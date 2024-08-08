@@ -1,0 +1,22 @@
+{
+  "name": "multitab-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc -p .",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.1.0",
+    "tsc-watch": "^6.2.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.5"
+  }
+}
