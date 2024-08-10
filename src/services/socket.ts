@@ -3,6 +3,8 @@ import { Server } from "socket.io";
 import { config } from "dotenv";
 config();
 
+const socketToRoomMap = new Map<string, string>();
+
 class SocketService {
     private _io: Server;
     constructor() {
@@ -24,19 +26,30 @@ class SocketService {
 
             
 
-            socket.on("event:message",  ({ activeFile, data }: {activeFile: string, data: string}) => {
+            socket.on("event:message", ({ activeFile, data, roomId }: { activeFile: string, data: string, roomId: string }) => {
+                socket.join(roomId);
+                socketToRoomMap.set(socket.id, roomId);
                 console.log("Active File: ", activeFile);
                 console.log("Data: ", data);
-                io.emit("event:server-message", { activeFile, data });
+                io.to(roomId).emit("event:server-message", { activeFile, data });
             });
 
             socket.on("event:visible-files", ({ visibleFiles }: { visibleFiles: string[] }) => {
                 console.log("Visible files: ", visibleFiles)
-                io.emit("event:sync-visible-files", { visibleFiles });
+                let roomId = socketToRoomMap.get(socket.id);
+                io.to(roomId!).emit("event:sync-visible-files", { visibleFiles });
             });
 
             socket.on("disconnect", () => {
                 console.log("User disconnected: ", socket.id);
+                let roomId = socketToRoomMap.get(socket.id);
+                socket.leave(roomId!);
+                const rooms = Array.from(io.sockets.adapter.rooms.get(roomId!)!);
+                if (rooms.length === 0) {
+                    console.log("All users left the room");
+                    socketToRoomMap.delete(roomId!);
+                }
+                console.log("User left the room");
               });
             
         })
