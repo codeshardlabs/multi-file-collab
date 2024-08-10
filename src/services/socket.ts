@@ -37,20 +37,24 @@ class SocketService {
             socket.on("event:visible-files", ({ visibleFiles }: { visibleFiles: string[] }) => {
                 console.log("Visible files: ", visibleFiles)
                 let roomId = socketToRoomMap.get(socket.id);
-                io.to(roomId!).emit("event:sync-visible-files", { visibleFiles });
+                if (roomId) {
+                    io.to(roomId).emit("event:sync-visible-files", { visibleFiles });
+                }
             });
 
             socket.on("disconnect", () => {
                 console.log("User disconnected: ", socket.id);
                 let roomId = socketToRoomMap.get(socket.id);
-                socket.leave(roomId!);
-                const rooms = Array.from(io.sockets.adapter.rooms.get(roomId!)!);
-                if (rooms.length === 0) {
-                    console.log("All users left the room");
-                    socketToRoomMap.delete(roomId!);
+                if (roomId) {
+                    socket.leave(roomId);
+                    const rooms = Array.from(io.sockets.adapter.rooms.get(roomId)!);
+                    if (rooms.length === 0) {
+                        console.log("All users left the room");
+                        socketToRoomMap.delete(roomId!);
+                    }
+                    console.log("User left the room");
                 }
-                console.log("User left the room");
-              });
+              })
             
         })
     }
