@@ -23,15 +23,20 @@ class SocketService {
         const io = this._io;
         io.on("connect", (socket) => {
             console.log("User connected: ", socket.id);
-
-            
-
-            socket.on("event:message", ({ activeFile, data, roomId }: { activeFile: string, data: string, roomId: string }) => {
+            socket.on("event:join-room", ({ roomId }: { roomId: string; }) => {
+                console.log("RoomID: ", roomId);
                 socket.join(roomId);
                 socketToRoomMap.set(socket.id, roomId);
+            });
+
+            socket.on("event:message", ({ activeFile, data }: { activeFile: string, data: string }) => {
+                
                 console.log("Active File: ", activeFile);
                 console.log("Data: ", data);
-                io.to(roomId).emit("event:server-message", { activeFile, data });
+                console.log("Socket: ", socket.id);
+                console.log("Room ID: ", socketToRoomMap.get(socket.id));
+                const roomId = socketToRoomMap.get(socket.id);
+                if(roomId) io.to(roomId).emit("event:server-message", { activeFile, data });
             });
 
             socket.on("event:visible-files", ({ visibleFiles }: { visibleFiles: string[] }) => {
@@ -47,10 +52,11 @@ class SocketService {
                 let roomId = socketToRoomMap.get(socket.id);
                 if (roomId) {
                     socket.leave(roomId);
-                    const rooms = Array.from(io.sockets.adapter.rooms.get(roomId)!);
-                    if (rooms.length === 0) {
+                    console.log(roomId);
+                    const sockets = Array.from(io.sockets.adapter.rooms.get(roomId)!);
+                    if (!sockets || sockets.length === 0) {
                         console.log("All users left the room");
-                        socketToRoomMap.delete(roomId!);
+                        socketToRoomMap.delete(roomId);
                     }
                     console.log("User left the room");
                 }
