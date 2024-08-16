@@ -7,6 +7,8 @@ import { produceMessage } from "./kafka/producer";
 config();
 
 const client = new Redis(process.env.REDIS_URL!);
+const publisher = new Redis(process.env.REDIS_URL!);
+const subscriber = new Redis(process.env.REDIS_URL!);
 
 class SocketService {
     private _io: Server;
@@ -15,14 +17,14 @@ class SocketService {
         this._io = new Server({
             cors: {
                 origin: process.env.FRONTEND_URL!
-              }
+            }
         });
     }
     get io() {
         return this._io;
     }
 
-    public initListeners () {
+    public initListeners() {
         const io = this._io;
         io.on("connect", async (socket) => {
             console.log("User connected: ", socket.id);
@@ -30,7 +32,12 @@ class SocketService {
                 if (roomId) {
                     console.log("RoomID: ", roomId);
                     socket.join(roomId);
-                    await client.set(socket.id, roomId);
+                    try {
+
+                        await client.set(socket.id, roomId);
+                    } catch (error) {
+                        console.log("Could not join room: ", error)
+                    }
                 }
                 else if (!roomId) {
                     console.log("RoomId falsy: ", roomId)
@@ -38,49 +45,64 @@ class SocketService {
             });
 
             socket.on("event:message", async ({ activeFile, data }: { activeFile: string, data: string }) => {
-                
+
                 console.log("Active File: ", activeFile);
                 console.log("Data: ", data);
                 console.log("Socket: ", socket.id);
-                
-                
-                const roomId = await client.get(socket.id);
-                if (roomId) {
-                    io.to(roomId).emit("event:server-message", { activeFile, data });
-                    await produceMessage({
-                       activeFile, data, roomId
-                   })
-                    await client.publish("EVENT:MESSAGE", JSON.stringify({
-                        activeFile,
-                        data
-                    }));
 
+
+                try {
+                    const roomId = await client.get(socket.id);
+                    if (roomId) {
+                        io.to(roomId).emit("event:server-message", { activeFile, data });
+                        await produceMessage({
+                            activeFile, data, roomId
+                        })
+                        await publisher.publish("EVENT:MESSAGE", JSON.stringify({
+                            activeFile,
+                            data
+                        }));
+
+                    }
+                    else if (!roomId) {
+                        console.log("RoomId falsy: ", roomId)
+                    }
+
+                } catch (error) {
+                    console.log("event:message Error: ", error)
                 }
-                    
-                else if (!roomId) {
-                    console.log("RoomId falsy: ", roomId)
-                }
+
+
+
+
+
             });
 
             socket.on("event:visible-files", async ({ visibleFiles }: { visibleFiles: string[] }) => {
                 console.log("Visible files: ", visibleFiles)
-                let roomId = await client.get(socket.id);
-                if (roomId) {
-                    io.to(roomId).emit("event:sync-visible-files", { visibleFiles });
-                    await client.publish("EVENT:SYNC-VISIBLE-FILES", JSON.stringify({
-                        visibleFiles
-                    }));
-                }
-                else if (!roomId) {
-                    console.log("RoomId falsy: ", roomId)
+
+                try {
+                    let roomId = await client.get(socket.id);
+                    if (roomId) {
+                        io.to(roomId).emit("event:sync-visible-files", { visibleFiles });
+                        await publisher.publish("EVENT:SYNC-VISIBLE-FILES", JSON.stringify({
+                            visibleFiles
+                        }));
+                    }
+                    else if (!roomId) {
+                        console.log("RoomId falsy: ", roomId)
+                    }
+
+                } catch (error) {
+                    console.log("event:visible-files Error: ", error)
                 }
             });
 
-            client.subscribe("EVENT:MESSAGE", async (err, result) => {
+            subscriber.subscribe("EVENT:MESSAGE", async (err, result) => {
                 if (err) {
                     throw err;
                 }
-               
+
                 const { activeFile, data } = JSON.parse(result as string) as { activeFile: string; data: string; };
                 const roomId = await client.get(socket.id);
                 if (roomId) {
@@ -89,14 +111,14 @@ class SocketService {
                         data
                     })
                 }
-                
+
             })
 
-            client.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
+            subscriber.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
                 if (err) {
                     throw err;
                 }
-               
+
                 const { visibleFiles } = JSON.parse(result as string) as { visibleFiles: string[] }
                 const roomId = await client.get(socket.id);
                 if (roomId) {
@@ -104,7 +126,7 @@ class SocketService {
                         visibleFiles
                     })
                 }
-                
+
             })
 
             socket.on("disconnect", async () => {
@@ -126,11 +148,11 @@ class SocketService {
                 else if (!roomId) {
                     console.log("RoomId falsy: ", roomId)
                 }
-              })
-            
+            })
+
         })
     }
-} 
+}
 
 
 export default SocketService;

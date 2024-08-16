@@ -13,6 +13,7 @@ const createProducer = async () => {
 
 
 export const produceMessage = async ({ activeFile, data, roomId }: { activeFile: string; data: string; roomId: string; }) => {
+    console.log("Started producing");
     const producer = await createProducer();
     await producer.send({
         topic: "multitab-collab",

@@ -1,7 +1,7 @@
 import kafka from ".";
 import { Shard } from "../../models/shard";
 
-const consumer = kafka.consumer({
+const consumer = kafka!.consumer({
     groupId: "default"
 });
 
@@ -19,6 +19,7 @@ export const consumeMessage = async () => {
                 return;
            }
             const activeFile = message.key!.toString();
+            console.log("Message received");
             
             const {data, roomId} = JSON.parse(message.value!.toString()) as { data: string; roomId: string; };
 
@@ -46,7 +47,10 @@ export const consumeMessage = async () => {
                         }
 
                         room.files = files;
-                        await room.save();
+
+                        setTimeout(async () => {
+                            await room.save();
+                        }, 10*1000);
                     }
 
                 } catch (error) {

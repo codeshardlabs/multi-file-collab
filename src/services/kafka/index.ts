@@ -2,7 +2,8 @@ import { Kafka, logLevel } from "kafkajs";
 import { config } from "dotenv";
 config();
 
-const kafka = new Kafka({
+
+let kafka = new Kafka({
     brokers: [process.env.KAFKA_BROKER!],
     ssl: true,
     sasl: {
@@ -11,6 +12,8 @@ const kafka = new Kafka({
         password: process.env.KAFKA_PASSWD!
     },
     logLevel: logLevel.ERROR
-})
+})   
+
+
 
 export default kafka;
