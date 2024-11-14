@@ -1,14 +1,9 @@
 
 import { Server } from "socket.io";
 import { config } from "dotenv";
-import Redis from "ioredis";
-import { produceMessage } from "./kafka/producer";
 
 config();
 
-const client = new Redis(process.env.REDIS_URL!);
-const publisher = new Redis(process.env.REDIS_URL!);
-const subscriber = new Redis(process.env.REDIS_URL!);
 
 class SocketService {
     private _io: Server;
@@ -55,9 +50,7 @@ class SocketService {
                     const roomId = await client.get(socket.id);
                     if (roomId) {
                         io.to(roomId).emit("event:server-message", { activeFile, data });
-                        await produceMessage({
-                            activeFile, data, roomId
-                        })
+                      
                         await publisher.publish("EVENT:MESSAGE", JSON.stringify({
                             activeFile,
                             data

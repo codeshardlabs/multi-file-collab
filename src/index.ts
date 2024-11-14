@@ -1,6 +1,5 @@
 import http from "http";
 import SocketService from "./services/socket";
-import { consumeMessage } from "./services/kafka/consumer";
 import mongoose from "mongoose";
 
 mongoose.connect(process.env.MONGODB_URL!);
@@ -17,7 +16,6 @@ async function init() {
     httpServer.listen(PORT, () => {
         console.log(`Server is listening on port: ${PORT}`);
     })
-    consumeMessage();
     socketService.initListeners();
 }
 
