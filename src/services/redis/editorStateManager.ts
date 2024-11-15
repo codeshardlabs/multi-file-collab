@@ -43,7 +43,7 @@ export class EditorStateManager {
                     const value = await this.kvStore.get(key);
                     const roomId = keyParts[1];
                     const activeFile = keyParts[2];
-                    // add new job to background worker
+                    // add new job to queue
                    await this.queueService.addJob(redisConfig.job.JOB_FLUSH, {
                         roomId,
                        activeFile,
@@ -68,6 +68,4 @@ export class EditorStateManager {
             console.log(error);
         }
     }
-
-
 }
