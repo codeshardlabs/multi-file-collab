@@ -1,0 +1,73 @@
+
+import { QueueService } from "./queue";
+import { KVService } from "./kvStore";
+import { redisConfig } from "../../config";
+
+export class EditorStateManager {
+    private queueService: QueueService;
+    private kvStore: KVService;
+    private static FLUSH_INTERVAL: number = 5000; // every 5 sec
+    constructor() {
+        this.queueService = new QueueService({
+            queueName: "editorUpdates",
+            redis: {
+                port: Number(process.env.REDIS_PORT!),
+                host: process.env.REDIS_HOST!,
+                password: process.env.REDIS_PWD
+            },
+            defaultJobOptions: {
+                attempts: 3,// no. of retries if job fails
+                backoff: {
+                    type: "exponential", // exponential delay on each job fail
+                    delay: 1000
+                }
+            }
+        })
+
+        this.kvStore = new KVService();
+        this.startPeriodicFlush();
+    }
+
+    private getEditorStateKey(roomId: string, activeFile: string): string {
+        return `editor:${roomId}:${activeFile}:pending`;
+    }
+
+    private async startPeriodicFlush() {
+        setInterval(async () => {
+            try {
+                // flush cache data to the DB
+                let pattern = "editor:*:pending";
+                const keys = await this.kvStore.keys(pattern);
+                for (let key of keys) {
+                    const keyParts = key.split(":");
+                    const value = await this.kvStore.get(key);
+                    const roomId = keyParts[1];
+                    const activeFile = keyParts[2];
+                    // add new job to background worker
+                   await this.queueService.addJob(redisConfig.job.JOB_FLUSH, {
+                        roomId,
+                       activeFile,
+                        code: value
+                   });
+                
+                    // delete (k,v) pair from the cache
+                    await this.kvStore.del(key);
+                }
+                
+            } catch (error) {
+                console.log("Periodic flush failed: ", error);
+            }
+
+        }, EditorStateManager.FLUSH_INTERVAL);
+    }
+
+    async cacheLatestUpdates(roomId: string, activeFile: string,  data: string): Promise<void> {
+        try {
+            await this.kvStore.set(this.getEditorStateKey(roomId, activeFile), data);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+
+}

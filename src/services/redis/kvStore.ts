@@ -25,8 +25,8 @@ export class KVService {
       }
     
     // delete key from redis
-      async del(key: string): Promise<number> {
-        return await this.client.del(key);
+      async del(...keys : string[]): Promise<number> {
+        return await this.client.del(...keys);
   }
   
   // check if key exists or not
@@ -34,6 +34,9 @@ export class KVService {
          return await this.client.exists(key)
        }
   
+  async keys(pattern: string): Promise<string[]> {
+    return await this.client.keys(pattern);
+      }
     
     // set TTL/expiry of key in seconds
       async expire(key: string, seconds: number): Promise<number> {

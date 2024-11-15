@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 import { config } from "dotenv";
 import { PubSubService } from "./redis/pubsub";
 import { KVService } from "./redis/kvStore";
+import { EditorStateManager } from "./redis/editorStateManager";
 
 config();
 
@@ -11,6 +12,7 @@ const kvStore = new KVService();
 
 class SocketService {
     private _io: Server;
+    private editorManager: EditorStateManager;
     constructor() {
         console.log("Init socket server");
         this._io = new Server({
@@ -18,6 +20,8 @@ class SocketService {
                 origin: process.env.FRONTEND_URL!
             }
         });
+
+        this.editorManager = new EditorStateManager();
     }
     get io() {
         return this._io;
@@ -54,7 +58,8 @@ class SocketService {
                     const roomId = await kvStore.get(socket.id);
                     if (roomId) {
                         io.to(roomId).emit("event:server-message", { activeFile, data });
-                      
+
+                        await this.editorManager.cacheLatestUpdates(roomId, activeFile, data);
                         await pubsub.publish("EVENT:MESSAGE", JSON.stringify({
                             activeFile,
                             data

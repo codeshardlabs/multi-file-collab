@@ -2,6 +2,7 @@ import { DefaultJobOptions, Job, Queue, Worker } from "bullmq";
 import Redis from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
+import { Shard } from "../../models/shard";
 
 
 // Job Data
@@ -12,6 +13,17 @@ interface JobData {
 // Job Result
 interface JobResult {
     [key: string]: any;
+}
+
+interface FlushJobData extends JobData {
+  roomId: string;
+  activeFile: string;
+  code: string;
+}
+
+interface BaseJobResult extends JobResult {
+  job: string;
+  status: "completed" | "failed" | "finished";
 }
 
 interface IQueueServiceConfig {
@@ -78,8 +90,8 @@ export class QueueService {
           switch (job.name) {
             case 'emailJob':
               return await this.processEmailJob(job.data);
-            case 'exportJob':
-              return await this.processExportJob(job.data);
+            case redisConfig.job.JOB_FLUSH:
+              return await this.processFlushJob(job.data);
             default:
               throw new Error(`Unknown job type: ${job.name}`);
           }
@@ -95,12 +107,40 @@ export class QueueService {
         return { status: 'completed', message: 'Email sent successfully' };
       }
     
-      // Example job processor for export jobs
-      private async processExportJob(data: JobData): Promise<JobResult> {
-        // Implement export logic here
-        console.log('Processing export job:', data);
-        return { status: 'completed', message: 'Export completed successfully' };
+  private async processFlushJob(data: FlushJobData): Promise<BaseJobResult> {
+    // flush the data to database
+    // for a particular Shard Id: which is roomId in this case
+    try {
+      const room = await Shard.findById(data.roomId);
+      if (room) {
+        let files = room.files;
+        const ind = files.findIndex((file) => file.name == data.activeFile);
+        if (ind == -1) {
+          // not added to db
+          files.push({
+            name: data.activeFile,
+            code: data.code
+          });
+
+        }
+        else {
+          // already in db
+          files[ind].code = data.code;
+        }
+
+        room.files = files;
+
+        await room.save();
+        return {status :"completed", job: redisConfig.job.JOB_FLUSH}
       }
+
+    } catch (error) {
+      console.log("error occurred: ", error)
+      return {status: "failed", job: redisConfig.job.JOB_FLUSH}
+    }
+
+    return {status: "finished", job: redisConfig.job.JOB_FLUSH}
+  }
     
 
     // add new job to the queue

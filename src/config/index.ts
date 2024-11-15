@@ -11,6 +11,8 @@ const EVENT_COMPLETED = "completed";
 const EVENT_FAILED = "failed";
 const EVENT_ERROR = "error";
 
+// queue jobs
+const JOB_FLUSH = "job:flush"
 
 // REDIS config
 const redisConfig = {
@@ -25,6 +27,9 @@ const redisConfig = {
         EVENT_COMPLETED,
         EVENT_ERROR,
         EVENT_FAILED
+    },
+    job: {
+        JOB_FLUSH
     }
 } as const;
 
