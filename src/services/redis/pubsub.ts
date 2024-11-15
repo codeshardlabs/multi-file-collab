@@ -17,15 +17,19 @@ export class PubSubService {
     }
     
 
-    async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
+    async subscribe(channel: string, callback: (error: Error | null, message: string | null) => void): Promise<void> {
         // subscribe to particular channel
         await this.subscriber.subscribe(channel);
         // upon message receival, verify the channel and upon match, call the callback.
         this.subscriber.on('message', (ch: string, message: string) => {
           if (ch === channel) {
-            callback(message);
+            callback(null, message);
           }
         });
+      
+      this.subscriber.on("error", (error: Error) => {
+        callback(error, null);
+      })
     }
     
   async unsubscribe(channel: string): Promise<void> {

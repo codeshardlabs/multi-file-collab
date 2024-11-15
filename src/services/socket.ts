@@ -1,9 +1,13 @@
 
 import { Server } from "socket.io";
 import { config } from "dotenv";
+import { PubSubService } from "./redis/pubsub";
+import { KVService } from "./redis/kvStore";
 
 config();
 
+const pubsub = new PubSubService();
+const kvStore = new KVService();
 
 class SocketService {
     private _io: Server;
@@ -29,7 +33,7 @@ class SocketService {
                     socket.join(roomId);
                     try {
 
-                        await client.set(socket.id, roomId);
+                        await kvStore.set(socket.id, roomId);
                     } catch (error) {
                         console.log("Could not join room: ", error)
                     }
@@ -47,11 +51,11 @@ class SocketService {
 
 
                 try {
-                    const roomId = await client.get(socket.id);
+                    const roomId = await kvStore.get(socket.id);
                     if (roomId) {
                         io.to(roomId).emit("event:server-message", { activeFile, data });
                       
-                        await publisher.publish("EVENT:MESSAGE", JSON.stringify({
+                        await pubsub.publish("EVENT:MESSAGE", JSON.stringify({
                             activeFile,
                             data
                         }));
@@ -75,10 +79,10 @@ class SocketService {
                 console.log("Visible files: ", visibleFiles)
 
                 try {
-                    let roomId = await client.get(socket.id);
+                    let roomId = await kvStore.get(socket.id);
                     if (roomId) {
                         io.to(roomId).emit("event:sync-visible-files", { visibleFiles });
-                        await publisher.publish("EVENT:SYNC-VISIBLE-FILES", JSON.stringify({
+                        await pubsub.publish("EVENT:SYNC-VISIBLE-FILES", JSON.stringify({
                             visibleFiles
                         }));
                     }
@@ -91,13 +95,13 @@ class SocketService {
                 }
             });
 
-            subscriber.subscribe("EVENT:MESSAGE", async (err, result) => {
+            pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {
                 if (err) {
                     throw err;
                 }
 
                 const { activeFile, data } = JSON.parse(result as string) as { activeFile: string; data: string; };
-                const roomId = await client.get(socket.id);
+                const roomId = await kvStore.get(socket.id);
                 if (roomId) {
                     io.to(roomId).emit("event:message", {
                         activeFile,
@@ -107,13 +111,13 @@ class SocketService {
 
             })
 
-            subscriber.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
+            pubsub.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
                 if (err) {
                     throw err;
                 }
 
                 const { visibleFiles } = JSON.parse(result as string) as { visibleFiles: string[] }
-                const roomId = await client.get(socket.id);
+                const roomId = await kvStore.get(socket.id);
                 if (roomId) {
                     io.to(roomId).emit("event:message", {
                         visibleFiles
@@ -124,16 +128,16 @@ class SocketService {
 
             socket.on("disconnect", async () => {
                 console.log("User disconnected: ", socket.id);
-                let roomId = await client.get(socket.id);
+                let roomId = await kvStore.get(socket.id);
                 if (roomId) {
                     socket.leave(roomId);
                     console.log(roomId);
                     const sockets = Array.from(io.sockets.adapter.rooms.get(roomId)!);
                     if (!sockets || sockets.length === 0) {
                         console.log("All users left the room");
-                        const exists = await client.exists(socket.id);
+                        const exists = await kvStore.exists(socket.id);
                         if (exists == 1) {
-                            await client.del(socket.id);
+                            await kvStore.del(socket.id);
                         }
                     }
                     console.log("User left the room");
