@@ -10,16 +10,11 @@ export class EditorStateManager {
     constructor() {
         this.queueService = new QueueService({
             queueName: "editorUpdates",
-            redis: {
-                port: Number(process.env.REDIS_PORT!),
-                host: process.env.REDIS_HOST!,
-                password: process.env.REDIS_PWD
-            },
             defaultJobOptions: {
-                attempts: 3,// no. of retries if job fails
+                attempts: 3,
                 backoff: {
-                    type: "exponential", // exponential delay on each job fail
-                    delay: 1000
+                    type: "exponential"
+                    , delay: 1000
                 }
             }
         })
@@ -44,16 +39,16 @@ export class EditorStateManager {
                     const roomId = keyParts[1];
                     const activeFile = keyParts[2];
                     // add new job to queue
-                   await this.queueService.addJob(redisConfig.job.JOB_FLUSH, {
+                    await this.queueService.addJob(redisConfig.job.JOB_FLUSH, {
                         roomId,
-                       activeFile,
+                        activeFile,
                         code: value
-                   });
-                
+                    });
+
                     // delete (k,v) pair from the cache
                     await this.kvStore.del(key);
                 }
-                
+
             } catch (error) {
                 console.log("Periodic flush failed: ", error);
             }
@@ -61,7 +56,7 @@ export class EditorStateManager {
         }, EditorStateManager.FLUSH_INTERVAL);
     }
 
-    async cacheLatestUpdates(roomId: string, activeFile: string,  data: string): Promise<void> {
+    async cacheLatestUpdates(roomId: string, activeFile: string, data: string): Promise<void> {
         try {
             await this.kvStore.set(this.getEditorStateKey(roomId, activeFile), data);
         } catch (error) {

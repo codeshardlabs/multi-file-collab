@@ -16,7 +16,9 @@ export class RedisManager {
     // checks if there is existing connection or not by connection name, and if not create new connection and add it to the pool
     getConnection(name: string = redisConfig.connection.CONN_DEFAULT): Redis {
         if (!this.pool.has(name)) {
-          const connection = new Redis(process.env.REDIS_URL!);
+          const connection = new Redis(process.env.REDIS_URL!, {
+            maxRetriesPerRequest: null
+          });
           this.pool.set(name, connection);
         }
         return this.pool.get(name)!;

@@ -28,11 +28,6 @@ interface BaseJobResult extends JobResult {
 
 interface IQueueServiceConfig {
     queueName: string;
-    redis: {
-        host: string;
-        password?: string;
-        port: number;
-    },
     defaultJobOptions?: DefaultJobOptions
 }
 export class QueueService {
@@ -46,8 +41,8 @@ export class QueueService {
 
         // create new queue instance
         this.queue = new Queue(config.queueName, {
-            connection: this.conn,
-            defaultJobOptions: config.defaultJobOptions
+          connection: this.conn,
+          defaultJobOptions: config.defaultJobOptions
         })
 
         // create new worker instance to process new jobs
