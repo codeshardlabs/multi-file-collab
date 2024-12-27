@@ -1,0 +1,7 @@
+tf-kp.pem
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+FILE
+*.tfvars
+.terraform.lock.hcl
