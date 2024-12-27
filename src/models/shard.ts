@@ -13,12 +13,28 @@ const shardSchema = new Schema(
     creator: {
       type: String,
     },
-    isTemplate: {
-      type: Boolean,
-      required: true,
-      default: false,
+    templateType: {
+      type: String,
+      enum: [
+        "static",
+        "angular",
+        "react",
+        "react-ts",
+        "solid",
+        "svelte",
+        "test-ts",
+        "vanilla-ts",
+        "vanilla",
+        "vue",
+        "vue-ts",
+        "node",
+        "nextjs",
+        "astro",
+        "vite",
+        "vite-react",
+        "vite-react-ts",
+      ]
     },
-    templateType: String,
     files: [fileSchema],
     dependencies: [dependencySchema],
     tags: [String],
@@ -42,22 +58,12 @@ const shardSchema = new Schema(
       ref: "User",
     },
     commentThread: Schema.Types.ObjectId,
+    lastSyncTime: Date,
   },
   {
     timestamps: true,
   },
 );
 
-shardSchema.pre("save", function (next) {
-    if (this.isTemplate) {
-      this.html = undefined;
-      this.css = undefined;
-      this.js = undefined;
-    } else {
-      this.templateType = undefined;
-    }
-  
-    next();
-});
-  
+
 export const Shard = model("Shard", shardSchema);
