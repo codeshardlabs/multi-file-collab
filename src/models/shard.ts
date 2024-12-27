@@ -13,21 +13,6 @@ const shardSchema = new Schema(
     creator: {
       type: String,
     },
-    html: {
-      type: String,
-      required: false,
-      default: "",
-    },
-    css: {
-      type: String,
-      required: false,
-      default: "",
-    },
-    js: {
-      type: String,
-      required: false,
-      default: "",
-    },
     isTemplate: {
       type: Boolean,
       required: true,
