@@ -19,7 +19,7 @@ export interface Shard {
     creator: string;
     templateType: TemplateType;
     files: File[];
-    dependencies?: Dependency[];
+    dependencies: Dependency[];
     type: VisibilityType;
     mode: ShardMode;
     likes: number;
