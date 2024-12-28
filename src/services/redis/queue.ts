@@ -2,7 +2,6 @@ import { DefaultJobOptions, Job, Queue, Worker } from "bullmq";
 import Redis from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
-import ShardRepository from "../../repositories/ShardRepository";
 import { IShardRepository } from "../../interfaces/IShardRepository";
 
 // Job Data

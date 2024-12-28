@@ -1,8 +1,8 @@
 import http from "http";
 import SocketService from "./services/socket";
 import { connectToDB } from "./dbConn";
-import ShardRepository from "./repositories/ShardRepository";
 import { Shard } from "./models/shard";
+import ShardRepository from "./repositories/ShardRepository";
 
 const newShardRepo = ShardRepository.getInstance(Shard);
 
