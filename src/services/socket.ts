@@ -39,6 +39,7 @@ class SocketService {
                     try {
 
                         await kvStore.set(socket.id, roomId);
+                        await kvStore.rpush(roomId, socket.id);
                     } catch (error) {
                         console.log("Could not join room: ", error)
                     }
@@ -138,9 +139,9 @@ class SocketService {
                 if (roomId) {
                     socket.leave(roomId);
                     console.log(roomId);
-                    const sockets = Array.from(io.sockets.adapter.rooms.get(roomId)!);
-                    if (!sockets || sockets.length === 0) {
-                        console.log("All users left the room");
+                    await kvStore.lrem(roomId, 1, socket.id);
+                    const len = await kvStore.llen(roomId);
+                    if (len == 0) {
                         const exists = await kvStore.exists(socket.id);
                         if (exists == 1) {
                             await kvStore.del(socket.id);
