@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc -p .",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\""
+    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,11 @@
   "description": "",
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.1.0",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.2",
+    "ts-jest": "^29.2.5",
     "tsc-watch": "^6.2.0",
     "typescript": "^5.5.4"
   },
@@ -22,6 +27,8 @@
     "dotenv": "^16.4.5",
     "ioredis": "^5.4.1",
     "mongoose": "^8.5.2",
-    "socket.io": "^4.7.5"
+    "reflect-metadata": "^0.2.2",
+    "socket.io": "^4.7.5",
+    "typedi": "^0.10.0"
   }
 }

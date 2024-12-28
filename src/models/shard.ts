@@ -3,6 +3,7 @@ import { fileSchema } from "./file";
 import { dependencySchema } from "./dependency";
 import { User } from "./user";
 import { Comment } from "./comment";
+import { ShardDocument } from "../repositories/ShardRepository";
 
 const shardSchema = new Schema(
   {
@@ -58,7 +59,10 @@ const shardSchema = new Schema(
       ref: "User",
     },
     commentThread: Schema.Types.ObjectId,
-    lastSyncTime: Date,
+    lastSyncTime: {
+      type: Date,
+      default: Date.now()
+    },
   },
   {
     timestamps: true,
@@ -66,4 +70,4 @@ const shardSchema = new Schema(
 );
 
 
-export const Shard = model("Shard", shardSchema);
+export const Shard = model<ShardDocument>("Shard", shardSchema);

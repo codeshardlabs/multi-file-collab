@@ -1,4 +1,4 @@
-import { Shard } from "./shard";
+import {Shard} from "./shard";
 
 export interface User {
     id: string;

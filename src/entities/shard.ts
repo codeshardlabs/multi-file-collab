@@ -13,7 +13,7 @@ export type TemplateType = "static" | "angular" | "react" | "react-ts" | "solid"
 export type VisibilityType = "public" | "private" | "forked";
 export type ShardMode = "normal" | "collaboration";
 
-export interface Shard {
+export  interface Shard {
     id: string;
     title: string;
     creator: string;
