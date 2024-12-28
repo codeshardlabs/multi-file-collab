@@ -14,6 +14,7 @@ const kvStore = new KVService();
 class SocketService {
     private _io: Server;
     private editorManager: EditorStateManager;
+    private shardRepo: IShardRepository;
     constructor(shardRepo: IShardRepository) {
         console.log("Init socket server");
         this._io = new Server({
@@ -21,7 +22,7 @@ class SocketService {
                 origin: process.env.FRONTEND_URL!
             }
         });
-
+        this.shardRepo = shardRepo;
         this.editorManager = new EditorStateManager(shardRepo);
     }
     get io() {
@@ -39,6 +40,20 @@ class SocketService {
                     try {
 
                         await kvStore.set(socket.id, roomId);
+                        const len = await kvStore.llen(roomId);
+                        if (len == 0) {
+                            // first user joined the room
+                            // get the shard by room id 
+                            const room = await this.shardRepo.findById(roomId);
+                            if (room) {
+                                const files = room.files; 
+                                // populate all the files to redis
+                                for (let file of files) {
+                                    let redisKey = `editor:${roomId}:${file.name}:pending`;
+                                    await kvStore.set(redisKey, file.code);
+                                }
+                            }
+                        }
                         await kvStore.rpush(roomId, socket.id);
                     } catch (error) {
                         console.log("Could not join room: ", error)
@@ -142,10 +157,17 @@ class SocketService {
                     await kvStore.lrem(roomId, 1, socket.id);
                     const len = await kvStore.llen(roomId);
                     if (len == 0) {
-                        const exists = await kvStore.exists(socket.id);
-                        if (exists == 1) {
-                            await kvStore.del(socket.id);
-                        }
+                        // all the users left the room -> depopulate the cache
+                        const room = await this.shardRepo.findById(roomId);
+                        const keys = [socket.id, roomId];
+                        if (room) {
+                            const files = room.files;
+                            for (let file of files) {
+                                const redisKey = `editor:${roomId}:${file.name}:pending`;
+                                keys.push(redisKey);
+                            }
+                        }  
+                        await kvStore.del(...keys);
                     }
                     console.log("User left the room");
                 }
