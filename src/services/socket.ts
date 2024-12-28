@@ -4,6 +4,7 @@ import { config } from "dotenv";
 import { PubSubService } from "./redis/pubsub";
 import { KVService } from "./redis/kvStore";
 import { EditorStateManager } from "./redis/editorStateManager";
+import { IShardRepository } from "../interfaces/IShardRepository";
 
 config();
 
@@ -13,7 +14,7 @@ const kvStore = new KVService();
 class SocketService {
     private _io: Server;
     private editorManager: EditorStateManager;
-    constructor() {
+    constructor(shardRepo: IShardRepository) {
         console.log("Init socket server");
         this._io = new Server({
             cors: {
@@ -21,7 +22,7 @@ class SocketService {
             }
         });
 
-        this.editorManager = new EditorStateManager();
+        this.editorManager = new EditorStateManager(shardRepo);
     }
     get io() {
         return this._io;

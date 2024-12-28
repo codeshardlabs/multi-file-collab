@@ -3,7 +3,7 @@ import Redis from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 import ShardRepository from "../../repositories/ShardRepository";
-import { Inject } from "typedi";
+import { IShardRepository } from "../../interfaces/IShardRepository";
 
 // Job Data
 interface JobData {
@@ -35,14 +35,13 @@ export class QueueService {
   private queue: Queue;
   private worker: Worker;
   private conn: Redis;
-  private shardRepo: ShardRepository;
+  private shardRepo: IShardRepository;
 
-  constructor(private config: IQueueServiceConfig, @Inject("shard.repository") shardRepo: ShardRepository) {
+  constructor(config: IQueueServiceConfig,  shardRepo: IShardRepository) {
     const redisManager = RedisManager.getInstance();
     this.conn = redisManager.getConnection(redisConfig.connection.CONN_BULLMQ);
-    this.shardRepo = shardRepo;
-
     // create new queue instance
+    this.shardRepo = shardRepo;
     this.queue = new Queue(config.queueName, {
       connection: this.conn,
       defaultJobOptions: config.defaultJobOptions
@@ -55,11 +54,9 @@ export class QueueService {
       connection: this.conn
     })
 
-    // setup event listeners
     this.setupEventListeners();
   }
 
-  // setup event listeners
   private setupEventListeners() {
     // executed when job completed successfully in the worker
     this.worker.on(redisConfig.event.EVENT_COMPLETED, (job: Job) => {
@@ -100,7 +97,7 @@ export class QueueService {
   }
 
   private async processEmailJob(data: JobData): Promise<JobResult> {
-    // Implement email sending logic here
+    // TODO: Implement email sending logic here
     console.log('Processing email job:', data);
     return { status: 'completed', message: 'Email sent successfully' };
   }
@@ -173,3 +170,4 @@ export class QueueService {
   }
 
 }
+

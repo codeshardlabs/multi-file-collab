@@ -2,12 +2,13 @@
 import { QueueService } from "./queue";
 import { KVService } from "./kvStore";
 import { redisConfig } from "../../config";
+import { IShardRepository } from "../../interfaces/IShardRepository";
 
 export class EditorStateManager {
     private queueService: QueueService;
     private kvStore: KVService;
     private static FLUSH_INTERVAL: number = 5000; // every 5 sec
-    constructor() {
+    constructor(shardRepo: IShardRepository) {
         this.queueService = new QueueService({
             queueName: "editorUpdates",
             defaultJobOptions: {
@@ -17,7 +18,8 @@ export class EditorStateManager {
                     , delay: 1000
                 }
             }
-        })
+        },
+            shardRepo);
 
         this.kvStore = new KVService();
         this.startPeriodicFlush();

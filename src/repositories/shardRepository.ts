@@ -1,17 +1,25 @@
 import mongoose, { Model, Document } from "mongoose";
 import {Shard} from "../entities/shard";
 import { IShardRepository } from "../interfaces/IShardRepository";
-import { Service } from "typedi";
+
 
 export interface ShardDocument extends Omit<Shard, "id">, Document {
 }
 
-@Service("shard.repository")
+
  export default class ShardRepository implements IShardRepository {
-    private model: Model<ShardDocument>
-    constructor(model: Model<ShardDocument>) {
-        this.model = model;
-    }
+     private model: Model<ShardDocument>;
+     private static shardRepoInst: ShardRepository;
+     private constructor(model: Model<ShardDocument>) {
+         this.model = model;
+      }
+     
+     static getInstance(model: Model<ShardDocument>): ShardRepository {
+         if (ShardRepository.shardRepoInst == null) {
+             ShardRepository.shardRepoInst = new ShardRepository(model);
+         }
+         return ShardRepository.shardRepoInst;
+     }
 
     async findById(id: string): Promise<Shard | null> {
         const doc = await this.model.findById(new mongoose.Types.ObjectId(id));

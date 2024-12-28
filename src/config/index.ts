@@ -1,10 +1,10 @@
 
 // Redis connection names
-const CONN_DEFAULT = "default";
-const CONN_PUBLISHER = "publisher";
-const CONN_SUBSCRIBER = "subscriber";
-const CONN_KV_STORE = "kv-store";
-const CONN_BULLMQ = "bullmq";
+const CONN_DEFAULT = "conn:default";
+const CONN_PUBLISHER = "conn:publisher";
+const CONN_SUBSCRIBER = "conn:subscriber";
+const CONN_KV_STORE = "conn:kvstore";
+const CONN_BULLMQ = "conn:bullmq";
 
 // worker and queue events
 const EVENT_COMPLETED = "completed";
