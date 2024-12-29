@@ -9,17 +9,17 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
 
  export default class ShardRepository implements IShardRepository {
      private model: Model<ShardDocument>;
-     private static shardRepoInst: ShardRepository;
-     private constructor(model: Model<ShardDocument>) {
+    //  private static shardRepoInst: ShardRepository;
+      constructor(model: Model<ShardDocument>) {
          this.model = model;
       }
      
-     static getInstance(model: Model<ShardDocument>): ShardRepository {
-         if (ShardRepository.shardRepoInst == null) {
-             ShardRepository.shardRepoInst = new ShardRepository(model);
-         }
-         return ShardRepository.shardRepoInst;
-     }
+    //  static getInstance(model: Model<ShardDocument>): ShardRepository {
+    //      if (ShardRepository.shardRepoInst == null) {
+    //          ShardRepository.shardRepoInst = new ShardRepository(model);
+    //      }
+    //      return ShardRepository.shardRepoInst;
+    //  }
 
     async findById(id: string): Promise<Shard | null> {
         const doc = await this.model.findById(new mongoose.Types.ObjectId(id));

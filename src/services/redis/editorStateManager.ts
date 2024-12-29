@@ -46,9 +46,6 @@ export class EditorStateManager {
                         activeFile,
                         code: value
                     });
-
-                    // delete (k,v) pair from the cache
-                    await this.kvStore.del(key);
                 }
 
             } catch (error) {
