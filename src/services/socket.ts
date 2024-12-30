@@ -5,6 +5,7 @@ import { PubSubService } from "./redis/pubsub";
 import { KVService } from "./redis/kvStore";
 import { EditorStateManager } from "./redis/editorStateManager";
 import { IShardRepository } from "../interfaces/IShardRepository";
+import { joinRoom, propagateRealtimeCodeUpdates, propagateVisibleFiles } from "../controllers/ws/room";
 
 config();
 
@@ -36,87 +37,15 @@ class SocketService {
         io.on("connect", async (socket) => {
             console.log("User connected: ", socket.id);
             socket.on("event:join-room", async ({ roomId }: { roomId: string; }) => {
-                if (roomId) {
-                    console.log("RoomID: ", roomId);
-                    socket.join(roomId);
-                    try {
-
-                        await this.kvStore.set(socket.id, roomId);
-                        const len = await this.kvStore.llen(roomId);
-                        if (len == 0) {
-                            // first user joined the room
-                            // get the shard by room id 
-                            const room = await this.shardRepo.findById(roomId);
-                            if (room) {
-                                const files = room.files; 
-                                // populate all the files to redis
-                                for (let file of files) {
-                                    let redisKey = `editor:${roomId}:${file.name}:pending`;
-                                    await this.kvStore.set(redisKey, file.code);
-                                }
-                            }
-                        }
-                        await this.kvStore.rpush(roomId, socket.id);
-                    } catch (error) {
-                        console.log("Could not join room: ", error)
-                    }
-                }
-                else if (!roomId) {
-                    console.log("RoomId falsy: ", roomId)
-                }
-            });
+                joinRoom(roomId, io, socket, this.kvStore, this.shardRepo);
+            } );
 
             socket.on("event:message", async ({ activeFile, data }: { activeFile: string, data: string }) => {
-
-                console.log("Active File: ", activeFile);
-                console.log("Data: ", data);
-                console.log("Socket: ", socket.id);
-
-
-                try {
-                    const roomId = await this.kvStore.get(socket.id);
-                    if (roomId) {
-                        io.to(roomId).emit("event:server-message", { activeFile, data });
-
-                        await this.editorManager.cacheLatestUpdates(roomId, activeFile, data);
-                        await pubsub.publish("EVENT:MESSAGE", JSON.stringify({
-                            activeFile,
-                            data
-                        }));
-
-                    }
-                    else if (!roomId) {
-                        console.log("RoomId falsy: ", roomId)
-                    }
-
-                } catch (error) {
-                    console.log("event:message Error: ", error)
-                }
-
-
-
-
-
+                propagateRealtimeCodeUpdates(activeFile, data, io, socket, this.kvStore, pubsub, this.editorManager);
             });
 
             socket.on("event:visible-files", async ({ visibleFiles }: { visibleFiles: string[] }) => {
-                console.log("Visible files: ", visibleFiles)
-
-                try {
-                    let roomId = await this.kvStore.get(socket.id);
-                    if (roomId) {
-                        io.to(roomId).emit("event:sync-visible-files", { visibleFiles });
-                        await pubsub.publish("EVENT:SYNC-VISIBLE-FILES", JSON.stringify({
-                            visibleFiles
-                        }));
-                    }
-                    else if (!roomId) {
-                        console.log("RoomId falsy: ", roomId)
-                    }
-
-                } catch (error) {
-                    console.log("event:visible-files Error: ", error)
-                }
+                propagateVisibleFiles(visibleFiles, io, socket, this.kvStore, pubsub);
             });
 
             pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {

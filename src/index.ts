@@ -4,30 +4,17 @@ import { connectToDB } from "./dbConn";
 import { Shard } from "./models/shard";
 import ShardRepository from "./repositories/ShardRepository";
 import express from "express";
-import { fetchLatestRoomFilesState } from "./controllers/room";
+import { fetchLatestRoomFilesState } from "./controllers/http/room";
 import { KVService } from "./services/redis/kvStore";
+import { idValidation } from "./middleware/idValidation";
 
 const newShardRepo = new ShardRepository(Shard);
 const kvService = new KVService()
 const socketService = new SocketService(newShardRepo, kvService);
 const app = express();
 
-app.get("/api/v1/room/:id/files", (req, res) => {
-    const id = req.params["id"];
-    if (!id) {
-        res.status(400).json({
-            data: null,
-            error: {
-                message: "ID not found"
-            },
-            status: {
-                code: 400,
-                message: "Bad Request"
-            }
-        });
-        return;
-    }
-    return fetchLatestRoomFilesState(res, id, kvService, newShardRepo);
+app.get("/api/v1/room/:id/files", idValidation, (req, res) => {
+    return fetchLatestRoomFilesState(res, req.id!, kvService, newShardRepo);
 });
 
 async function init() {
