@@ -38,7 +38,7 @@ class SocketService {
             console.log("User connected: ", socket.id);
             socket.on("event:join-room", async ({ roomId }: { roomId: string; }) => {
                 joinRoom(roomId, io, socket, this.kvStore, this.shardRepo);
-            } );
+            });
 
             socket.on("event:message", async ({ activeFile, data }: { activeFile: string, data: string }) => {
                 propagateRealtimeCodeUpdates(activeFile, data, io, socket, this.kvStore, pubsub, this.editorManager);
@@ -78,6 +78,16 @@ class SocketService {
                 }
 
             })
+
+            socket.on("error", (error) => {
+                    // room id not found
+                    socket.emit("error", {
+                        data: null,
+                        error: {
+                            message: error.message
+                        }
+                    })
+                });
 
             socket.on("disconnect", async () => {
                 console.log("User disconnected: ", socket.id);

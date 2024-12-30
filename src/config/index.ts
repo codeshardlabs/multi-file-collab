@@ -33,6 +33,15 @@ const redisConfig = {
     }
 } as const;
 
+enum errors {
+    ROOM_ID_NOT_FOUND
+}
+
+const errorMessage = new Map<number, string>();
+errorMessage.set(errors.ROOM_ID_NOT_FOUND, "Room ID Not Found");
+
 export {
-    redisConfig
+    redisConfig,
+    errors,
+    errorMessage
 }

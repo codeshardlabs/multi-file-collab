@@ -3,14 +3,15 @@ import { KVService } from "../../services/redis/kvStore";
 import { IShardRepository } from "../../interfaces/IShardRepository";
 import { PubSubService } from "../../services/redis/pubsub";
 import { EditorStateManager } from "../../services/redis/editorStateManager";
+import { validateRoomId } from "../../middleware/ws/room";
 
 
 export async function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KVService, shardRepo: IShardRepository) {
-    if (roomId) {
-        console.log("RoomID: ", roomId);
-        socket.join(roomId);
+    // validate room id: library not required
+    validateRoomId(roomId, socket);
+    socket.join(roomId);
         try {
-            await kvStore.set(socket.id, roomId);
+             await kvStore.set(socket.id, roomId);
             const len = await kvStore.llen(roomId);
             if (len == 0) {
                 // first user joined the room
@@ -27,17 +28,15 @@ export async function joinRoom(roomId: string, io: Server, socket: Socket, kvSto
             }
             await kvStore.rpush(roomId, socket.id);
         } catch (error) {
-            console.log("Could not join room: ", error)
+            console.log("Could not join room: ", error);
+            socket.emit("event:error", {
+                error: error
+            })
         }
-    }
-    else if (!roomId) {
-        console.log("RoomId falsy: ", roomId)
-    }
 }
 
 
 export async function propagateRealtimeCodeUpdates(activeFile:  string, data: string, io: Server, socket: Socket, kvStore: KVService, pubsub: PubSubService, editorManager: EditorStateManager) {
-    
     console.log("Active File: ", activeFile);
     console.log("Data: ", data);
     console.log("Socket: ", socket.id);

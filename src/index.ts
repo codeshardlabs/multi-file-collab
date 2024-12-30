@@ -6,7 +6,7 @@ import ShardRepository from "./repositories/ShardRepository";
 import express from "express";
 import { fetchLatestRoomFilesState } from "./controllers/http/room";
 import { KVService } from "./services/redis/kvStore";
-import { idValidation } from "./middleware/idValidation";
+import { idValidation } from "./middleware/http/room";
 
 const newShardRepo = new ShardRepository(Shard);
 const kvService = new KVService()
