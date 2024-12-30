@@ -8,12 +8,12 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
     const keys = await kvStore.keys(pattern);
     if (keys.length == 0) {
         // cache not populated
-        const room = await shardRepo.findById(id);
-        if (!room) {
+        let shardFiles = await shardRepo.getFiles(id);
+        if (!shardFiles) {
             res.status(500).json({
                 data: null,
                 error: {
-                    message: "Could not find room by room ID"
+                    message: "Could not find resource by room ID"
                 },
                 status: {
                     code: 500,
@@ -23,17 +23,12 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
             return;
         }
         // room found 
-        const files = room.files.length > 0 ? room.files.map((file) => {
-            return {
-                code: file.code,
-                name: file.name,
-            }
-        }) : [];
+
         res.status(200).json({
             error: null,
             data: {
                 source: "db",
-                files: files
+                files: shardFiles
             },
             status: {
                 code: 200,

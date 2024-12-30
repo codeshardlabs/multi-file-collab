@@ -1,6 +1,7 @@
 import mongoose, { Model, Document } from "mongoose";
 import {Shard} from "../entities/shard";
 import { IShardRepository } from "../interfaces/IShardRepository";
+import { File } from "../entities/file";
 
 
 export interface ShardDocument extends Omit<Shard, "id">, Document {
@@ -32,7 +33,13 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
         await this.model.findByIdAndUpdate(id, {
            ...docWithoutId
         })
-    }
+     }
+     
+     async getFiles(id: string): Promise<File[] | null> {
+         const room = await this.findById(id);
+         if (!room) return null;
+         return room.files;
+     }
 
      toEntity(doc: ShardDocument): Shard {
         return {
