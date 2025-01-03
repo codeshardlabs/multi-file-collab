@@ -3,7 +3,7 @@ import { fileSchema } from "./file";
 import { dependencySchema } from "./dependency";
 import { User } from "./user";
 import { Comment } from "./comment";
-import { ShardDocument } from "../repositories/ShardRepository";
+import { ShardDocument } from "../repositories/shardRepository";
 
 const shardSchema = new Schema(
   {
