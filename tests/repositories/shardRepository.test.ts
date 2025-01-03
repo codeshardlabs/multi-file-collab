@@ -14,7 +14,7 @@ describe("src/repositories/ShardRepository.findById()", () => {
     })
 
     beforeEach(() => {
-        shardRepo = ShardRepository.getInstance(ShardModel);
+        shardRepo = new ShardRepository(ShardModel);
     })
 
     describe("findById()", () => {

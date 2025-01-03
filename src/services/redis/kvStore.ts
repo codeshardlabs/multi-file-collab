@@ -1,4 +1,4 @@
-import Redis, { RedisKey } from "ioredis";
+import Redis, { ChainableCommander, RedisKey } from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 
@@ -56,6 +56,15 @@ export class KVService {
   // get length of the list
   async llen(key: RedisKey): Promise<number> {
     return await this.client.llen(key);
+  }
+
+  // buffers the content to the memory, before saving the contents on redis server.
+   pipeline(commands? : unknown[][]) : ChainableCommander {
+    return this.client.pipeline(commands);
+  }
+
+  multi(): ChainableCommander {
+    return this.client.multi();
   }
   
 }

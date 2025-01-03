@@ -46,11 +46,16 @@ export class QueueService {
       defaultJobOptions: config.defaultJobOptions
     })
 
-    // create new worker instance to process new jobs
+    // create new worker instance to process new jobs, creates new worker thread to handle new request
     this.worker = new Worker(config.queueName, async (job: Job) => {
       return this.processJob(job)
     }, {
-      connection: this.conn
+      connection: this.conn,
+      concurrency: 3, // handles 3 jobs concurrently
+      limiter: {
+        max: 10,
+        duration : 1000, // handle  max. 10 jobs per sec
+      }
     })
 
     this.setupEventListeners();
