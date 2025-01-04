@@ -8,6 +8,7 @@ import { errorMessage, errors } from "../../config";
 
 export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KVService, shardRepo: IShardRepository) {
     // validate room id: library not required
+    console.log("join room handler");
     validateRoomId(roomId, socket);
     socket.join(roomId);
         try {

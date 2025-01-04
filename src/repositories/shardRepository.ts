@@ -36,7 +36,7 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
      }
 
      async getAllCollaborativeRooms(): Promise<Shard[] | null> {
-         const roomsDoc = await this.model.find({ mode: "collaboration" }, "_id,lastSyncTimestamp");
+         const roomsDoc = await this.model.find({ mode: "collaboration" });
          if (!roomsDoc) {
              return null;
          }

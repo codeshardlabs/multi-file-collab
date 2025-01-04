@@ -2,7 +2,7 @@ import http from "http";
 import SocketService from "./services/socket";
 import { connectToDB } from "./dbConn";
 import { Shard } from "./models/shard";
-import ShardRepository from "./repositories/ShardRepository";
+import ShardRepository from "./repositories/shardRepository";
 import express from "express";
 import { fetchLatestRoomFilesState } from "./controllers/http/room";
 import { KVService } from "./services/redis/kvStore";
