@@ -35,19 +35,18 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
          return room.files;
      }
 
-     async getAllCollaborativeRoomIds(): Promise<string[] | null> {
-         const roomsDoc = await this.model.find({ mode: "collaboration" }, "_id");
+     async getAllCollaborativeRooms(): Promise<Shard[] | null> {
+         const roomsDoc = await this.model.find({ mode: "collaboration" }, "_id,lastSyncTimestamp");
          if (!roomsDoc) {
              return null;
          }
 
-         const ids: string[] = [];
-
-         for (let doc of roomsDoc) {
-             const id = doc?._id as string;
-             ids.push(id);
+         let rooms : Shard[] = [];
+      
+         for (let room of roomsDoc) {
+             rooms.push(this.toEntity(room));
          }
-         return ids;
+         return rooms;
      }
 
      async getLastSyncTimestamp(id: string): Promise<Date | null> {
