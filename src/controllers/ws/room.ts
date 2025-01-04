@@ -28,7 +28,12 @@ export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KV
                             let pipeline = kvStore.multi();
                             for (let file of files) {
                                 let redisKey = `editor:${roomId}:${file.name}:pending`;
-                                pipeline.set(redisKey, file.code);
+                                const timestamp = Date.now();
+                                pipeline.hset(redisKey, {
+                                    code: file.code, 
+                                    lastModified: timestamp,
+                                });
+                                pipeline.zadd(`project:${roomId}:changes`, timestamp, file.name);
                             }
                             await pipeline.exec();
                         }

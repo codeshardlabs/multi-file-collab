@@ -25,5 +25,5 @@ export  interface Shard {
     likes: number;
     likedBy: User[];
     commentThread: string;
-    lastSyncTime: Date;
+    lastSyncTimestamp: Date;
 }

@@ -59,7 +59,7 @@ const shardSchema = new Schema(
       ref: "User",
     },
     commentThread: Schema.Types.ObjectId,
-    lastSyncTime: {
+    lastSyncTimestamp: {
       type: Date,
       default: Date.now()
     },

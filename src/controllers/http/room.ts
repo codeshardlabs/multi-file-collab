@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { KVService } from "../../services/redis/kvStore";
-import ShardRepository from "../../repositories/ShardRepository";
+import ShardRepository from "../../repositories/shardRepository";
 import { File } from "../../entities/file";
 
 export async function fetchLatestRoomFilesState(res: Response, id: string, kvStore: KVService, shardRepo: ShardRepository) {

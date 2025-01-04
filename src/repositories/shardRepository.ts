@@ -15,12 +15,6 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
          this.model = model;
       }
      
-    //  static getInstance(model: Model<ShardDocument>): ShardRepository {
-    //      if (ShardRepository.shardRepoInst == null) {
-    //          ShardRepository.shardRepoInst = new ShardRepository(model);
-    //      }
-    //      return ShardRepository.shardRepoInst;
-    //  }
 
     async findById(id: string): Promise<Shard | null> {
         const doc = await this.model.findById(new mongoose.Types.ObjectId(id));
@@ -41,6 +35,36 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
          return room.files;
      }
 
+     async getAllCollaborativeRoomIds(): Promise<string[] | null> {
+         const roomsDoc = await this.model.find({ mode: "collaboration" }, "_id");
+         if (!roomsDoc) {
+             return null;
+         }
+
+         const ids: string[] = [];
+
+         for (let doc of roomsDoc) {
+             const id = doc?._id as string;
+             ids.push(id);
+         }
+         return ids;
+     }
+
+     async getLastSyncTimestamp(id: string): Promise<Date | null> {
+         const room = await this.model.findById(id, "lastSyncTimestamp");
+         if (!room) return null;
+        return room.lastSyncTimestamp ?? null;
+     }
+
+     async updateLastSyncTimestamp(id: string): Promise<"OK" | null> {
+         const room = await this.model.findById(id);
+         if (!room) return null;
+         room.lastSyncTimestamp = new Date();
+         const ok = await room.save();
+         if (!ok) return null;
+         return "OK";
+     }
+
      toEntity(doc: ShardDocument): Shard {
         return {
             id: doc._id as string,
@@ -54,7 +78,7 @@ export interface ShardDocument extends Omit<Shard, "id">, Document {
             likes: doc.likes, 
             likedBy: doc.likedBy,
             commentThread: doc.commentThread,
-            lastSyncTime: doc?.lastSyncTime,
+            lastSyncTimestamp: doc?.lastSyncTimestamp,
         }
     }
 }

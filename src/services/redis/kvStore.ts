@@ -1,4 +1,4 @@
-import Redis, { ChainableCommander, RedisKey } from "ioredis";
+import Redis, { Callback, ChainableCommander, RedisKey } from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 
@@ -22,6 +22,10 @@ export class KVService {
     }
     // otherwise set without expiry data
     return await this.client.set(key, value);
+  }
+
+  async hset(key: string, obj: object, cb? : Callback<number>) : Promise<number> {
+    return await this.client.hset(key, obj, cb);
   }
 
   // delete key from redis
@@ -65,6 +69,14 @@ export class KVService {
 
   multi(): ChainableCommander {
     return this.client.multi();
+  }
+
+  async zrangebyscore(key: RedisKey, min: number | string, max: number | string, cb?: Callback<string[]>) : Promise<string[]> {
+    return await this.client.zrangebyscore(key, min, max, cb);
+  }
+
+  async hgetall(key: RedisKey, cb?: Callback<Record<string,string>>) : Promise<Record<string,string>> {
+    return await this.client.hgetall(key, cb)
   }
   
 }
