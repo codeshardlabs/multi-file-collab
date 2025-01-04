@@ -1,9 +1,7 @@
 name: "Publish the image to Docker Hub and Deploy to AWS"
 
 on:
-    push:
-      branches: 
-        - main
+    workflow_dispatch
 
 jobs:
     build-and-deploy: 
