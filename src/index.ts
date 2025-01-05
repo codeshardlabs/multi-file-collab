@@ -7,10 +7,13 @@ import express from "express";
 import { fetchLatestRoomFilesState } from "./controllers/http/room";
 import { KVService } from "./services/redis/kvStore";
 import { idValidation } from "./middleware/http/room";
+import UserRepository from "./repositories/userRepository";
+import { User } from "./models/user";
 
 const newShardRepo = new ShardRepository(Shard);
+const newUserRepo = new UserRepository(User);
 const kvService = new KVService()
-const socketService = new SocketService(newShardRepo, kvService);
+const socketService = new SocketService(newShardRepo, newUserRepo, kvService);
 const app = express();
 
 app.get("/api/v1/room/:id/files", idValidation, (req, res) => {

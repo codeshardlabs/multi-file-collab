@@ -10,12 +10,13 @@ export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KV
     // validate room id: library not required
     console.log("join room handler");
     validateRoomId(roomId, socket);
+    const userId = socket.user.id;
     socket.join(roomId);
         try {
             const pipeline = kvStore.multi();
             pipeline
-                .set(socket.id, roomId)
-                .rpush(roomId, socket.id)
+                .set(userId, roomId)
+                .rpush(roomId, userId)
                  .llen(roomId, async (err, results) => {
                      if (err) throw err;
                     const len = results!;
@@ -50,7 +51,7 @@ export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KV
             
         } catch (error) {
             console.log("Could not join room: ", error);
-            socket.emit("event:error", {
+            io.to(roomId).emit("event:error", {
                 src: "event:join-room",
                 error: error
             })
@@ -58,15 +59,13 @@ export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KV
 }
 
 
-export async function propagateRealtimeCodeUpdates(activeFile:  string, data: string, io: Server, socket: Socket, kvStore: KVService, pubsub: PubSubService, editorManager: EditorStateManager) {
+export async function propagateRealtimeCodeUpdates(activeFile:  string, data: string, roomId: string, io: Server, socket: Socket, pubsub: PubSubService, editorManager: EditorStateManager) {
     console.log("Active File: ", activeFile);
     console.log("Data: ", data);
     console.log("Socket: ", socket.id);
 
 
     try {
-        const roomId = await kvStore.get(socket.id);
-        if (roomId) {
             io.to(roomId).emit("event:server-message", { activeFile, data });
             await Promise.all([
                 editorManager.cacheLatestUpdates(roomId, activeFile, data),
@@ -75,11 +74,10 @@ export async function propagateRealtimeCodeUpdates(activeFile:  string, data: st
                     data
                 }))
             ]);
-        }
 
     } catch (error) {
         console.log("event:message Error: ", error)
-        socket.emit("event:error", {
+        io.to(roomId).emit("event:error", {
             src : "event:message",
             error: error
         })
@@ -87,21 +85,17 @@ export async function propagateRealtimeCodeUpdates(activeFile:  string, data: st
 
 }
 
-export async function propagateVisibleFiles(files: string[], io: Server, socket: Socket, kvStore: KVService, pubsub: PubSubService) {
+export async function propagateVisibleFiles(files: string[], roomId: string, io:Server, socket: Socket, pubsub: PubSubService) {
     console.log("Visible files: ", files)
 
     try {
-        let roomId = await kvStore.get(socket.id);
-        if (roomId) {
             io.to(roomId).emit("event:sync-visible-files", { visibleFiles: files });
             await pubsub.publish("EVENT:SYNC-VISIBLE-FILES", JSON.stringify({
                 visibleFiles: files
             }));
-        }
-
     } catch (error) {
         console.log("event:visible-files Error: ", error)
-        socket.emit("event:error", {
+        io.to(roomId).emit("event:error", {
             src: "event:visible-files",
             error: error
         });

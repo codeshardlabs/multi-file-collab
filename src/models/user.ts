@@ -1,5 +1,6 @@
 import { Schema, model, models } from "mongoose";
 import { Shard } from "./shard";
+import { UserDocument } from "../repositories/userRepository";
 
 const userSchema = new Schema(
   {
@@ -17,11 +18,6 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    shards: {
-      type: [Schema.Types.ObjectId],
-      ref: "Shard",
-      default: [],
-    },
     followers: {
       type: [String],
       default: [],
@@ -36,4 +32,4 @@ const userSchema = new Schema(
   },
 );
 
-export const User = models?.User || model("User", userSchema);
+export const User = model<UserDocument>("User", userSchema);

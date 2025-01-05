@@ -34,11 +34,15 @@ const redisConfig = {
 } as const;
 
 enum errors {
-    ROOM_ID_NOT_FOUND
+    ROOM_ID_NOT_FOUND,
+    TOKEN_NOT_FOUND,
+    USER_NOT_FOUND,
 }
 
 const errorMessage = new Map<number, string>();
 errorMessage.set(errors.ROOM_ID_NOT_FOUND, "Room ID Not Found");
+errorMessage.set(errors.TOKEN_NOT_FOUND, "Token Not Found");
+errorMessage.set(errors.USER_NOT_FOUND, "User Not Found");
 
 export {
     redisConfig,
