@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { errorMessage, errors } from "../../config";
-import { IUserRepository } from "../../interfaces/IUserRepository";
+import { IUserRepository } from "../../interfaces/repositories/IUserRepository";
 import { User } from "../../entities/user";
 
 declare module 'socket.io' {

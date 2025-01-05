@@ -11,16 +11,20 @@ import { idValidation } from "./middleware/http/room";
 import { authMiddleware } from "./middleware/http/auth";
 import UserRepository from "./repositories/userRepository";
 import { User } from "./models/user";
-import { config } from "dotenv"
+import { env } from "./config";
+import { PubSubService } from "./services/redis/pubsub";
+import { logger } from "./services/logger/logger";
+
+
 const newShardRepo = new ShardRepository(Shard);
 const newUserRepo = new UserRepository(User);
 const kvService = new KVService()
-const socketService = new SocketService(newShardRepo, newUserRepo, kvService);
+const pubsub = new PubSubService();
+const socketService = new SocketService(newShardRepo, newUserRepo, kvService, pubsub);
 const app = express();
 
-config();
 app.use(cors({
-     origin: process.env.FRONTEND_URL!
+    origin: env.FRONTEND_URL
 }))
 
 app.get("/api/v1/room/:id", (req, res, next) => {
@@ -33,9 +37,9 @@ async function init() {
     connectToDB();
     const httpServer = http.createServer(app);
     socketService.io.attach(httpServer);
-    const PORT = process.env.PORT || 8080;
+    const PORT = env.PORT || 8080;
     httpServer.listen(PORT, () => {
-        console.log(`Server is listening on port: ${PORT}`);
+        logger.info(`Server is listening on port: ${PORT}`);
     })
     socketService.initListeners();
 }

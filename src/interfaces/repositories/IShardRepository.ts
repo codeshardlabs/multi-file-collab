@@ -1,6 +1,6 @@
 
-import { File } from "../entities/file";
-import { Shard } from "../entities/shard";
+import { File } from "../../entities/file";
+import { Shard } from "../../entities/shard";
 
 export interface IShardRepository {
     findById: (id: string) => Promise<Shard | null>

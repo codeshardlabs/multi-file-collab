@@ -1,17 +1,15 @@
 
 import { Server } from "socket.io";
-import { config } from "dotenv";
-import { PubSubService } from "./redis/pubsub";
+import {  PubSubService } from "./redis/pubsub";
 import { KVService } from "./redis/kvStore";
 import { EditorStateManager } from "./redis/editorStateManager";
-import { IShardRepository } from "../interfaces/IShardRepository";
+import { IShardRepository } from "../interfaces/repositories/IShardRepository";
 import { joinRoom, propagateRealtimeCodeUpdates, propagateVisibleFiles } from "../controllers/ws/room";
-import { IUserRepository } from "../interfaces/IUserRepository";
+import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import { fetchUserFromToken } from "../middleware/ws/room";
+import { env } from "../config";
+import { logger } from "./logger/logger";
 
-config();
-
-const pubsub = new PubSubService();
 
 class SocketService {
     private _io: Server;
@@ -19,12 +17,15 @@ class SocketService {
     private shardRepo: IShardRepository;
     private userRepo: IUserRepository;
     private kvStore: KVService;
+    private pubsub: PubSubService;
     constructor(shardRepo: IShardRepository, userRepo: IUserRepository, kvService: KVService
-    ) {
-        console.log("Init socket server");
+        , pubsub: PubSubService) {
+        
+        this.pubsub = pubsub;
+        logger.info("SocketService instance created");
         this._io = new Server({
             cors: {
-                origin: process.env.FRONTEND_URL!
+                origin: env.FRONTEND_URL
             }
         });
         this.shardRepo = shardRepo;
@@ -37,49 +38,104 @@ class SocketService {
     }
 
     public initListeners() {
+        logger.info("initListeners() method called");
         const io = this._io;
         io.on("connect", async (socket) => {
             fetchUserFromToken(socket, this.userRepo);
-            console.log("User connected: ", socket.id);
+            logger.info("User connected: ", socket.id);
             socket.on("event:join-room", async ({ roomId }: { roomId: string; }) => {
+                logger.info("event:join-room");
                 joinRoom(roomId,io, socket, this.kvStore, this.shardRepo);
             });
 
             socket.on("event:message", async ({ activeFile, data, roomId }: { activeFile: string, data: string; roomId: string; }) => {
-                propagateRealtimeCodeUpdates(activeFile, data, roomId, io,socket, pubsub, this.editorManager);
+                logger.info("event:message");
+                propagateRealtimeCodeUpdates(activeFile, data, roomId, io,socket, this.pubsub, this.editorManager);
             });
 
             socket.on("event:visible-files", async ({ visibleFiles, roomId }: { visibleFiles: string[], roomId: string; }) => {
-                propagateVisibleFiles(visibleFiles, roomId, io, socket, pubsub);
+                logger.info("event:visible-files")
+                propagateVisibleFiles(visibleFiles, roomId, io, socket, this.pubsub);
             });
 
-            pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {
+            this.pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {
                 if (err) {
-                    throw err;
+                    logger.warn("could not subscribe to event", {
+                        metadata: {
+                            event: "EVENT:MESSAGE",
+                            src: "pubsub"
+                        }
+                    })
+                    return;
                 }
+
+                logger.info("subscribed to event", {
+                    metadata: {
+                        event: "EVENT:MESSAGE",
+                        src: "pubsub"
+                    }
+                })
 
                 const { activeFile, data } = JSON.parse(result as string) as { activeFile: string; data: string; };
                 const roomId = await this.kvStore.get(socket.id);
+
                 if (roomId) {
                     io.to(roomId).emit("event:message", {
                         activeFile,
                         data
                     })
+                    logger.info("emit event: event:message", {
+                        metadata: {
+                            activeFile,
+                            data
+                        }
+                    })
+                }
+                else {
+                    logger.debug("room id not found", {
+                        metadata: {
+                            event: "EVENT:MESSAGE",
+                            src: "pubsub"
+                        }
+                    });
                 }
 
             })
 
-            pubsub.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
+            this.pubsub.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
                 if (err) {
-                    throw err;
+                    logger.warn("could not subscribe to event", {
+                        metadata: {
+                            event: "EVENT:SYNC-VISIBLE-FILES",
+                            src: "pubsub"
+                        }
+                    });
+                    return;
                 }
+
+                logger.info("successfully subscribed to an event", {
+                    metadata: {
+                        event: "EVENT:SYNC-VISIBLE-FILES",
+                        src: "pubsub"
+                    }
+                })
 
                 const { visibleFiles } = JSON.parse(result as string) as { visibleFiles: string[] }
                 const roomId = await this.kvStore.get(socket.id);
                 if (roomId) {
-                    io.to(roomId).emit("event:message", {
+                    io.to(roomId).emit("event:sync-visible-files", {
                         visibleFiles
                     })
+                    logger.info("emit event", {
+                        metadata: {
+                            event: "event:sync-visible-files",
+                            src: "pubsub",
+                            visibleFiles: visibleFiles
+                        }
+                    })
+                }
+                else {
+
                 }
 
             })
@@ -92,6 +148,12 @@ class SocketService {
                         message: error.message
                     }
                 })
+
+                logger.debug("error event", {
+                    metadata: {
+                        message: error.message
+                    }
+                })
             });
 
             socket.on("disconnect", async () => {
@@ -99,7 +161,6 @@ class SocketService {
                 let roomId = await this.kvStore.get(userId);
                 if (roomId) {
                     socket.leave(roomId);
-                    console.log(roomId);
                     await this.kvStore.lrem(roomId, 1, userId);
                     const len = await this.kvStore.llen(roomId);
                     if (len == 0) {
@@ -115,10 +176,21 @@ class SocketService {
                         }
                         await this.kvStore.del(...keys);
                     }
-                    console.log("User left the room");
+                    logger.info("User left the room", {
+                        metadata: {
+                            userId: userId,
+                            event: "disconnect",
+                            src :"socket.io"
+                        }
+                    });
                 }
                 else if (!roomId) {
-                    console.log("RoomId falsy: ", roomId)
+                    logger.warn("Room Id not found", {
+                        metadata: {
+                            event: "disconnect",
+                            src: "socket.io"
+                        }
+                    })
                 }
             })
 

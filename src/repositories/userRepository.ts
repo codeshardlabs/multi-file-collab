@@ -1,5 +1,5 @@
 import mongoose, { Model, Document } from "mongoose";
-import { IUserRepository } from "../interfaces/IUserRepository";
+import { IUserRepository } from "../interfaces/repositories/IUserRepository";
 import { User } from "../entities/user";
 
 

@@ -2,11 +2,10 @@ import Redis from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 
-
 export class PubSubService {
     private publisher: Redis;
-    private subscriber: Redis;
-    constructor() {
+  private subscriber: Redis;
+  constructor() {
         const redisManager = RedisManager.getInstance();
         this.publisher = redisManager.getConnection(redisConfig.connection.CONN_PUBLISHER);
         this.subscriber = redisManager.getConnection(redisConfig.connection.CONN_SUBSCRIBER);

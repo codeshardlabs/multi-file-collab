@@ -1,9 +1,10 @@
 import { Response } from "express";
 import { KVService } from "../../services/redis/kvStore";
-import ShardRepository from "../../repositories/shardRepository";
 import { File } from "../../entities/file";
+import { IShardRepository } from "../../interfaces/repositories/IShardRepository";
+import { logger } from "../../services/logger/logger";
 
-export async function fetchLatestRoomFilesState(res: Response, id: string, kvStore: KVService, shardRepo: ShardRepository) {
+export async function fetchLatestRoomFilesState(res: Response, id: string, kvStore: KVService, shardRepo: IShardRepository) {
     let shard = await shardRepo.findById(id);
     if (!shard) {
         res.status(500).json({
@@ -41,7 +42,11 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
         let files: File[] = [];
         for (let key of keys) {
             // TODO: optimize the asynchronous code
-            console.log("key", key);
+            logger.debug("fetchLatestRoomFilesState(): key", {
+                metadata: {
+                    key: key
+                }
+            });
             const record = await kvStore.hgetall(key);
             let temp = key;
             let keyParts = temp.split(":");

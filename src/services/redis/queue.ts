@@ -2,7 +2,10 @@ import { DefaultJobOptions, Job, Queue, Worker } from "bullmq";
 import Redis from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
-import { IShardRepository } from "../../interfaces/IShardRepository";
+import { IShardRepository } from "../../interfaces/repositories/IShardRepository";
+import { ILogger } from "../../interfaces/ILogger";
+import { Shard } from "../../entities/shard";
+import { logger } from "../logger/logger";
 
 // Job Data
 interface JobData {
@@ -35,8 +38,7 @@ export class QueueService {
   private worker: Worker;
   private conn: Redis;
   private shardRepo: IShardRepository;
-
-  constructor(config: IQueueServiceConfig,  shardRepo: IShardRepository) {
+  constructor(config: IQueueServiceConfig, shardRepo: IShardRepository) {
     const redisManager = RedisManager.getInstance();
     this.conn = redisManager.getConnection(redisConfig.connection.CONN_BULLMQ);
     // create new queue instance
@@ -64,19 +66,42 @@ export class QueueService {
   private setupEventListeners() {
     // executed when job completed successfully in the worker
     this.worker.on(redisConfig.event.EVENT_COMPLETED, (job: Job) => {
-      console.log(`Job ${job.id} has completed successfully`);
+      logger.info(`Job ${job.id} has completed successfully`, {
+        metadata: {
+          src: "setupEventListeners()",
+          event: redisConfig.event.EVENT_COMPLETED,
+          jobId: job.id
+        }
+      });
     })
 
     this.worker.on(redisConfig.event.EVENT_FAILED, (job: Job | undefined, error: Error) => {
-      console.error(`Job ${job?.id} has failed:`, error);
+      logger.warn(`Job ${job?.id} has failed:`, {
+        metadata: {
+          src: "setupEventListeners()",
+          event: redisConfig.event.EVENT_FAILED,
+          jobId: job?.id
+        }
+      });
+
     });
 
     this.worker.on(redisConfig.event.EVENT_ERROR, (error: Error) => {
-      console.error('Worker error:', error);
+      logger.warn('Worker error', {
+        metadata: {
+          src: "setupEventListeners()",
+          event: redisConfig.event.EVENT_ERROR
+        }
+      });
     });
 
     this.queue.on(redisConfig.event.EVENT_ERROR, (error: Error) => {
-      console.error('Queue error:', error);
+      logger.warn('Queue error', {
+        metadata: {
+          src: "setupEventListeners()",
+          event: redisConfig.event.EVENT_ERROR
+        }
+      });
     });
 
   }
@@ -84,7 +109,13 @@ export class QueueService {
 
   private async processJob(job: Job): Promise<JobResult> {
     try {
-      console.log(`Processing job ${job.id} of type ${job.name}`);
+      logger.debug(`Processing job ${job.id} of type ${job.name}`, {
+        metadata: {
+          jobId: job.id,
+          jobName: job.name,
+          src: "processJob()"
+        }
+      });
 
       switch (job.name) {
         case 'emailJob':
@@ -95,14 +126,25 @@ export class QueueService {
           throw new Error(`Unknown job type: ${job.name}`);
       }
     } catch (error) {
-      console.error(`Error processing job ${job.id}:`, error);
+      logger.warn(`Error processing job ${job.id}:`, {
+        metadata: {
+          error: error,
+          jobId: job.id,
+          src: "processJob()"
+        }
+      });
       throw error;
     }
   }
 
   private async processEmailJob(data: JobData): Promise<JobResult> {
     // TODO: Implement email sending logic here
-    console.log('Processing email job:', data);
+    logger.debug("Processing email job", {
+      metadata: {
+        src: "processEmailJob()",
+        data: data,
+      }
+    });
     return { status: 'completed', message: 'Email sent successfully' };
   }
 
@@ -110,7 +152,7 @@ export class QueueService {
     // flush the data to database
     // for a particular Shard Id: which is roomId in this case
     try {
-      const room = await this.shardRepo.findById(data.roomId);
+      const room : Shard | null = await this.shardRepo.findById(data.roomId);
       if (room) {
         let files = room.files;
         const ind = files.findIndex((file) => file.name == data.activeFile);
@@ -133,7 +175,13 @@ export class QueueService {
       }
 
     } catch (error) {
-      console.log("error occurred: ", error)
+      logger.warn("Job Failed", {
+        metadata: {
+          type: redisConfig.job.JOB_FLUSH,
+          src: "processFlushJob()",
+          error: error
+           }
+         })
       return { status: "failed", job: redisConfig.job.JOB_FLUSH }
     }
 
@@ -150,7 +198,13 @@ export class QueueService {
     try {
       return await this.queue.add(name, data, opts);
     } catch (error) {
-      console.error(`Error adding job ${name}:`, error);
+      logger.warn(`Error adding job`, {
+        metadata: {
+          name,
+          data,
+          src :"addJob"
+        }
+      });
       throw error;
     }
   }

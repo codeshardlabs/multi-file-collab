@@ -2,7 +2,8 @@
 import { QueueService } from "./queue";
 import { KVService } from "./kvStore";
 import { redisConfig } from "../../config";
-import { IShardRepository } from "../../interfaces/IShardRepository";
+import { IShardRepository } from "../../interfaces/repositories/IShardRepository";
+import { logger } from "../logger/logger";
 
 export class EditorStateManager {
     private queueService: QueueService;
@@ -10,6 +11,7 @@ export class EditorStateManager {
     private shardRepo: IShardRepository;
     private static FLUSH_INTERVAL: number = 5000; // every 5 sec
     constructor(shardRepo: IShardRepository) {
+        logger.info("EditorStateManager instance created")
         this.shardRepo = shardRepo;
         this.queueService = new QueueService({
             queueName: "editorUpdates",
@@ -67,7 +69,11 @@ export class EditorStateManager {
                 // add new job to queue
                 
             } catch (error) {
-                console.log("Periodic flush failed: ", error);
+                logger.warn("Periodic flush failed: ", {
+                    metadata: {
+                        error: error
+                    }
+                });
             }
 
         }, EditorStateManager.FLUSH_INTERVAL);
@@ -84,7 +90,12 @@ export class EditorStateManager {
             pipeline.zadd(`project:${roomId}:changes`, timestamp, activeFile);
             await pipeline.exec();
         } catch (error) {
-            console.log(error);
+            logger.warn("could not cache latest updates", {
+                metadata: {
+                    error: error
+                }
+            })
+
         }
     }
 }

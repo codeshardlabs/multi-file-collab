@@ -1,6 +1,6 @@
 import mongoose, { Model, Document } from "mongoose";
 import {Shard} from "../entities/shard";
-import { IShardRepository } from "../interfaces/IShardRepository";
+import { IShardRepository } from "../interfaces/repositories/IShardRepository";
 import { File } from "../entities/file";
 
 
