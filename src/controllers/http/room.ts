@@ -4,31 +4,31 @@ import ShardRepository from "../../repositories/shardRepository";
 import { File } from "../../entities/file";
 
 export async function fetchLatestRoomFilesState(res: Response, id: string, kvStore: KVService, shardRepo: ShardRepository) {
+    let shard = await shardRepo.findById(id);
+    if (!shard) {
+        res.status(500).json({
+            data: null,
+            error: {
+                message: "Could not find resource by room ID"
+            },
+            status: {
+                code: 500,
+                message: "Internal Server Error"
+            }
+        });
+        return;
+    }
+    
     let pattern = `editor:${id}:*:pending`;
     const keys = await kvStore.keys(pattern);
     if (keys.length == 0) {
         // cache not populated
-        let shardFiles = await shardRepo.getFiles(id);
-        if (!shardFiles) {
-            res.status(500).json({
-                data: null,
-                error: {
-                    message: "Could not find resource by room ID"
-                },
-                status: {
-                    code: 500,
-                    message: "Internal Server Error"
-                }
-            });
-            return;
-        }
         // room found 
-
         res.status(200).json({
             error: null,
             data: {
                 source: "db",
-                files: shardFiles
+                shard: shard
             },
             status: {
                 code: 200,
@@ -41,10 +41,11 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
         let files: File[] = [];
         for (let key of keys) {
             // TODO: optimize the asynchronous code
-            const value = await kvStore.get(`${id}:${key}`);
-            if (value) {
+            console.log("key", key);
+            const record = await kvStore.hgetall(`editor:${id}:${key}:pending`);
+            if (record) {
                 files.push({
-                    code: value,
+                    code: record.code,
                     name: key,
                 });
             }
@@ -63,11 +64,12 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
             }
         }
 
+        shard.files = files;
         res.status(200).json({
             error: null,
             data: {
                 source: "cache",
-                files: files
+                shard: shard
             },
             status: {
                 code: 200,

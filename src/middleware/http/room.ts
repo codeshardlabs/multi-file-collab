@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { errorMessage, errors } from "../../config";
+import { User } from "../../entities/user";
 
 // Adding custom property to Express Request: https://stackoverflow.com/questions/71122741/how-do-i-add-custom-property-to-express-request-in-typescript
 declare module "express-serve-static-core" {
     interface Request {
-      id?: string;
+        id: string;
+        user: User;
     }
 }
 
