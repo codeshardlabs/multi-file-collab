@@ -42,11 +42,13 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
         for (let key of keys) {
             // TODO: optimize the asynchronous code
             console.log("key", key);
-            const record = await kvStore.hgetall(`editor:${id}:${key}:pending`);
+            const record = await kvStore.hgetall(key);
+            let temp = key;
+            let keyParts = temp.split(":");
             if (record) {
                 files.push({
                     code: record.code,
-                    name: key,
+                    name: keyParts[2],
                 });
             }
             else {

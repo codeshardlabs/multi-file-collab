@@ -71,12 +71,23 @@ export class KVService {
     return this.client.multi();
   }
 
-  async zrangebyscore(key: RedisKey, min: number | string, max: number | string, cb?: Callback<string[]>) : Promise<string[]> {
-    return await this.client.zrangebyscore(key, min, max, cb);
+  async zrangebyscore(key: RedisKey, min: number | string, max: number | string, cb?: Callback<string[]>): Promise<string[]> {
+    if (cb) {
+      return await this.client.zrangebyscore(key, min, max, cb);
+    }
+    return await this.client.zrangebyscore(key, min, max);
   }
 
-  async hgetall(key: RedisKey, cb?: Callback<Record<string,string>>) : Promise<Record<string,string>> {
-    return await this.client.hgetall(key, cb)
+  
+
+  async hgetall(key: RedisKey, cb?: Callback<Record<string, string>>): Promise<Record<string, string>> {
+    if (cb) {
+      return await this.client.hgetall(key, cb);
+    }
+    return await this.client.hgetall(key);
+  }
+  async hget(key: RedisKey, field: string | Buffer, cb?: Callback<string | null>): Promise<string | null> {
+    return await this.client.hget(key, field, cb);
   }
   
 }
