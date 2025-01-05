@@ -49,7 +49,8 @@ const env = {
     SERVICE_NAME: process.env.SERVICE_NAME!,
     SIGNOZ_TOKEN: process.env.SIGNOZ_TOKEN!,
     NODE_ENV: process.env.NODE_ENV!,
-    PORT: process.env.PORT!
+    PORT: process.env.PORT!,
+    SIGNOZ_ENDPOINT: process.env.SIGNOZ_ENDPOINT!
 }
 
 const errorMessage = new Map<number, string>();
