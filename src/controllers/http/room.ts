@@ -43,9 +43,7 @@ export async function fetchLatestRoomFilesState(res: Response, id: string, kvSto
         for (let key of keys) {
             // TODO: optimize the asynchronous code
             logger.debug("fetchLatestRoomFilesState(): key", {
-                metadata: {
                     key: key
-                }
             });
             const record = await kvStore.hgetall(key);
             let temp = key;

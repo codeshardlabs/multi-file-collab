@@ -10,9 +10,7 @@ import { logger } from "../../services/logger/logger";
 export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KVService, shardRepo: IShardRepository) {
     // validate room id: library not required
     logger.info("joinRoom() called", {
-        metadata: {
             roomId
-        }
     });
     validateRoomId(roomId, socket);
     const userId = socket.user.id;
@@ -56,10 +54,8 @@ export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KV
 
     } catch (error) {
         logger.error("Could not join room: ", {
-            metadata: {
                 error: error,
                 roomId: roomId
-            }
         });
         io.to(roomId).emit("event:error", {
             src: "event:join-room",
@@ -71,11 +67,9 @@ export function joinRoom(roomId: string, io: Server, socket: Socket, kvStore: KV
 
 export async function propagateRealtimeCodeUpdates(activeFile: string, data: string, roomId: string, io: Server, socket: Socket, pubsub: PubSubService, editorManager: EditorStateManager) {
     logger.debug("propagateRealtimeCodeUpdates() called", {
-        metadata: {
             activeFile,
             data,
             roomId
-        }
     });
 
     try {
@@ -90,12 +84,10 @@ export async function propagateRealtimeCodeUpdates(activeFile: string, data: str
 
     } catch (error) {
         logger.error("Unexpected Error Occurred", {
-            metadata: {
                 error: error,
                 event: "event:message",
                 src: "propagateRealtimeCodeUpdates()",
                 roomId: roomId
-            }
         })
         io.to(roomId).emit("event:error", {
             event: "event:message",
@@ -107,10 +99,8 @@ export async function propagateRealtimeCodeUpdates(activeFile: string, data: str
 
 export async function propagateVisibleFiles(files: string[], roomId: string, io: Server, socket: Socket, pubsub: PubSubService) {
     logger.debug("propagateVisibleFiles() called", {
-        metadata: {
             files: files,
             roomId: roomId
-        }
     })
 
     try {

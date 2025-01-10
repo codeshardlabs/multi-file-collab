@@ -70,9 +70,9 @@ export class EditorStateManager {
                 
             } catch (error) {
                 logger.warn("Periodic flush failed: ", {
-                    metadata: {
+             
                         error: error
-                    }
+    
                 });
             }
 
@@ -91,9 +91,9 @@ export class EditorStateManager {
             await pipeline.exec();
         } catch (error) {
             logger.warn("could not cache latest updates", {
-                metadata: {
+          
                     error: error
-                }
+           
             })
 
         }

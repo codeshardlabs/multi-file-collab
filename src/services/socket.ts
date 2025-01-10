@@ -61,19 +61,19 @@ class SocketService {
             this.pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {
                 if (err) {
                     logger.warn("could not subscribe to event", {
-                        metadata: {
+                        
                             event: "EVENT:MESSAGE",
                             src: "pubsub"
-                        }
+                        
                     })
                     return;
                 }
 
                 logger.info("subscribed to event", {
-                    metadata: {
+                    
                         event: "EVENT:MESSAGE",
                         src: "pubsub"
-                    }
+                    
                 })
 
                 const { activeFile, data } = JSON.parse(result as string) as { activeFile: string; data: string; };
@@ -85,18 +85,18 @@ class SocketService {
                         data
                     })
                     logger.info("emit event: event:message", {
-                        metadata: {
+                        
                             activeFile,
                             data
-                        }
+                        
                     })
                 }
                 else {
                     logger.debug("room id not found", {
-                        metadata: {
+                   
                             event: "EVENT:MESSAGE",
                             src: "pubsub"
-                        }
+                        
                     });
                 }
 
@@ -105,19 +105,19 @@ class SocketService {
             this.pubsub.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
                 if (err) {
                     logger.warn("could not subscribe to event", {
-                        metadata: {
+                        
                             event: "EVENT:SYNC-VISIBLE-FILES",
                             src: "pubsub"
-                        }
+                        
                     });
                     return;
                 }
 
                 logger.info("successfully subscribed to an event", {
-                    metadata: {
+                
                         event: "EVENT:SYNC-VISIBLE-FILES",
                         src: "pubsub"
-                    }
+                    
                 })
 
                 const { visibleFiles } = JSON.parse(result as string) as { visibleFiles: string[] }
@@ -127,11 +127,11 @@ class SocketService {
                         visibleFiles
                     })
                     logger.info("emit event", {
-                        metadata: {
+                     
                             event: "event:sync-visible-files",
                             src: "pubsub",
                             visibleFiles: visibleFiles
-                        }
+                        
                     })
                 }
                 else {
@@ -150,9 +150,9 @@ class SocketService {
                 })
 
                 logger.debug("error event", {
-                    metadata: {
+                 
                         message: error.message
-                    }
+                    
                 })
             });
 
@@ -177,19 +177,19 @@ class SocketService {
                         await this.kvStore.del(...keys);
                     }
                     logger.info("User left the room", {
-                        metadata: {
+                        
                             userId: userId,
                             event: "disconnect",
                             src :"socket.io"
-                        }
+                        
                     });
                 }
                 else if (!roomId) {
                     logger.warn("Room Id not found", {
-                        metadata: {
+                    
                             event: "disconnect",
                             src: "socket.io"
-                        }
+                        
                     })
                 }
             })

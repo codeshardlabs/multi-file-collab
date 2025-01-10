@@ -67,40 +67,35 @@ export class QueueService {
     // executed when job completed successfully in the worker
     this.worker.on(redisConfig.event.EVENT_COMPLETED, (job: Job) => {
       logger.info(`Job ${job.id} has completed successfully`, {
-        metadata: {
           src: "setupEventListeners()",
           event: redisConfig.event.EVENT_COMPLETED,
           jobId: job.id
-        }
       });
     })
 
     this.worker.on(redisConfig.event.EVENT_FAILED, (job: Job | undefined, error: Error) => {
       logger.warn(`Job ${job?.id} has failed:`, {
-        metadata: {
           src: "setupEventListeners()",
           event: redisConfig.event.EVENT_FAILED,
           jobId: job?.id
-        }
       });
 
     });
 
     this.worker.on(redisConfig.event.EVENT_ERROR, (error: Error) => {
       logger.warn('Worker error', {
-        metadata: {
+   
           src: "setupEventListeners()",
           event: redisConfig.event.EVENT_ERROR
-        }
+        
       });
     });
 
     this.queue.on(redisConfig.event.EVENT_ERROR, (error: Error) => {
       logger.warn('Queue error', {
-        metadata: {
           src: "setupEventListeners()",
           event: redisConfig.event.EVENT_ERROR
-        }
+   
       });
     });
 
@@ -110,11 +105,9 @@ export class QueueService {
   private async processJob(job: Job): Promise<JobResult> {
     try {
       logger.debug(`Processing job ${job.id} of type ${job.name}`, {
-        metadata: {
           jobId: job.id,
           jobName: job.name,
           src: "processJob()"
-        }
       });
 
       switch (job.name) {
@@ -127,11 +120,11 @@ export class QueueService {
       }
     } catch (error) {
       logger.warn(`Error processing job ${job.id}:`, {
-        metadata: {
+     
           error: error,
           jobId: job.id,
           src: "processJob()"
-        }
+     
       });
       throw error;
     }
@@ -140,10 +133,10 @@ export class QueueService {
   private async processEmailJob(data: JobData): Promise<JobResult> {
     // TODO: Implement email sending logic here
     logger.debug("Processing email job", {
-      metadata: {
+     
         src: "processEmailJob()",
         data: data,
-      }
+      
     });
     return { status: 'completed', message: 'Email sent successfully' };
   }
@@ -176,11 +169,11 @@ export class QueueService {
 
     } catch (error) {
       logger.warn("Job Failed", {
-        metadata: {
+        
           type: redisConfig.job.JOB_FLUSH,
           src: "processFlushJob()",
           error: error
-           }
+           
          })
       return { status: "failed", job: redisConfig.job.JOB_FLUSH }
     }
@@ -199,11 +192,11 @@ export class QueueService {
       return await this.queue.add(name, data, opts);
     } catch (error) {
       logger.warn(`Error adding job`, {
-        metadata: {
+   
           name,
           data,
           src :"addJob"
-        }
+      
       });
       throw error;
     }
