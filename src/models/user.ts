@@ -1,6 +1,6 @@
 import { Schema, model, models } from "mongoose";
 import { Shard } from "./shard";
-import { UserDocument } from "../repositories/userRepository";
+import { UserDocument } from "../repositories/user";
 
 const userSchema = new Schema(
   {

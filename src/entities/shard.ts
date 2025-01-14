@@ -1,29 +1,5 @@
-import { Dependency } from "./dependency";
-import { File } from "./file";
-import { User } from "./user";
+import { shards } from "../db/tables/shards";
 
-export type TemplateType = "static" | "angular" | "react" | "react-ts" | "solid" | "svelte" | "test-ts" | "vanilla-ts" | "vanilla" | "vue" | "vue-ts"
-    | "node"
-    | "nextjs"
-    | "astro"
-    | "vite"
-    | "vite-react"
-    | "vite-react-ts";
 
-export type VisibilityType = "public" | "private" | "forked";
-export type ShardMode = "normal" | "collaboration";
-
-export  interface Shard {
-    id: string;
-    title: string;
-    creator: string;
-    templateType: TemplateType;
-    files: File[];
-    dependencies: Dependency[];
-    type: VisibilityType;
-    mode: ShardMode;
-    likes: number;
-    likedBy: User[];
-    commentThread: string;
-    lastSyncTimestamp: Date;
-}
+//Reference: https://stackoverflow.com/a/78473818
+export type Shard = typeof shards.$inferSelect;

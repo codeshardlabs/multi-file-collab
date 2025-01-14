@@ -1,7 +1,4 @@
-export interface File {
-    name: string;
-    code: string;
-    readOnly?: boolean;
-    active?: boolean;
-    hidden?: boolean;
-}
+import { files } from "../db/tables/files";
+
+
+export type File = typeof files.$inferSelect;

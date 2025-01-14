@@ -101,6 +101,9 @@
     "node_modules",
     "tests", 
     "terraform",
-    "public"
+    "public",
+    "drizzle.config.ts",
+    "docker*.yml",
+    "Dockerfile"
   ]
 }

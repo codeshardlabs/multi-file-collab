@@ -1,6 +1,3 @@
 
-export interface Dependency {
-    name: string;
-    version: string;
-    isDevDependency: boolean;
-}
+import { dependencies } from "../db/tables/dependencies"
+export type Dependency = typeof dependencies.$inferSelect;

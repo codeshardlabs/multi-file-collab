@@ -1,26 +1,19 @@
 import http from "http";
 import SocketService from "./services/socket";
 import cors from "cors";
-import { connectToDB } from "./dbConn";
-import { Shard } from "./models/shard";
-import ShardRepository from "./repositories/shardRepository";
+import {  shardRepo, userRepo } from "./db";
 import express from "express";
 import { fetchLatestRoomFilesState } from "./controllers/http/room";
 import { KVService } from "./services/redis/kvStore";
 import { idValidation } from "./middleware/http/room";
 import { authMiddleware } from "./middleware/http/auth";
-import UserRepository from "./repositories/userRepository";
-import { User } from "./models/user";
 import { env } from "./config";
 import { PubSubService } from "./services/redis/pubsub";
 import { logger } from "./services/logger/logger";
 
-
-const newShardRepo = new ShardRepository(Shard);
-const newUserRepo = new UserRepository(User);
 const kvService = new KVService()
 const pubsub = new PubSubService();
-const socketService = new SocketService(newShardRepo, newUserRepo, kvService, pubsub);
+const socketService = new SocketService(shardRepo, userRepo, kvService, pubsub);
 const app = express();
 
 app.use(cors({
@@ -28,13 +21,12 @@ app.use(cors({
 }))
 
 app.get("/api/v1/room/:id", (req, res, next) => {
-    return authMiddleware(req, res, next, newUserRepo);
+    return authMiddleware(req, res, next, userRepo);
 }, idValidation, (req, res) => {
-    return fetchLatestRoomFilesState(res, req.id!, kvService, newShardRepo);
+    return fetchLatestRoomFilesState(res, req.id!, kvService, shardRepo);
 });
 
 async function init() {
-    connectToDB();
     const httpServer = http.createServer(app);
     socketService.io.attach(httpServer);
     const PORT = env.PORT || 8080;

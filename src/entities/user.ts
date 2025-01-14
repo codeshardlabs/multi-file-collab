@@ -1,9 +1,6 @@
 
-export interface User {
-    id: string;
-    name: string;
-    email: string;
-    password: string;
-    followers: string[];
-    following: string[];
-}
+
+
+import { users } from "../db/tables/users";
+
+export type User = typeof users.$inferSelect;
