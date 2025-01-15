@@ -1,9 +1,9 @@
-import { IShardRepository } from "../interfaces/repositories/IShardRepository";
+import { FileInput, IShardRepository } from "../interfaces/repositories/IShardRepository";
 import { File } from "../entities/file";
-import { Shard } from "../entities/shard";
+import { Shard, ShardWithFiles } from "../entities/shard";
 import { ShardTableType } from "../db/tables/shards";
 import { ShardDbType } from "../db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { FilesTableType } from "../db/tables/files";
 
 
@@ -66,13 +66,37 @@ import { FilesTableType } from "../db/tables/files";
          return "OK";
      }
 
-     async updateFiles(id: number, filePath: string, code: string): Promise<"OK" | null> {
+     // update multiple rows using (case/when) syntax: https://orm.drizzle.team/docs/guides/update-many-with-different-value
+     async updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null> {
+        files = Array.isArray(files) ? files : [files];
+        const sqlChunks : SQL[] = [];
+        let names : string[] = [];
+        sqlChunks.push(sql`(case`);
+        for (const file of files) {
+            sqlChunks.push(sql`when ${this.filesTable.name} = ${file.name} then ${file.code}`);
+            names.push(file.name);
+          }
+          
+        const finalSql: SQL = sql.join(sqlChunks, sql.raw(' '));
+
         await this.db.update(this.filesTable).set({
-            code: code
+            code: finalSql 
         }).where(and(
             eq(this.filesTable.shardId, id),
-            eq(this.filesTable.name, filePath)
+            inArray(this.filesTable.name, names)
         ))
          return null;
+     }
+
+     async getShardWithFiles(id: number): Promise<ShardWithFiles | null> {
+       const shard =  await this.db.query.shards.findFirst({
+            where : (shards) => eq(shards.id, id),
+            with: {
+                files: true
+            }
+        })
+
+        if(!shard) return null;
+        return shard;
      }
 }

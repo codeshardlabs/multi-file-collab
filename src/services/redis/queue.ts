@@ -146,7 +146,10 @@ export class QueueService {
     // for a particular Shard Id: which is roomId in this case
     try {
       // const room : Shard | null = await this.shardRepo.findById(data.roomId);
-      const files = await this.shardRepo.updateFiles(Number(data.roomId), data.activeFile, data.code);
+      const files = await this.shardRepo.updateFiles(Number(data.roomId), {
+        code: data.code,
+        name: data.activeFile
+      });
       if(!files) throw new Error("could not update files");
    
         return { status: "completed", job: redisConfig.job.JOB_FLUSH }

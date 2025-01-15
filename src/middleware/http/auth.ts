@@ -36,7 +36,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     
-    const user = await userRepo.findByUsername(creator);
+    const user = await userRepo.findById(creator);
     if (!user) {
          res.json({
             data: null,
