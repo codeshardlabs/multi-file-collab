@@ -1,21 +1,55 @@
 
-// import { Shard as ShardModel } from "../../src/db/shard"
+import {  Pool } from "pg";
 import ShardRepository from "../../src/repositories/shard"
+import {PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
+import { drizzle } from "drizzle-orm/node-postgres";
+import { ShardDbType } from "../../src/db";
+import * as dependencySchema from "../../src/db/tables/dependencies";
+import * as fileSchema from "../../src/db/tables/files";
+import * as shardSchema from "../../src/db/tables/shards";
+
 
 // TODO: Update the shard repository tests with postgres as db.
-describe("src/repositories/ShardRepository.findById()", () => {
+describe("Shard Repository", () => {
+    
     let shardRepo: ShardRepository;
-    // let mongoServer: MongoMemoryServer;
+    let container: StartedPostgreSqlContainer;
+    let client: Pool
+    const POSTGRES_USER = 'test'
+    const POSTGRES_PASSWORD = 'test'
+    const POSTGRES_DB = 'test'  
+    let db : ShardDbType;
+    
     beforeAll(async () => {
-        // mongoServer = await MongoMemoryServer.create(); // create memory mongodb server for tests
-        // const mongoUri = mongoServer.getUri(); // get MONGODB_URL for tests
-        // await mongoose.connect(mongoUri);
+        container = await new PostgreSqlContainer('pg_uuidv7')
+        .withEnvironment({
+            POSTGRES_USER: POSTGRES_USER,
+            POSTGRES_PASSWORD: POSTGRES_PASSWORD,
+            POSTGRES_DB: POSTGRES_DB,
+        })
+        .withExposedPorts(5432)
+        .start()
+        const connectionString = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${container.getHost()}:${container.getFirstMappedPort()}/${POSTGRES_DB}`
+         client = new Pool({
+            connectionString
+        })
+        await client.connect()
+         db = drizzle({
+            client: client, 
+            schema: {
+                ...shardSchema,
+                ...fileSchema,
+                ...dependencySchema
+            }
+        })        
+        
     })
 
     beforeEach(() => {
-        // shardRepo = new ShardRepository(ShardModel);
+        shardRepo = new ShardRepository(db , shardSchema.shards, fileSchema.files);
     })
 
+    
     describe("findById()", () => {
         it("should return null when shard not found", async () => {
             // const newId = new mongoose.Types.ObjectId(); // non-existent id
@@ -63,7 +97,7 @@ describe("src/repositories/ShardRepository.findById()", () => {
     })
 
     afterAll(async () => {
-        // await mongoose.disconnect();
-        // await mongoServer.stop();
+        await client.end();
+        await container.stop();
     })
 })
