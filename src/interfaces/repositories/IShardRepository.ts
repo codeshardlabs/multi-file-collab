@@ -7,4 +7,5 @@ export interface IShardRepository {
     getFiles(id: number): Promise<File[] | null>
     updateLastSyncTimestamp(id: number): Promise<"OK" | null> 
     getAllCollaborativeRooms() : Promise<Shard[] | null>
+    updateFiles(id: number, filePath: string, code: string): Promise<"OK" | null>
 }

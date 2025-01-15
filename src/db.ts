@@ -32,5 +32,5 @@ export const userDb = drizzle({
 })
 export type UserDbType = typeof userDb;
 
-export const shardRepo = new ShardRepository(shardDb, shardSchema.shards);
+export const shardRepo = new ShardRepository(shardDb, shardSchema.shards, fileSchema.files);
 export const userRepo = new UserRepository(userDb, userSchema.users);

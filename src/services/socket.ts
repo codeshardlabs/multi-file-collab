@@ -157,7 +157,7 @@ class SocketService {
             });
 
             socket.on("disconnect", async () => {
-                const userId = socket.user.id;
+                const userId = String(socket.user.id);
                 let roomId = await this.kvStore.get(userId);
                 if (roomId) {
                     socket.leave(roomId);
@@ -165,10 +165,9 @@ class SocketService {
                     const len = await this.kvStore.llen(roomId);
                     if (len == 0) {
                         // all the users left the room -> depopulate the cache
-                        const room = await this.shardRepo.findById(roomId);
+                        const files = await this.shardRepo.getFiles(Number(roomId));
                         const keys = [userId, roomId];
-                        if (room) {
-                            const files = room.files;
+                        if (files) {
                             for (let file of files) {
                                 const redisKey = `editor:${roomId}:${file.name}:pending`;
                                 keys.push(redisKey);

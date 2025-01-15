@@ -15,3 +15,6 @@ export const files = pgTable(
   },
   (table) => [index("file_shard_id_index").on(table.shardId)],
 );
+
+
+export type FilesTableType = typeof files;

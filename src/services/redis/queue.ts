@@ -145,35 +145,18 @@ export class QueueService {
     // flush the data to database
     // for a particular Shard Id: which is roomId in this case
     try {
-      const room : Shard | null = await this.shardRepo.findById(data.roomId);
-      if (room) {
-        let files = room.files;
-        const ind = files.findIndex((file) => file.name == data.activeFile);
-        if (ind == -1) {
-          // not added to db
-          files.push({
-            name: data.activeFile,
-            code: data.code
-          });
-        }
-        else {
-          // already in db
-          files[ind].code = data.code;
-        }
-
-        room.files = files;
-
-        await this.shardRepo.save(room);
+      // const room : Shard | null = await this.shardRepo.findById(data.roomId);
+      const files = await this.shardRepo.updateFiles(Number(data.roomId), data.activeFile, data.code);
+      if(!files) throw new Error("could not update files");
+   
         return { status: "completed", job: redisConfig.job.JOB_FLUSH }
       }
 
-    } catch (error) {
+     catch (error) {
       logger.warn("Job Failed", {
-        
           type: redisConfig.job.JOB_FLUSH,
           src: "processFlushJob()",
           error: error
-           
          })
       return { status: "failed", job: redisConfig.job.JOB_FLUSH }
     }

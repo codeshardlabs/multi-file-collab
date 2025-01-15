@@ -3,16 +3,18 @@ import { File } from "../entities/file";
 import { Shard } from "../entities/shard";
 import { ShardTableType } from "../db/tables/shards";
 import { ShardDbType } from "../db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { FilesTableType } from "../db/tables/files";
 
 
  export default class ShardRepository implements IShardRepository {
      private db: ShardDbType;
-     private table : ShardTableType;
-    //  private static shardRepoInst: ShardRepository;
-      constructor(model: ShardDbType, _table: ShardTableType) {
+     private shardsTable : ShardTableType;
+     private filesTable: FilesTableType;
+      constructor(model: ShardDbType, _shardTable: ShardTableType, _filesTableType: FilesTableType) {
          this.db = model;
-         this.table = _table;
+         this.shardsTable = _shardTable;
+         this.filesTable =_filesTableType;
       }
 
 
@@ -56,11 +58,21 @@ import { eq } from "drizzle-orm";
      }
 
      async updateLastSyncTimestamp(id: number): Promise<"OK" | null> {
-         const room = await this.db.update(this.table).set({
+         const room = await this.db.update(this.shardsTable).set({
             lastSyncTimestamp : new Date(),
             updatedAt: new Date()
-         }).where(eq(this.table.id, id)).returning();
+         }).where(eq(this.shardsTable.id, id)).returning();
          if(!room) return null;
          return "OK";
+     }
+
+     async updateFiles(id: number, filePath: string, code: string): Promise<"OK" | null> {
+        await this.db.update(this.filesTable).set({
+            code: code
+        }).where(and(
+            eq(this.filesTable.shardId, id),
+            eq(this.filesTable.name, filePath)
+        ))
+         return null;
      }
 }
