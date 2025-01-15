@@ -5,7 +5,6 @@ import { shards } from "./shards";
 //@ts-ignore
 import { timestamps } from "../utils/timestamp";
 
-
 export const dependencies = pgTable(
   "dependencies",
   {
@@ -13,7 +12,7 @@ export const dependencies = pgTable(
     name: text("name"),
     version: text("version"),
     isDevDependency: boolean("is_dev_dependency"),
-    shardId: serial("shard_id").references(() => shards.id),
+    shardId: serial("shard_id").references(() => shards.id, {onDelete: "cascade"}).notNull(),
     ...timestamps,
   },
   (table) => [index("dep_shard_id_index").on(table.shardId)],

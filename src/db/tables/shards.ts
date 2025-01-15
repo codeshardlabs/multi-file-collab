@@ -34,13 +34,14 @@ export const typeEnum = pgEnum("type", ["public", "private", "forked"]);
 export const shards = pgTable("shards", {
   id: serial("id").primaryKey(),
   title: text("title").default("Untitled"),
-  userId: text("user_id").references(() => users.id),
+  userId: text("user_id").references(() => users.id, {onDelete: "cascade"}).notNull(),
   templateType: templateTypeEnum().default("react"),
   mode: modeEnum().default("normal"),
   type: typeEnum().default("public"),
   lastSyncTimestamp: timestamp("last_sync_timestamp").defaultNow(),
   ...timestamps,
 });
+
 
 export type ShardTableType = typeof shards;
 

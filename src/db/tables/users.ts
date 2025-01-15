@@ -15,8 +15,8 @@ export type UserTableType = typeof users;
 // separate followers join table
 export const followers = pgTable("followers", {
   id: text("id").primaryKey(),
-  followerId: text("follower_id").references(() => users.id),
-  followingId: text("following_id").references(() => users.id),
+  followerId: text("follower_id").references(() => users.id, {onDelete: "cascade"}).notNull(),
+  followingId: text("following_id").references(() => users.id, {onDelete: "cascade"}).notNull(),
   ...timestamps,
 });
 
