@@ -7,7 +7,6 @@
 - [Components](#components)
 - [Current Workflow](#current-workflow)
 - [Local Development](#local-development)
-- [Testing](#testing)
 
 ### Overview
 
@@ -103,19 +102,3 @@ PORT=8080
 
 6. Run the development server using `yarn dev`. It will first run the predev script, which will format all your code via prettier and then start the development server. 
 
-### Testing 
-
-#### Mocking postgres instance 
-
-1. Pull `pg_uuidv7`image 
-
-```bash
-docker pull ghcr.io/fboulnois/pg_uuidv7:1.6.0
-```
-
-2. Run postgres container in detached mode and exposed on port 5432.
-```bash
-docker run -d -it ghcr.io/fboulnois/pg_uuidv7:1.6.0 -p  5432:5432 --name pg_container
-```
-
-3. Run Jest based tests using `yarn test`

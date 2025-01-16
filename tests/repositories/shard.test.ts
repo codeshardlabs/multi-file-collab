@@ -56,9 +56,6 @@ describe("Shard Repository", () => {
 );
 `);
 
-
-
-// create 
       
         console.log("Database setup completed");
     }, 30000);
@@ -68,8 +65,19 @@ describe("Shard Repository", () => {
     });
 
     it("should find shard by id", async () => {
-        const result = await shardRepo.findById(999999);
-        expect(result).toBeNull();
+        const newShard = await db.insert(shardSchema.shards).values({
+            title: "Test Shard",
+            userId: "test_user",
+            templateType: "react",
+            mode: "normal",
+            type: "public"
+        }).returning();
+
+        expect(newShard.length).toBe(1);
+        const insertedShard = await shardRepo.findById(newShard[0].id)
+        expect(insertedShard).not.toBeNull();
+        expect(insertedShard?.title).toBe("Test Shard");
+        await db.execute(sql`DELETE FROM shards WHERE id = ${newShard[0].id}`);
     });
 
     afterEach(async () => {
