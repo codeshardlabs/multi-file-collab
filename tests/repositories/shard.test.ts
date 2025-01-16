@@ -36,99 +36,50 @@ describe("Shard Repository", () => {
             }
         });
 
-        // Create enums and tables
-        await db.execute(sql`
-            DO $$ BEGIN
-                CREATE TYPE template_type AS ENUM (
-                    'static', 'angular', 'react', 'react-ts', 'solid', 
-                    'svelte', 'test-ts', 'vanilla-ts', 'vanilla', 'vue', 
-                    'vue-ts', 'node', 'nextjs', 'astro', 'vite', 
-                    'vite-react', 'vite-react-ts'
-                );
-            EXCEPTION 
-                WHEN duplicate_object THEN null;
-            END $$;
 
-            DO $$ BEGIN
-                CREATE TYPE mode AS ENUM ('normal', 'collaboration');
-            EXCEPTION 
-                WHEN duplicate_object THEN null;
-            END $$;
+        // create enums
+        await db.execute(sql`CREATE TYPE "public"."mode" AS ENUM('normal', 'collaboration');`)
+       await db.execute(sql`CREATE TYPE "public"."template_type" AS ENUM('static', 'angular', 'react', 'react-ts', 'solid', 'svelte', 'test-ts', 'vanilla-ts', 'vanilla', 'vue', 'vue-ts', 'node', 'nextjs', 'astro', 'vite', 'vite-react', 'vite-react-ts');`);
+       await db.execute(sql`CREATE TYPE "public"."type" AS ENUM('public', 'private', 'forked');`)
+        // Create shard table
+        await db.execute(sql`CREATE TABLE "shards" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text DEFAULT 'Untitled',
+	"user_id" text NOT NULL,
+	"templateType" "template_type" DEFAULT 'react',
+	"mode" "mode" DEFAULT 'normal',
+	"type" "type" DEFAULT 'public',
+	"last_sync_timestamp" timestamp DEFAULT now(),
+	"updated_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);`);
 
-            DO $$ BEGIN
-                CREATE TYPE type AS ENUM ('public', 'private', 'forked');
-            EXCEPTION 
-                WHEN duplicate_object THEN null;
-            END $$;
-        `);
 
-        // Create tables
-        await db.execute(sql`
-            CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-            );
 
-            CREATE TABLE IF NOT EXISTS shards (
-                id SERIAL PRIMARY KEY,
-                title TEXT DEFAULT 'Untitled',
-                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                template_type template_type DEFAULT 'react',
-                mode mode DEFAULT 'normal',
-                type type DEFAULT 'public',
-                last_sync_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS files (
-                id SERIAL PRIMARY KEY,
-                shard_id INTEGER REFERENCES shards(id) ON DELETE CASCADE,
-                name TEXT NOT NULL,
-                content TEXT NOT NULL,
-                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
+// create 
+      
         console.log("Database setup completed");
     }, 30000);
 
     beforeEach(async () => {
-        // Insert test user
-        await db.execute(sql`
-            INSERT INTO users (id) VALUES ('test-user-id')
-            ON CONFLICT (id) DO NOTHING
-        `);
-
         shardRepo = new ShardRepository(db, shardSchema.shards, fileSchema.files);
     });
 
     it("should find shard by id", async () => {
-        // Insert test data
-        // const [shard] = await db.execute<any>(sql`
-        //     INSERT INTO shards (title, user_id, template_type, type, mode)
-        //     VALUES ('Test Shard', 'test-user-id', 'react', 'private', 'normal')
-        //     RETURNING id
-        // `);
-
-        // const result = await shardRepo.findById(999999);
-        expect(null).toBeNull();
+        const result = await shardRepo.findById(999999);
+        expect(result).toBeNull();
         // expect(result?.title).toBe('Test Shard');
     });
 
     afterEach(async () => {
         // Clean up test data
-        await db.execute(sql`TRUNCATE TABLE files, shards CASCADE`);
+        await db.execute(sql`TRUNCATE TABLE shards CASCADE`);
     });
 
     afterAll(async () => {
         // Clean up everything
         await db.execute(sql`
-            DROP TABLE IF EXISTS files CASCADE;
             DROP TABLE IF EXISTS shards CASCADE;
-            DROP TABLE IF EXISTS users CASCADE;
         `);
         await client.end();
     });
