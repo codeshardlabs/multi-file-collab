@@ -105,7 +105,7 @@ PORT=8080
 
 ### Testing 
 
-#### Mocking drizzle instance 
+#### Mocking postgres instance 
 
 1. Pull `pg_uuidv7`image 
 
@@ -117,3 +117,5 @@ docker pull ghcr.io/fboulnois/pg_uuidv7:1.6.0
 ```bash
 docker run -d -it ghcr.io/fboulnois/pg_uuidv7 -p  5432:5432 --name pg_container
 ```
+
+3. Run Jest based tests using `yarn test`
