@@ -115,7 +115,7 @@ docker pull ghcr.io/fboulnois/pg_uuidv7:1.6.0
 
 2. Run postgres container in detached mode and exposed on port 5432.
 ```bash
-docker run -d -it ghcr.io/fboulnois/pg_uuidv7 -p  5432:5432 --name pg_container
+docker run -d -it ghcr.io/fboulnois/pg_uuidv7:1.6.0 -p  5432:5432 --name pg_container
 ```
 
 3. Run Jest based tests using `yarn test`

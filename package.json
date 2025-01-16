@@ -23,7 +23,8 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "tsc-watch": "^6.2.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "v4": "^0.0.1"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
