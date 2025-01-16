@@ -42,7 +42,8 @@ describe("Shard Repository", () => {
        await db.execute(sql`CREATE TYPE "public"."template_type" AS ENUM('static', 'angular', 'react', 'react-ts', 'solid', 'svelte', 'test-ts', 'vanilla-ts', 'vanilla', 'vue', 'vue-ts', 'node', 'nextjs', 'astro', 'vite', 'vite-react', 'vite-react-ts');`);
        await db.execute(sql`CREATE TYPE "public"."type" AS ENUM('public', 'private', 'forked');`)
         // Create shard table
-        await db.execute(sql`CREATE TABLE "shards" (
+        await db.execute(sql`
+            CREATE TABLE "shards" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"title" text DEFAULT 'Untitled',
 	"user_id" text NOT NULL,
@@ -52,7 +53,8 @@ describe("Shard Repository", () => {
 	"last_sync_timestamp" timestamp DEFAULT now(),
 	"updated_at" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);`);
+);
+`);
 
 
 
@@ -68,7 +70,6 @@ describe("Shard Repository", () => {
     it("should find shard by id", async () => {
         const result = await shardRepo.findById(999999);
         expect(result).toBeNull();
-        // expect(result?.title).toBe('Test Shard');
     });
 
     afterEach(async () => {
