@@ -2,7 +2,7 @@
 import { QueueService } from "./queue";
 import { KVService } from "./kvStore";
 import { redisConfig } from "../../config";
-import { IShardRepository } from "../../interfaces/repositories/IShardRepository";
+import { IShardRepository } from "../../interfaces/repositories/shard";
 import { logger } from "../logger/logger";
 
 export class EditorStateManager {

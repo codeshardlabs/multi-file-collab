@@ -1,5 +1,5 @@
 
-import { IUserRepository } from "../interfaces/repositories/IUserRepository";
+import { IUserRepository } from "../interfaces/repositories/user";
 import { User } from "../entities/user";
 import { UserDbType } from "../db";
 import { UserTableType } from "../db/tables/users";

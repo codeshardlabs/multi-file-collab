@@ -9,9 +9,9 @@ export interface FileInput {
 
 export interface IShardRepository {
     findById: (id: number) => Promise<Shard | null>
-    getFiles(id: number): Promise<File[] | null>
+    getFiles(id: number): Promise<File[]>
     updateLastSyncTimestamp(id: number): Promise<"OK" | null> 
-    getAllCollaborativeRooms() : Promise<Shard[] | null>
+    getAllCollaborativeRooms() : Promise<Shard[]>
     updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>
     getShardWithFiles(id: number): Promise<ShardWithFiles | null>
 }

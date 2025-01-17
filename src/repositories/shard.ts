@@ -1,4 +1,4 @@
-import { FileInput, IShardRepository } from "../interfaces/repositories/IShardRepository";
+import { FileInput, IShardRepository } from "../interfaces/repositories/shard";
 import { File } from "../entities/file";
 import { Shard, ShardWithFiles } from "../entities/shard";
 import { ShardTableType } from "../db/tables/shards";
@@ -26,21 +26,20 @@ import { FilesTableType } from "../db/tables/files";
         return doc;
     }
      
-     async getFiles(id: number): Promise<File[] | null> {
+     async getFiles(id: number): Promise<File[]> {
         const files = await this.db.query.files.findMany({
             where: (files) => eq(files.shardId, id)
         });
-         if(files.length === 0) return null;
+         
          return files;
      }
 
-     async getAllCollaborativeRooms(): Promise<Shard[] | null> {
+     async getAllCollaborativeRooms(): Promise<Shard[]> {
         //  const roomsDoc = await this.model.find({ mode: "collaboration" });
         const rooms =  await this.db.query.shards.findMany({
            where: (shards) => eq(shards.mode, "collaboration")
          })
 
-         if(rooms.length === 0) return null;
          return rooms;
      }
 

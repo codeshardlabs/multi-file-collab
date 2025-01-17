@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { KVService } from "../../services/redis/kvStore";
-import { IShardRepository } from "../../interfaces/repositories/IShardRepository";
+import { IShardRepository } from "../../interfaces/repositories/shard";
 import { PubSubService } from "../../services/redis/pubsub";
 import { EditorStateManager } from "../../services/redis/editorStateManager";
 import { validateRoomId } from "../../middleware/ws/room";

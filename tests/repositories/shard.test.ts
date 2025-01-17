@@ -78,7 +78,7 @@ describe("Shard Repository", () => {
     });
 
     describe("findById()", () => {
-        it("should return shard for existing user", async () => {
+        it("should return shard for valid shard id", async () => {
             const newShard = await db.insert(shardSchema.shards).values({
                 title: "Test Shard",
                 userId: "test_user",
@@ -95,7 +95,7 @@ describe("Shard Repository", () => {
             await db.execute(sql`DELETE FROM shards WHERE id = ${newShard[0].id}`);
         });
 
-        it("should return null for non-existing user", async () => {
+        it("should return null for non-existing shard", async () => {
             const notExistingShard = await shardRepo.findById(333333333);
             expect(notExistingShard).toBeNull();
         })
@@ -111,8 +111,6 @@ describe("Shard Repository", () => {
                 type: "public"
             }).returning();
 
-            
-
             const file = await db.insert(fileSchema.files).values({
                 code: "console.log('hello world');",
                 name: "index.js",
@@ -122,7 +120,6 @@ describe("Shard Repository", () => {
             expect(newShard).not.toBeNull();
             expect(newShard.length).toBe(1);
             const files = await shardRepo.getFiles(newShard[0].id);
-            expect(files).not.toBeNull();
             expect(files?.length).toBe(1);
             expect(files?.at(0)?.name).toBe("index.js");
 
@@ -134,8 +131,36 @@ describe("Shard Repository", () => {
 
         it("should return null for non-existent shard", async () => {
             const files = await shardRepo.getFiles(33333);
-            expect(files).toBeNull();
+            expect(files.length).toBe(0);
         })
+    })
+
+    describe("updateLastSyncTimestamp()", () => {
+        it("should update the timestamp correctly", async () => {
+            const newShard = await db.insert(shardSchema.shards).values({
+                title: "Test Shard",
+                userId: "test_user",
+                templateType: "react",
+                mode: "normal",
+                type: "public"
+            }).returning();
+
+            expect(newShard).not.toBeNull();
+            expect(newShard.length).toBe(1);
+
+            let lastSyncTimestamp = newShard[0].lastSyncTimestamp;
+            const res = await shardRepo.updateLastSyncTimestamp(newShard[0].id);
+            expect(res).toBe("OK");
+            const shard = await shardRepo.findById(newShard[0].id);
+            expect(lastSyncTimestamp).not.toBeNull();
+            expect(shard?.lastSyncTimestamp).not.toBe(lastSyncTimestamp);
+
+            await db.execute(`DELETE FROM shards WHERE id = ${newShard[0].id}`);
+        })
+    })
+
+    describe("", () => {
+
     })
 
     afterEach(async () => {

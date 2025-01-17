@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { errorMessage, errors } from "../../config";
-import { IUserRepository } from "../../interfaces/repositories/IUserRepository";
+import { IUserRepository } from "../../interfaces/repositories/user";
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction, userRepo: IUserRepository) {
     const token = req.headers["authorization"];
