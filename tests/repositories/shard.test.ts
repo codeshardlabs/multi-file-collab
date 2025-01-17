@@ -159,8 +159,13 @@ describe("Shard Repository", () => {
         })
     })
 
-    describe("", () => {
-
+    describe("getAllCollaborativeRooms()", () => {
+        it("should return valid rooms", async () => {
+        const rooms = await shardRepo.getAllCollaborativeRooms();
+        for(let room of rooms) {
+            expect(room.mode).toBe("collaboration");
+        }
+        })
     })
 
     afterEach(async () => {
