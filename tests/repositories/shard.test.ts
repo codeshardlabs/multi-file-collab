@@ -335,6 +335,47 @@ describe("Shard Repository", () => {
     });
   });
 
+  describe("getShardWithFiles()", () => {
+    it("should return valid shard with files", async () => {
+      const user = await db
+        .insert(userSchema.users)
+        .values({
+          id: "valid_user",
+        })
+        .returning();
+
+      expect(user).not.toBeNull();
+      expect(user.length).toBe(1);
+      const newShard = await shardRepo.create({
+        title: "Test Shard",
+        userId: user[0].id,
+        templateType: "react",
+        mode: "normal",
+        type: "public",
+      });
+
+      expect(newShard).not.toBeNull();
+      expect(newShard?.length).toBe(1);
+      const file = await db
+        .insert(fileSchema.files)
+        .values({
+          code: "console.log('hello world');",
+          name: "index.js",
+          shardId: newShard?.at(0)?.id,
+        })
+        .returning();
+      const shard = await shardRepo.getShardWithFiles(newShard?.at(0)?.id!);
+      expect(shard).not.toBeNull();
+      expect(shard?.files.length).toBe(1);
+      expect(shard?.files[0].code).toBe(file[0].code);
+      await db.execute(
+        sql`DELETE FROM shards WHERE id = ${newShard?.at(0)?.id!}`,
+      );
+      await db.execute(sql`DELETE FROM users WHERE id = ${user[0].id}`);
+      await db.execute(sql`DELETE FROM files WHERE id = ${file[0].id}`);
+    });
+  });
+
   afterEach(async () => {
     // Clean up test data
     await db.execute(sql`TRUNCATE TABLE shards CASCADE`);

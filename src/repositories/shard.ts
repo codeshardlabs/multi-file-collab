@@ -128,7 +128,7 @@ export default class ShardRepository implements IShardRepository {
         files: true,
       },
     });
-
+    console.log(shard);
     if (!shard) return null;
     return shard;
   }
