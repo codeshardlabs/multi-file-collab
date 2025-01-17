@@ -28,9 +28,9 @@ import { FilesTableType } from "../db/tables/files";
      
      async getFiles(id: number): Promise<File[] | null> {
         const files = await this.db.query.files.findMany({
-            where: (shards) => eq(shards.id, id)
+            where: (files) => eq(files.shardId, id)
         });
-         if(!files) return null;
+         if(files.length === 0) return null;
          return files;
      }
 
@@ -40,7 +40,7 @@ import { FilesTableType } from "../db/tables/files";
            where: (shards) => eq(shards.mode, "collaboration")
          })
 
-         if(!rooms) return null;
+         if(rooms.length === 0) return null;
          return rooms;
      }
 

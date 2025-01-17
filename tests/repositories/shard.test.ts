@@ -38,23 +38,36 @@ describe("Shard Repository", () => {
 
 
         // create enums
-        await db.execute(sql`CREATE TYPE "public"."mode" AS ENUM('normal', 'collaboration');`)
-       await db.execute(sql`CREATE TYPE "public"."template_type" AS ENUM('static', 'angular', 'react', 'react-ts', 'solid', 'svelte', 'test-ts', 'vanilla-ts', 'vanilla', 'vue', 'vue-ts', 'node', 'nextjs', 'astro', 'vite', 'vite-react', 'vite-react-ts');`);
-       await db.execute(sql`CREATE TYPE "public"."type" AS ENUM('public', 'private', 'forked');`)
-        // Create shard table
-        await db.execute(sql`
-            CREATE TABLE "shards" (
+        await db.transaction(async (tx) => {
+            await tx.execute(sql`CREATE TYPE "public"."mode" AS ENUM('normal', 'collaboration');`)
+           await tx.execute(sql`CREATE TYPE "public"."template_type" AS ENUM('static', 'angular', 'react', 'react-ts', 'solid', 'svelte', 'test-ts', 'vanilla-ts', 'vanilla', 'vue', 'vue-ts', 'node', 'nextjs', 'astro', 'vite', 'vite-react', 'vite-react-ts');`);
+           await tx.execute(sql`CREATE TYPE "public"."type" AS ENUM('public', 'private', 'forked');`)
+            // Create shard table
+            await tx.execute(sql`
+                CREATE TABLE "shards" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "title" text DEFAULT 'Untitled',
+        "user_id" text NOT NULL,
+        "templateType" "template_type" DEFAULT 'react',
+        "mode" "mode" DEFAULT 'normal',
+        "type" "type" DEFAULT 'public',
+        "last_sync_timestamp" timestamp DEFAULT now(),
+        "updated_at" timestamp,
+        "created_at" timestamp DEFAULT now() NOT NULL
+    );
+    `);
+    // create files table
+    await db.execute(sql`CREATE TABLE "files" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"title" text DEFAULT 'Untitled',
-	"user_id" text NOT NULL,
-	"templateType" "template_type" DEFAULT 'react',
-	"mode" "mode" DEFAULT 'normal',
-	"type" "type" DEFAULT 'public',
-	"last_sync_timestamp" timestamp DEFAULT now(),
+	"name" text,
+	"code" text,
+	"read_only" boolean DEFAULT false,
+	"hidden" boolean DEFAULT false,
+	"shard_id" serial NOT NULL,
 	"updated_at" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);
-`);
+);`)
+        })
 
       
         console.log("Database setup completed");
@@ -64,21 +77,66 @@ describe("Shard Repository", () => {
         shardRepo = new ShardRepository(db, shardSchema.shards, fileSchema.files);
     });
 
-    it("should find shard by id", async () => {
-        const newShard = await db.insert(shardSchema.shards).values({
-            title: "Test Shard",
-            userId: "test_user",
-            templateType: "react",
-            mode: "normal",
-            type: "public"
-        }).returning();
+    describe("findById()", () => {
+        it("should return shard for existing user", async () => {
+            const newShard = await db.insert(shardSchema.shards).values({
+                title: "Test Shard",
+                userId: "test_user",
+                templateType: "react",
+                mode: "normal",
+                type: "public"
+            }).returning();
+    
+            expect(newShard.length).toBe(1);
+            const insertedShard = await shardRepo.findById(newShard[0].id)
+            expect(insertedShard).not.toBeNull();
+            expect(insertedShard?.title).toBe("Test Shard");
+    
+            await db.execute(sql`DELETE FROM shards WHERE id = ${newShard[0].id}`);
+        });
 
-        expect(newShard.length).toBe(1);
-        const insertedShard = await shardRepo.findById(newShard[0].id)
-        expect(insertedShard).not.toBeNull();
-        expect(insertedShard?.title).toBe("Test Shard");
-        await db.execute(sql`DELETE FROM shards WHERE id = ${newShard[0].id}`);
-    });
+        it("should return null for non-existing user", async () => {
+            const notExistingShard = await shardRepo.findById(333333333);
+            expect(notExistingShard).toBeNull();
+        })
+    })
+
+    describe("getFiles()", () => {
+        it("should return files for existing shard", async () => {
+            const newShard = await db.insert(shardSchema.shards).values({
+                title: "Test Shard",
+                userId: "test_user",
+                templateType: "react",
+                mode: "normal",
+                type: "public"
+            }).returning();
+
+            
+
+            const file = await db.insert(fileSchema.files).values({
+                code: "console.log('hello world');",
+                name: "index.js",
+                shardId: newShard[0].id
+            }).returning();
+
+            expect(newShard).not.toBeNull();
+            expect(newShard.length).toBe(1);
+            const files = await shardRepo.getFiles(newShard[0].id);
+            expect(files).not.toBeNull();
+            expect(files?.length).toBe(1);
+            expect(files?.at(0)?.name).toBe("index.js");
+
+            await db.transaction(async (tx) => {
+                await tx.execute(sql`DELETE FROM shards WHERE id = ${newShard[0].id}`);
+                await tx.execute(sql`DELETE from files WHERE id = ${file[0].id}`);
+            })
+        })
+
+        it("should return null for non-existent shard", async () => {
+            const files = await shardRepo.getFiles(33333);
+            expect(files).toBeNull();
+        })
+    })
 
     afterEach(async () => {
         // Clean up test data
