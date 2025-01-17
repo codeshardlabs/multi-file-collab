@@ -1,10 +1,10 @@
-version: "3.7"  
-services:  
-  prod: 
-    env_file: ".env" 
-    build:  
-      context: .  
-      target: production  
-  
-    ports:  
-    - 3000:3000
+version: "3.7"
+services:
+  prod:
+    env_file: ".env"
+    build:
+      context: .
+      target: production
+
+    ports:
+      - 3000:3000

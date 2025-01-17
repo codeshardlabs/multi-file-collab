@@ -8,13 +8,16 @@ export const likes = pgTable(
   "likes",
   {
     id: serial("id").primaryKey(),
-    shardId: serial("shard_id").references(() => shards.id, {onDelete: "cascade"}).notNull(),
-    likedBy: text("liked_by").references(() => users.id, {onDelete: "cascade"}).notNull(),
+    shardId: serial("shard_id")
+      .references(() => shards.id, { onDelete: "cascade" })
+      .notNull(),
+    likedBy: text("liked_by")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
     ...timestamps,
   },
   (table) => [index("like_shard_id_index").on(table.shardId)],
 );
-
 
 const likesRelations = relations(likes, ({ one }) => ({
   user: one(users, {

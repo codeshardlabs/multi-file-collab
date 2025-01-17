@@ -1,4 +1,3 @@
-
 // import * as commentSchema from "./db/tables/comments";
 import * as dependencySchema from "./db/tables/dependencies";
 import * as fileSchema from "./db/tables/files";
@@ -18,7 +17,7 @@ export const shardDb = drizzle({
   schema: {
     ...shardSchema,
     ...fileSchema,
-    ...dependencySchema
+    ...dependencySchema,
   },
 });
 
@@ -27,10 +26,14 @@ export type ShardDbType = typeof shardDb;
 export const userDb = drizzle({
   client: pool,
   schema: {
-    ...userSchema
-  }
-})
+    ...userSchema,
+  },
+});
 export type UserDbType = typeof userDb;
 
-export const shardRepo = new ShardRepository(shardDb, shardSchema.shards, fileSchema.files);
+export const shardRepo = new ShardRepository(
+  shardDb,
+  shardSchema.shards,
+  fileSchema.files,
+);
 export const userRepo = new UserRepository(userDb, userSchema.users);

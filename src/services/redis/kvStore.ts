@@ -2,12 +2,13 @@ import Redis, { Callback, ChainableCommander, RedisKey } from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 
-
 export class KVService {
   private client: Redis;
   constructor() {
     const redisManager = RedisManager.getInstance();
-    this.client = redisManager.getConnection(redisConfig.connection.CONN_KV_STORE);
+    this.client = redisManager.getConnection(
+      redisConfig.connection.CONN_KV_STORE,
+    );
   }
 
   // get key from redis
@@ -15,16 +16,16 @@ export class KVService {
     return await this.client.get(key);
   }
 
-  async set(key: string, value: string, ttl?: number): Promise<'OK'> {
+  async set(key: string, value: string, ttl?: number): Promise<"OK"> {
     if (ttl) {
       // if ttl > 0, set expiry date
-      return await this.client.set(key, value, 'EX', ttl);
+      return await this.client.set(key, value, "EX", ttl);
     }
     // otherwise set without expiry data
     return await this.client.set(key, value);
   }
 
-  async hset(key: string, obj: object, cb? : Callback<number>) : Promise<number> {
+  async hset(key: string, obj: object, cb?: Callback<number>): Promise<number> {
     return await this.client.hset(key, obj, cb);
   }
 
@@ -35,7 +36,7 @@ export class KVService {
 
   // check if key exists or not
   async exists(key: string): Promise<number> {
-    return await this.client.exists(key)
+    return await this.client.exists(key);
   }
 
   async keys(pattern: string): Promise<string[]> {
@@ -47,13 +48,17 @@ export class KVService {
     return await this.client.expire(key, seconds);
   }
 
-  // append data to the redis list 
+  // append data to the redis list
   async rpush(key: RedisKey, data: string | number): Promise<number> {
     return await this.client.rpush(key, data);
   }
 
   // remove first k occurrence of element from list
-  async lrem(key: RedisKey, k: number, element: string | number) : Promise<number> {
+  async lrem(
+    key: RedisKey,
+    k: number,
+    element: string | number,
+  ): Promise<number> {
     return await this.client.lrem(key, k, element);
   }
 
@@ -63,7 +68,7 @@ export class KVService {
   }
 
   // buffers the content to the memory, before saving the contents on redis server.
-   pipeline(commands? : unknown[][]) : ChainableCommander {
+  pipeline(commands?: unknown[][]): ChainableCommander {
     return this.client.pipeline(commands);
   }
 
@@ -71,25 +76,32 @@ export class KVService {
     return this.client.multi();
   }
 
-  async zrangebyscore(key: RedisKey, min: number | string, max: number | string, cb?: Callback<string[]>): Promise<string[]> {
+  async zrangebyscore(
+    key: RedisKey,
+    min: number | string,
+    max: number | string,
+    cb?: Callback<string[]>,
+  ): Promise<string[]> {
     if (cb) {
       return await this.client.zrangebyscore(key, min, max, cb);
     }
     return await this.client.zrangebyscore(key, min, max);
   }
 
-  
-
-  async hgetall(key: RedisKey, cb?: Callback<Record<string, string>>): Promise<Record<string, string>> {
+  async hgetall(
+    key: RedisKey,
+    cb?: Callback<Record<string, string>>,
+  ): Promise<Record<string, string>> {
     if (cb) {
       return await this.client.hgetall(key, cb);
     }
     return await this.client.hgetall(key);
   }
-  async hget(key: RedisKey, field: string | Buffer, cb?: Callback<string | null>): Promise<string | null> {
+  async hget(
+    key: RedisKey,
+    field: string | Buffer,
+    cb?: Callback<string | null>,
+  ): Promise<string | null> {
     return await this.client.hget(key, field, cb);
   }
-  
 }
-
-
