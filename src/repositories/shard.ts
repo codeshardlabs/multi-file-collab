@@ -1,4 +1,4 @@
-import { FileInput, IShardRepository } from "../interfaces/repositories/shard";
+import { FileInput, IShardRepository, ShardInput } from "../interfaces/repositories/shard";
 import { File } from "../entities/file";
 import { Shard, ShardWithFiles } from "../entities/shard";
 import { ShardTableType } from "../db/tables/shards";
@@ -17,6 +17,15 @@ import { FilesTableType } from "../db/tables/files";
          this.filesTable =_filesTableType;
       }
 
+      async create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null> {
+        shards = Array.isArray(shards) ? shards : [shards];
+        try {
+            return  await this.db.insert(this.shardsTable).values(shards).returning();
+        } catch (error) {
+            console.log("error occurred while creating shards");
+            return null;
+        }
+      }
 
     async findById(id: number): Promise<Shard | null> {
         const doc = await this.db.query.shards.findFirst({

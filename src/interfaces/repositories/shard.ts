@@ -7,8 +7,22 @@ export interface FileInput {
     name: string;
 }
 
+
+type ShardTemplateType = 'static'| 'angular'| 'react'| 'react-ts'| 'solid'| 'svelte'| 'test-ts'| 'vanilla-ts'| 'vanilla'| 'vue'| 'vue-ts'| 'node'| 'nextjs'| 'astro'| 'vite'| 'vite-react'| 'vite-react-ts';
+
+type ShardModeType = 'normal' | 'collaboration';
+type ShardTypeType = 'public' | 'private' | 'forked';
+export interface ShardInput {
+      title: string;
+      userId: string;
+      templateType: ShardTemplateType;
+      mode: ShardModeType;
+      type: ShardTypeType;
+}
+
 export interface IShardRepository {
-    findById: (id: number) => Promise<Shard | null>
+    create(shards: ShardInput[]|ShardInput) : Promise<Shard[] | null>
+    findById (id: number) : Promise<Shard | null>
     getFiles(id: number): Promise<File[]>
     updateLastSyncTimestamp(id: number): Promise<"OK" | null> 
     getAllCollaborativeRooms() : Promise<Shard[]>
