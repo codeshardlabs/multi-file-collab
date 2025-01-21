@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { errorMessage, errors } from "../../config";
-import { IUserRepository } from "../../interfaces/repositories/user";
+import { userRepo } from "../../db";
 
 export async function authMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction,
-  userRepo: IUserRepository,
+  next: NextFunction
 ) {
   const token = req.headers["authorization"];
+  
 
   if (!token) {
     res.json({

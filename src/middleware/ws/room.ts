@@ -17,7 +17,7 @@ export async function fetchUserFromToken(
     const token = socket.handshake.auth.token as string;
     if (!token) next(new Error(errorMessage.get(errors.TOKEN_NOT_FOUND)));
 
-    const user = await userRepo.findByUsername(token);
+    const user = await userRepo.findById(token);
 
     if (!user) next(new Error(errorMessage.get(errors.USER_NOT_FOUND)));
     socket.user = user!;
@@ -34,7 +34,7 @@ export async function getCreatorName(
     const token = socket.handshake.auth.token as string;
     if (!token) next(new Error(errorMessage.get(errors.TOKEN_NOT_FOUND)));
 
-    const user = await userRepo.findByUsername(token);
+    const user = await userRepo.findById(token);
 
     if (!user) next(new Error(errorMessage.get(errors.USER_NOT_FOUND)));
 

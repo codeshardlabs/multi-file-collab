@@ -9,7 +9,7 @@ export class EditorStateManager {
   private kvStore: KVService;
   private shardRepo: IShardRepository;
   private static FLUSH_INTERVAL: number = 5000; // every 5 sec
-  constructor(shardRepo: IShardRepository) {
+  constructor(shardRepo: IShardRepository, kvStore: KVService) {
     logger.info("EditorStateManager instance created");
     this.shardRepo = shardRepo;
     this.queueService = new QueueService(
@@ -26,7 +26,7 @@ export class EditorStateManager {
       shardRepo,
     );
 
-    this.kvStore = new KVService();
+    this.kvStore = kvStore;
     this.startPeriodicFlush();
   }
 
@@ -99,3 +99,5 @@ export class EditorStateManager {
     }
   }
 }
+
+

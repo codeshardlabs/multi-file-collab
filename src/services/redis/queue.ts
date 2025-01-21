@@ -197,3 +197,4 @@ export class QueueService {
     await this.conn.quit();
   }
 }
+

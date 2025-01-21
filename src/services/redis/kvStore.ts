@@ -105,3 +105,6 @@ export class KVService {
     return await this.client.hget(key, field, cb);
   }
 }
+
+
+export const kvStore = new KVService();

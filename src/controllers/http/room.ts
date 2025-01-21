@@ -1,14 +1,19 @@
-import { Response } from "express";
-import { KVService } from "../../services/redis/kvStore";
-import { IShardRepository } from "../../interfaces/repositories/shard";
+import { Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
+import { shardRepo } from "../../db";
+import { kvStore } from "../../services/redis/kvStore";
+import { AuthRequest } from "../../routes/v1";
+
+interface RoomRequest extends AuthRequest {
+  id: number;
+}
+
 
 export async function fetchLatestRoomFilesState(
-  res: Response,
-  id: number,
-  kvStore: KVService,
-  shardRepo: IShardRepository,
+  req: Request,
+  res: Response
 ) {
+  const id = req.id;
   let shard = await shardRepo.getShardWithFiles(id);
   if (!shard) {
     res.status(500).json({

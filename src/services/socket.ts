@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
-import { PubSubService } from "./redis/pubsub";
-import { KVService } from "./redis/kvStore";
+import { pubsub, PubSubService } from "./redis/pubsub";
+import { KVService, kvStore } from "./redis/kvStore";
 import { EditorStateManager } from "./redis/editorStateManager";
 import { IShardRepository } from "../interfaces/repositories/shard";
 import {
@@ -12,6 +12,7 @@ import { IUserRepository } from "../interfaces/repositories/user";
 import { fetchUserFromToken } from "../middleware/ws/room";
 import { env } from "../config";
 import { logger } from "./logger/logger";
+import { shardRepo, userRepo } from "../db";
 
 class SocketService {
   private _io: Server;
@@ -34,7 +35,7 @@ class SocketService {
       },
     });
     this.shardRepo = shardRepo;
-    this.editorManager = new EditorStateManager(shardRepo);
+    this.editorManager = new EditorStateManager(shardRepo, kvService);
     this.kvStore = kvService;
     this.userRepo = userRepo;
   }
@@ -208,4 +209,4 @@ class SocketService {
   }
 }
 
-export default SocketService;
+export const socketService = new SocketService(shardRepo, userRepo, kvStore, pubsub);

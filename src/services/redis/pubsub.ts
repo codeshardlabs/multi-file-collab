@@ -41,3 +41,6 @@ export class PubSubService {
     await this.subscriber.unsubscribe(channel);
   }
 }
+
+
+export const pubsub = new PubSubService();

@@ -20,8 +20,8 @@ export const likes = pgTable(
 );
 
 const likesRelations = relations(likes, ({ one }) => ({
-  user: one(users, {
-    fields: [likes.likedBy],
-    references: [users.id],
+  shard: one(shards, {
+    fields: [likes.shardId],
+    references: [shards.id],
   }),
 }));
