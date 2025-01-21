@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 
-
 export  function fetchShards(req: Request, res: Response) {
     // TODO: implement this
 }
@@ -13,6 +12,12 @@ export function saveShard(req: Request, res: Response) {
     // TODO: implement this
 }
 
-export function saveShardTitle(req: Request, res: Response) {
+// ?title=""&type=""
+export function updateShard(req: Request, res: Response) {
+    // TODO: implement this
+}
+
+
+export function deleteShardById(req: Request, res: Response) {
     // TODO: implement this
 }
