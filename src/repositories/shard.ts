@@ -5,29 +5,23 @@ import {
 } from "../interfaces/repositories/shard";
 import { File } from "../entities/file";
 import { Shard, ShardWithFiles } from "../entities/shard";
-import { ShardTableType } from "../db/tables/shards";
+import { shards, ShardTableType } from "../db/tables/shards";
 import { ShardDbType } from "../db";
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
-import { FilesTableType } from "../db/tables/files";
+import { files, FilesTableType } from "../db/tables/files";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
-  private shardsTable: ShardTableType;
-  private filesTable: FilesTableType;
   constructor(
     model: ShardDbType,
-    _shardTable: ShardTableType,
-    _filesTableType: FilesTableType,
   ) {
     this.db = model;
-    this.shardsTable = _shardTable;
-    this.filesTable = _filesTableType;
   }
 
-  async create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null> {
-    shards = Array.isArray(shards) ? shards : [shards];
+  async create(shardInput: ShardInput[] | ShardInput): Promise<Shard[] | null> {
+    shardInput = Array.isArray(shardInput) ? shardInput : [shardInput];
     try {
-      return await this.db.insert(this.shardsTable).values(shards).returning();
+      return await this.db.insert(shards).values(shardInput).returning();
     } catch (error) {
       console.log("error occurred while creating shards");
       return null;
@@ -74,12 +68,12 @@ export default class ShardRepository implements IShardRepository {
 
   async updateLastSyncTimestamp(id: number): Promise<"OK" | null> {
     const room = await this.db
-      .update(this.shardsTable)
+      .update(shards)
       .set({
         lastSyncTimestamp: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(this.shardsTable.id, id))
+      .where(eq(shards.id, id))
       .returning();
     if (!room) return null;
     return "OK";
@@ -88,15 +82,15 @@ export default class ShardRepository implements IShardRepository {
   // update multiple rows using (case/when) syntax: https://orm.drizzle.team/docs/guides/update-many-with-different-value
   async updateFiles(
     id: number,
-    files: FileInput[] | FileInput,
+    fileInput:  FileInput[] | FileInput,
   ): Promise<"OK" | null> {
-    files = Array.isArray(files) ? files : [files];
+    fileInput = Array.isArray(fileInput) ? fileInput : [fileInput];
     const sqlChunks: SQL[] = [];
     let names: string[] = [];
     sqlChunks.push(sql`(case`);
-    for (const file of files) {
+    for (const file of fileInput) {
       sqlChunks.push(
-        sql`when ${this.filesTable.name} = ${file.name} then ${file.code}`,
+        sql`when ${file.name} = ${file.name} then ${file.code}`,
       );
       names.push(file.name);
     }
@@ -104,14 +98,14 @@ export default class ShardRepository implements IShardRepository {
     const finalSql: SQL = sql.join(sqlChunks, sql.raw(" "));
     try {
       await this.db
-        .update(this.filesTable)
+        .update(files)
         .set({
           code: finalSql,
         })
         .where(
           and(
-            eq(this.filesTable.shardId, id),
-            inArray(this.filesTable.name, names),
+            eq(files.shardId, id),
+            inArray(files.name, names),
           ),
         );
       return "OK";

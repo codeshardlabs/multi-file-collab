@@ -11,7 +11,7 @@ export async function idValidation(
     res.status(400).json({
       data: null,
       error: {
-        message: errorMessage.get(errors.ROOM_ID_NOT_FOUND),
+        message: errorMessage.get(errors.SHARD_ID_NOT_FOUND),
       },
       status: {
         code: 400,

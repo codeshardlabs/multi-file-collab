@@ -2,11 +2,7 @@ import { Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
 import { shardRepo } from "../../db";
 import { kvStore } from "../../services/redis/kvStore";
-import { AuthRequest } from "../../routes/v1";
 
-interface RoomRequest extends AuthRequest {
-  id: number;
-}
 
 
 export async function fetchLatestRoomFilesState(
@@ -90,4 +86,8 @@ export async function fetchLatestRoomFilesState(
     });
     return;
   }
+}
+
+export async function fetchAllRooms(req: Request, res: Response) {
+  // TODO: implement this
 }

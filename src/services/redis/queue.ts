@@ -3,8 +3,6 @@ import Redis from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 import { IShardRepository } from "../../interfaces/repositories/shard";
-import { ILogger } from "../../interfaces/ILogger";
-import { Shard } from "../../entities/shard";
 import { logger } from "../logger/logger";
 
 // Job Data

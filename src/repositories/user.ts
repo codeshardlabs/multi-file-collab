@@ -6,11 +6,9 @@ import { eq } from "drizzle-orm";
 
 export default class UserRepository implements IUserRepository {
   private db: UserDbType;
-  private table: UserTableType;
   //  private static shardRepoInst: ShardRepository;
-  constructor(model: UserDbType, _table: UserTableType) {
+  constructor(model: UserDbType) {
     this.db = model;
-    this.table = _table;
   }
 
   async findById(id: string): Promise<User | null> {
