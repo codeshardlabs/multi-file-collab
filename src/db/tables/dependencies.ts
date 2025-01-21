@@ -4,6 +4,7 @@ import { pgTable, text, boolean, serial, index } from "drizzle-orm/pg-core";
 import { shards } from "./shards";
 //@ts-ignore
 import { timestamps } from "../utils/timestamp";
+import { relations } from "drizzle-orm";
 
 export const dependencies = pgTable(
   "dependencies",
@@ -19,3 +20,10 @@ export const dependencies = pgTable(
   },
   (table) => [index("dep_shard_id_index").on(table.shardId)],
 );
+
+export const dependenciesRelations = relations(dependencies, ({ one }) => ({
+  shard: one(shards, {
+    fields: [dependencies.shardId],
+    references: [shards.id],
+  }),
+}));
