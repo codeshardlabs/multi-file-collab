@@ -10,7 +10,7 @@ export function errorHandler(
 ) {
   logger.error("errorHandler middleware error", err);
   if (err instanceof AppError) {
-     res.status(err.statusCode).json({
+    res.status(err.statusCode).json({
       data: null,
       error: {
         message: err.message,
@@ -42,9 +42,11 @@ export function paramsValidation<T>(
   }
 
   if (missingFields.length > 0) {
-    return next(new AppError(400, `Missing fields: ${missingFields.join(", ")}`));
-   }
- 
+    return next(
+      new AppError(400, `Missing fields: ${missingFields.join(", ")}`),
+    );
+  }
+
   next();
 }
 
@@ -63,7 +65,9 @@ export function queryValidation<T>(
   }
 
   if (missingFields.length > 0) {
-   return next(new AppError(400, `Missing fields: ${missingFields.join(", ")}`));
+    return next(
+      new AppError(400, `Missing fields: ${missingFields.join(", ")}`),
+    );
   }
 
   next();

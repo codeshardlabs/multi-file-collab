@@ -9,7 +9,7 @@ export async function fetchLatestRoomFilesState(
   res: Response,
   next: NextFunction,
 ) {
-  const id = req.id;
+  const id = req.shard.id;
   let shard = await shardRepo.getShardWithFiles(id);
   if (!shard) {
     next(new AppError(500, "Could not find resource by room ID"));
@@ -20,7 +20,7 @@ export async function fetchLatestRoomFilesState(
   if (keys.length == 0) {
     // cache not populated
     // room found
-     res.status(200).json({
+    res.status(200).json({
       error: null,
       data: {
         source: "db",
@@ -65,7 +65,7 @@ export async function fetchAllRooms(
   res: Response,
   next: NextFunction,
 ) {
-  const userId = req.user.id;
+  const userId = req.auth.user.id;
   try {
     const rooms = await shardRepo.getAllCollaborativeRooms(userId);
     if (!rooms) {
@@ -74,7 +74,7 @@ export async function fetchAllRooms(
 
     res.status(200).json({
       data: {
-        rooms
+        rooms,
       },
       error: null,
     });

@@ -44,6 +44,7 @@ export interface PatchShardInput {
 export interface IShardRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
   findById(id: number): Promise<Shard | null>;
+  deleteById(id: number): Promise<"OK" | null>;
   findByUserId(id: string): Promise<Shard[] | null>;
   getFiles(id: number): Promise<File[]>;
   updateLastSyncTimestamp(id: number): Promise<"OK" | null>;

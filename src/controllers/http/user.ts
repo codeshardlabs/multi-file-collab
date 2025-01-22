@@ -1,8 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { UserPostRequestBody } from "../../routes/v1/types";
 import { userRepo } from "../../db";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
+
+export interface UserPostRequestBody {
+  id: string;
+}
 
 export async function saveUserMetadata(
   req: Request,

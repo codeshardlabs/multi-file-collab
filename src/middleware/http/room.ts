@@ -20,6 +20,6 @@ export async function idValidation(
     });
     return;
   }
-  req.id = Number(id);
+  req.shard.id = Number(id);
   next();
 }

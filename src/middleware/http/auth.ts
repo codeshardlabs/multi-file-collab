@@ -54,6 +54,6 @@ export async function authMiddleware(
     return;
   }
 
-  req.user = user;
+  req.auth.user = user;
   next();
 }

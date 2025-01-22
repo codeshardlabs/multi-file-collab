@@ -1,5 +1,5 @@
 import express from "express";
-import shardRouter from "./shard";
+import shardRouter from "./shard/shard";
 import roomRouter from "./room";
 import userRouter from "./user";
 import { authMiddleware } from "../../middleware/http/auth";

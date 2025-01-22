@@ -165,4 +165,14 @@ export default class ShardRepository implements IShardRepository {
     if (!shard) return null;
     return shard;
   }
+
+  async deleteById(id: number): Promise<"OK" | null> {
+    try {
+      await this.db.delete(shards).where(eq(shards.id, id));
+      return "OK";
+    } catch (error) {
+      logger.error("shard repository > deleteById() error", error);
+      return null;
+    }
+  }
 }
