@@ -89,5 +89,38 @@ export async function fetchLatestRoomFilesState(
 }
 
 export async function fetchAllRooms(req: Request, res: Response) {
-  // TODO: implement this
+  const userId = req.user.id;
+try {
+  if(!userId) {
+    res.status(400).json({
+      data: null,
+      error: {
+        message: "User ID not found"
+      },
+      status: 400
+    })
+    return;
+  }
+
+  const rooms  = await shardRepo.getAllCollaborativeRooms(userId);
+  if(!rooms) {
+    throw new Error("could not fetch rooms");
+  }
+
+  res.status(200).json({
+    data: rooms,
+    status: 200,
+    error: null
+  });
+
+} catch (error) {
+  logger.error("fetchAllRoom() route error", error);
+  res.status(500).json({
+    data: null,
+    error: {
+      message: "could not fetch collaborative rooms info."
+    },
+    status: 500
+  })
+}
 }

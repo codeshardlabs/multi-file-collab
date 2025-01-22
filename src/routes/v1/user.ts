@@ -4,6 +4,7 @@ import { saveUserMetadata } from "../../controllers/http/user";
 
 const userRouter = Router();
 
-userRouter.post("/:id", saveUserMetadata);
+userRouter.post("/", saveUserMetadata);
+
 
 export default userRouter;

@@ -5,10 +5,11 @@ import {
 } from "../interfaces/repositories/shard";
 import { File } from "../entities/file";
 import { Shard, ShardWithFiles } from "../entities/shard";
-import { shards, ShardTableType } from "../db/tables/shards";
+import { shards } from "../db/tables/shards";
 import { ShardDbType } from "../db";
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
-import { files, FilesTableType } from "../db/tables/files";
+import { files } from "../db/tables/files";
+import { logger } from "../services/logger/logger";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
@@ -36,6 +37,20 @@ export default class ShardRepository implements IShardRepository {
     return doc;
   }
 
+  async findByUserId(id: string) : Promise<Shard[] | null> {
+    try {
+     const users =  await this.db.query.shards.findMany({
+       where: (shards) => eq(shards.userId, id)
+      });
+
+      return users;
+
+    } catch (error) {
+      logger.error("shard repository find by user id error", error);
+      return null;
+    }
+  }
+
   async getFiles(id: number): Promise<File[]> {
     const files = await this.db.query.files.findMany({
       where: (files) => eq(files.shardId, id),
@@ -44,14 +59,24 @@ export default class ShardRepository implements IShardRepository {
     return files;
   }
 
-  async getAllCollaborativeRooms(): Promise<Shard[]> {
+  async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
     //  const roomsDoc = await this.model.find({ mode: "collaboration" });
-    const rooms = await this.db.query.shards.findMany({
-      where: (shards) => eq(shards.mode, "collaboration"),
-    });
+    try {
+      const rooms = await this.db.query.shards.findMany({
+        where: (shards) => and(
+          eq(shards.mode, "collaboration"),
+          eq(shards.userId, userId)
+        )
+      });
+      
+      return rooms;
+    } catch (error) {
+      logger.warn("shard repository getAllCollaborativeRooms() error");
+      return null;
+    }
 
-    return rooms;
   }
+
 
   async getLastSyncTimestamp(id: number): Promise<Date | null> {
     //  const room = await this.model.findById(id, "lastSyncTimestamp");
