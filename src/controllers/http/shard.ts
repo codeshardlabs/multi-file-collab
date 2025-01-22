@@ -60,14 +60,26 @@ export async function updateShard(req:  Request, res: Response) {
    const type = query.type ? query.type as ShardTypeType : "public";
    const title = query.title ? query.title as string : "";
    try {
-       await shardRepo.patchShard({
+      const out =  await shardRepo.patchShard({
         type: type,
         userId: userId,
         title: title
        })
-    // TODO: add success and error responses 
+    if(!out) throw new Error("could not patch shard");
+
+    res.status(200).json({
+        error: null,
+        status: 200,
+    })
    } catch (error) {
-    
+logger.error("updateShard error", error)
+    res.status(500).json({
+        data: null,
+        error: {
+            message: "could not patch shard"
+        },
+        status: 500
+    })
    }
 
 }
