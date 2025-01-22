@@ -1,6 +1,7 @@
 import {
   FileInput,
   IShardRepository,
+  PatchShardInput,
   ShardInput,
 } from "../interfaces/repositories/shard";
 import { File } from "../entities/file";
@@ -136,6 +137,33 @@ export default class ShardRepository implements IShardRepository {
       return "OK";
     } catch (error) {
       console.log("error updating files");
+      return null;
+    }
+  }
+
+  async patchShard(patchShardInput : PatchShardInput) : Promise<"OK"|null> {
+    try {
+
+      // TODO: implement this 
+      let updatedInput : Partial<PatchShardInput> = {
+        type: patchShardInput.type
+      };
+      
+      if(patchShardInput.title)  {
+        updatedInput["title"] = patchShardInput.title;
+      }
+
+
+     const res =  await this.db.update(shards).set(updatedInput).where(
+        eq(shards.userId,  patchShardInput.userId)
+      ).returning();
+
+      if(!res) {
+        throw new Error("could not update shard");
+      }
+      return "OK";
+    } catch (error) {
+      logger.error("shard repository patchShard error", error)
       return null;
     }
   }

@@ -1,10 +1,10 @@
 import {  Request, Response } from "express";
-import { UserHomeRoutePostRequestBody } from "../../routes/v1/types";
+import { UserPostRequestBody } from "../../routes/v1/types";
 import { userRepo } from "../../db";
 import { logger } from "../../services/logger/logger";
 
 export async function saveUserMetadata(req: Request, res: Response) {
-    const body = req.body as UserHomeRoutePostRequestBody;
+    const body = req.body as UserPostRequestBody;
     try {
        const user =  await userRepo.onboard({
             id: body.id

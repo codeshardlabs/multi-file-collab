@@ -6,7 +6,7 @@ export interface FileInput {
   name: string;
 }
 
-type ShardTemplateType =
+export type ShardTemplateType =
   | "static"
   | "angular"
   | "react"
@@ -25,8 +25,8 @@ type ShardTemplateType =
   | "vite-react"
   | "vite-react-ts";
 
-type ShardModeType = "normal" | "collaboration";
-type ShardTypeType = "public" | "private" | "forked";
+export type ShardModeType = "normal" | "collaboration";
+export type ShardTypeType = "public" | "private" | "forked";
 export interface ShardInput {
   title: string;
   userId: string;
@@ -34,6 +34,12 @@ export interface ShardInput {
   mode: ShardModeType;
   type: ShardTypeType;
 }
+
+export interface PatchShardInput {
+  title: string;
+  type: ShardTypeType;
+  userId: string;
+};
 
 export interface IShardRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
@@ -44,4 +50,5 @@ export interface IShardRepository {
   getAllCollaborativeRooms(userId: string): Promise<Shard[] | null>;
   updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;
   getShardWithFiles(id: number): Promise<ShardWithFiles | null>;
+  patchShard(patchShardInput: PatchShardInput) : Promise<"OK" | null>
 }
