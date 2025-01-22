@@ -1,13 +1,19 @@
 import { Router } from "express";
-import {  deleteShardById, fetchShardById, fetchShards, createShard, saveShard, updateShard } from "../../controllers/http/shard";
+import {
+  deleteShardById,
+  fetchShardById,
+  fetchShards,
+  createShard,
+  saveShard,
+  updateShard,
+} from "../../controllers/http/shard";
 import { idValidation } from "../../middleware/http/room";
 import { paramsValidation } from "../../middleware/http/global";
-
 
 const shardRouter = Router();
 
 interface PatchShardParams {
-    id: number; 
+  id: number;
 }
 
 shardRouter.get("/", fetchShards);

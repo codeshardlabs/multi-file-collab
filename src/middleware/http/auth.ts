@@ -5,10 +5,9 @@ import { userRepo } from "../../db";
 export async function authMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const token = req.headers["authorization"];
-  
 
   if (!token) {
     res.json({

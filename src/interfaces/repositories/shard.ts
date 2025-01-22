@@ -39,16 +39,16 @@ export interface PatchShardInput {
   title: string;
   type: ShardTypeType;
   userId: string;
-};
+}
 
 export interface IShardRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
   findById(id: number): Promise<Shard | null>;
-  findByUserId(id: string) : Promise<Shard[] | null>;
+  findByUserId(id: string): Promise<Shard[] | null>;
   getFiles(id: number): Promise<File[]>;
   updateLastSyncTimestamp(id: number): Promise<"OK" | null>;
   getAllCollaborativeRooms(userId: string): Promise<Shard[] | null>;
   updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;
   getShardWithFiles(id: number): Promise<ShardWithFiles | null>;
-  patchShard(patchShardInput: PatchShardInput) : Promise<"OK" | null>
+  patch(patchShardInput: PatchShardInput): Promise<"OK" | null>;
 }

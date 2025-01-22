@@ -42,5 +42,4 @@ export class PubSubService {
   }
 }
 
-
 export const pubsub = new PubSubService();

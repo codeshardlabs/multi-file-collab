@@ -17,7 +17,6 @@ app.use(
 app.use(express.json());
 app.use("/api/v1", v1Router);
 
-
 async function init() {
   const httpServer = http.createServer(app);
   socketService.io.attach(httpServer);
@@ -31,10 +30,10 @@ async function init() {
 init();
 
 // Handle graceful shutdown
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
 
 async function gracefulShutdown() {
-  logger.info('Starting graceful shutdown');
+  logger.info("Starting graceful shutdown");
   process.exit(0);
 }

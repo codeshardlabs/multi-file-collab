@@ -9,9 +9,9 @@ export default class UserRepository implements IUserRepository {
   constructor(model: UserDbType) {
     this.db = model;
   }
-async onboard(userInput: UserInput): Promise<User | null> {
+  async onboard(userInput: UserInput): Promise<User | null> {
     try {
-      const res =  await this.db.insert(users).values(userInput).returning();
+      const res = await this.db.insert(users).values(userInput).returning();
       return res[0];
     } catch (error) {
       console.log("error occurred while creating users");

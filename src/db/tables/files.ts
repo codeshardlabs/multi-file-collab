@@ -1,4 +1,11 @@
-import { boolean, index, integer, pgTable, serial, text } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  serial,
+  text,
+} from "drizzle-orm/pg-core";
 import { shards } from "./shards";
 import { timestamps } from "../utils/timestamp";
 import { relations } from "drizzle-orm";

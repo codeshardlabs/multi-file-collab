@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { idValidation } from "../../middleware/http/room";
-import { fetchAllRooms, fetchLatestRoomFilesState } from "../../controllers/http/room";
-
+import {
+  fetchAllRooms,
+  fetchLatestRoomFilesState,
+} from "../../controllers/http/room";
 
 const roomRouter = Router();
 

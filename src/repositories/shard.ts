@@ -14,9 +14,7 @@ import { logger } from "../services/logger/logger";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
-  constructor(
-    model: ShardDbType,
-  ) {
+  constructor(model: ShardDbType) {
     this.db = model;
   }
 
@@ -38,14 +36,13 @@ export default class ShardRepository implements IShardRepository {
     return doc;
   }
 
-  async findByUserId(id: string) : Promise<Shard[] | null> {
+  async findByUserId(id: string): Promise<Shard[] | null> {
     try {
-     const users =  await this.db.query.shards.findMany({
-       where: (shards) => eq(shards.userId, id)
+      const users = await this.db.query.shards.findMany({
+        where: (shards) => eq(shards.userId, id),
       });
 
       return users;
-
     } catch (error) {
       logger.error("shard repository find by user id error", error);
       return null;
@@ -64,20 +61,16 @@ export default class ShardRepository implements IShardRepository {
     //  const roomsDoc = await this.model.find({ mode: "collaboration" });
     try {
       const rooms = await this.db.query.shards.findMany({
-        where: (shards) => and(
-          eq(shards.mode, "collaboration"),
-          eq(shards.userId, userId)
-        )
+        where: (shards) =>
+          and(eq(shards.mode, "collaboration"), eq(shards.userId, userId)),
       });
-      
+
       return rooms;
     } catch (error) {
       logger.warn("shard repository getAllCollaborativeRooms() error");
       return null;
     }
-
   }
-
 
   async getLastSyncTimestamp(id: number): Promise<Date | null> {
     //  const room = await this.model.findById(id, "lastSyncTimestamp");
@@ -108,16 +101,14 @@ export default class ShardRepository implements IShardRepository {
   // update multiple rows using (case/when) syntax: https://orm.drizzle.team/docs/guides/update-many-with-different-value
   async updateFiles(
     id: number,
-    fileInput:  FileInput[] | FileInput,
+    fileInput: FileInput[] | FileInput,
   ): Promise<"OK" | null> {
     fileInput = Array.isArray(fileInput) ? fileInput : [fileInput];
     const sqlChunks: SQL[] = [];
     let names: string[] = [];
     sqlChunks.push(sql`(case`);
     for (const file of fileInput) {
-      sqlChunks.push(
-        sql`when ${file.name} = ${file.name} then ${file.code}`,
-      );
+      sqlChunks.push(sql`when ${file.name} = ${file.name} then ${file.code}`);
       names.push(file.name);
     }
     sqlChunks.push(sql`end)`);
@@ -128,12 +119,7 @@ export default class ShardRepository implements IShardRepository {
         .set({
           code: finalSql,
         })
-        .where(
-          and(
-            eq(files.shardId, id),
-            inArray(files.name, names),
-          ),
-        );
+        .where(and(eq(files.shardId, id), inArray(files.name, names)));
       return "OK";
     } catch (error) {
       console.log("error updating files");
@@ -141,29 +127,29 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async patchShard(patchShardInput : PatchShardInput) : Promise<"OK"|null> {
+  async patch(patchShardInput: PatchShardInput): Promise<"OK" | null> {
     try {
-
-      // TODO: implement this 
-      let updatedInput : Partial<PatchShardInput> = {
-        type: patchShardInput.type
+      // TODO: implement this
+      let updatedInput: Partial<PatchShardInput> = {
+        type: patchShardInput.type,
       };
-      
-      if(patchShardInput.title)  {
+
+      if (patchShardInput.title) {
         updatedInput["title"] = patchShardInput.title;
       }
 
+      const res = await this.db
+        .update(shards)
+        .set(updatedInput)
+        .where(eq(shards.userId, patchShardInput.userId))
+        .returning();
 
-     const res =  await this.db.update(shards).set(updatedInput).where(
-        eq(shards.userId,  patchShardInput.userId)
-      ).returning();
-
-      if(!res) {
+      if (!res) {
         throw new Error("could not update shard");
       }
       return "OK";
     } catch (error) {
-      logger.error("shard repository patchShard error", error)
+      logger.error("shard repository patchShard error", error);
       return null;
     }
   }

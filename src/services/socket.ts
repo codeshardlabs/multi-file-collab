@@ -209,4 +209,9 @@ class SocketService {
   }
 }
 
-export const socketService = new SocketService(shardRepo, userRepo, kvStore, pubsub);
+export const socketService = new SocketService(
+  shardRepo,
+  userRepo,
+  kvStore,
+  pubsub,
+);
