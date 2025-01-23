@@ -15,4 +15,5 @@ export interface IUserRepository {
   onboard: (userInput: UserInput) => Promise<User | null>;
   findByIdWithFollowersList(id: string): Promise<UserWithFollowersAndFollowering | null>;
   follow(followerId: string, followingId: string) : Promise<"OK" | null>;
+  unfollow(followerId: string, followingId: string): Promise<"OK" | null>;
 }

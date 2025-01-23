@@ -42,11 +42,38 @@ export async function getUserInfo(req: Request, res: Response, next: NextFunctio
 }
 
 export async function followUser(req: Request, res: Response, next: NextFunction) {
-  const userId = req.auth.user.id;
-  const userBeingFollowed = req.user.id;
+  const followerId = req.auth.user.id;
+  const followingId = req.user.id;
+  try {
+   const out = await userRepo.follow(followerId, followingId);
+   if(!out) return next(new AppError(500, `${followerId} could not follow ${followingId}`));
+res.status(200).json({
+error: null,
+data: {
+  response: "OK"
+}
+});
+  } catch (error) {
+    logger.debug("userController > followUser() error", error);
+    next(new AppError(500, "could not follow user"));
+  }
 
 }
 
 export async function unfollowUser(req: Request, res: Response, next: NextFunction) {
-
+  const followerId = req.auth.user.id;
+  const followingId = req.user.id;
+  try {
+   const out = await userRepo.unfollow(followerId, followingId);
+   if(!out) return next(new AppError(500, `${followerId} could not unfollow ${followingId}`));
+res.status(200).json({
+error: null,
+data: {
+  response: "OK"
+}
+});
+  } catch (error) {
+    logger.debug("userController > unFollowUser() error", error);
+    next(new AppError(500, "could not unfollow user"));
+  }
 }

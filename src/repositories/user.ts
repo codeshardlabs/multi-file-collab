@@ -1,7 +1,7 @@
 import { IUserRepository, UserInput,UserWithFollowersAndFollowering } from "../interfaces/repositories/user";
 import { User } from "../entities/user";
 import { UserDbType } from "../db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { followers, users } from "../db/tables/users";
 import { logger } from "../services/logger/logger";
 
@@ -51,6 +51,18 @@ export default class UserRepository implements IUserRepository {
         followerId: followerId,
         followingId: followingId
       });
+      return "OK";
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async unfollow(followerId: string, followingId: string): Promise<"OK" | null> {
+    try {
+      await this.db.delete(followers).where(and(
+        eq(followers.followerId,followerId),
+        eq(followers.followingId, followingId)
+      ))
       return "OK";
     } catch (error) {
       return null;

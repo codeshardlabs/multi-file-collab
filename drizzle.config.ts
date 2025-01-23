@@ -5,7 +5,7 @@ config({
 });
 
 export default defineConfig({
-  out: "./migrations",
+  out: "./drizzle",
   schema: "./src/db/tables",
   dialect: "postgresql",
   dbCredentials: {

@@ -1,7 +1,7 @@
 import winston, { createLogger, format, transport } from "winston";
 import TransportStream from "winston-transport";
 import { env } from "../../config";
-import { ILogger } from "../../interfaces/ILogger";
+import { ILogger } from "../../interfaces/logger";
 import { signozTransportStream } from "./transports/signoz";
 import { consoleTransportStream } from "./transports/console";
 import { fileTransportStream } from "./transports/file";

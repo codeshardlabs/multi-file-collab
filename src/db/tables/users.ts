@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, serial, text } from "drizzle-orm/pg-core";
+import { integer, serial, pgTable, text } from "drizzle-orm/pg-core";
 import { shards } from "./shards";
 // TODO: handle types here
 // @ts-ignore
@@ -11,7 +11,7 @@ export const users = pgTable("users", {
 });
 
 export const followers = pgTable("followers", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey(), 
   followerId: text("follower_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),

@@ -46,7 +46,7 @@ export async function fetchShardById(
 ) {
   const id = req.shard.id;
   try {
-    const shard = await shardRepo.findById(id);
+    const shard = await shardRepo.getShardWithFiles(id);
     if (!shard) return next(new AppError(400, "id does not exist"));
     res.status(200).json({
       error: null,
