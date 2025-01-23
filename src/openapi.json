@@ -1,0 +1,257 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "CodeShard API Documentation",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/api/v1/shards": {
+        "get": {
+          "summary": "Fetch all shards",
+          "responses": {
+            "200": {
+              "description": "A list of shards"
+            }
+          }
+        },
+        "post": {
+          "summary": "Create a new shard",
+          "responses": {
+            "201": {
+              "description": "Shard created"
+            }
+          }
+        }
+      },
+      "/api/v1/shards/{id}": {
+        "get": {
+          "summary": "Fetch shard by ID",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shard details"
+            }
+          }
+        },
+        "put": {
+          "summary": "Save shard",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shard saved"
+            }
+          }
+        },
+        "patch": {
+          "summary": "Update shard",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shard updated"
+            }
+          }
+        },
+        "delete": {
+          "summary": "Delete shard by ID",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shard deleted"
+            }
+          }
+        }
+      },
+      "/api/v1/shards/{id}/comments": {
+        "get": {
+          "summary": "Get comments for a shard",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Comments for the shard"
+            }
+          }
+        },
+        "post": {
+          "summary": "Add a comment to a shard",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": "Comment added"
+            }
+          }
+        }
+      },
+      "/api/v1/shards/{id}/likes": {
+        "post": {
+          "summary": "Like a shard",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shard liked"
+            }
+          }
+        },
+        "delete": {
+          "summary": "Dislike a shard",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shard disliked"
+            }
+          }
+        }
+      },
+      "/api/v1/rooms": {
+        "get": {
+          "summary": "Fetch all rooms",
+          "responses": {
+            "200": {
+              "description": "A list of rooms"
+            }
+          }
+        }
+      },
+      "/api/v1/rooms/{id}": {
+        "get": {
+          "summary": "Fetch latest room files state",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Latest room files state"
+            }
+          }
+        }
+      },
+      "/api/v1/users": {
+        "post": {
+          "summary": "Save user metadata",
+          "responses": {
+            "201": {
+              "description": "User metadata saved"
+            }
+          }
+        }
+      },
+      "/api/v1/users/{id}": {
+        "get": {
+          "summary": "Get user info",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "User info"
+            }
+          }
+        }
+      },
+      "/api/v1/comments/{id}": {
+        "delete": {
+          "summary": "Delete a comment",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Comment deleted"
+            }
+          }
+        }
+      }
+    }
+  }
