@@ -15,6 +15,6 @@ v1Router.use(errorHandler);
 v1Router.use("/shards", authMiddleware, shardRouter);
 v1Router.use("/rooms", authMiddleware, roomRouter);
 v1Router.use("/users", userRouter);
-v1Router.use("/comments", commentRouter);
+v1Router.use("/comments", authMiddleware, commentRouter);
 
 export default v1Router;
