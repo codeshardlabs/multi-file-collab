@@ -46,7 +46,7 @@ export interface IShardRepository {
   findById(id: number): Promise<Shard | null>;
   deleteById(id: number): Promise<"OK" | null>;
   findByUserId(id: string): Promise<Shard[] | null>;
-  getFiles(id: number): Promise<File[]>;
+  getFiles(id: number): Promise<File[] | null>;
   updateLastSyncTimestamp(id: number): Promise<"OK" | null>;
   getAllCollaborativeRooms(userId: string): Promise<Shard[] | null>;
   updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;

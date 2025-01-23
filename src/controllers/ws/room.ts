@@ -32,9 +32,8 @@ export function joinRoom(
         if (len == 1) {
           // first user joined the room
           // get the shard by room id
-          const room = await shardRepo.findById(roomId);
-          if (room) {
-            const files = room.files;
+          const files = await shardRepo.getFiles(Number(roomId));
+          if (files) {
             // populate all the files to redis
             let pipeline = kvStore.multi();
             for (let file of files) {
@@ -44,11 +43,11 @@ export function joinRoom(
                 code: file.code,
                 lastModified: timestamp,
               });
-              pipeline.zadd(`project:${roomId}:changes`, timestamp, file.name);
+              // pipeline.zadd(`project:${roomId}:changes`, "XX", , file.name); // TODO: implement this 
             }
             await pipeline.exec();
           } else {
-            throw new Error(errorMessage.get(errors.ROOM_ID_NOT_FOUND));
+            throw new Error(errorMessage.get(errors.SHARD_ID_NOT_FOUND));
           }
         }
       })
@@ -72,7 +71,7 @@ export async function propagateRealtimeCodeUpdates(
   data: string,
   roomId: string,
   io: Server,
-  socket: Socket,
+  _: Socket,
   pubsub: PubSubService,
   editorManager: EditorStateManager,
 ) {

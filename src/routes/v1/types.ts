@@ -15,5 +15,8 @@ declare module "express-serve-static-core" {
     auth: {
       user: User;
     };
+    user: {
+      id: string;
+    }
   }
 }

@@ -1,20 +1,17 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text } from "drizzle-orm/pg-core";
+import { pgTable, serial, text } from "drizzle-orm/pg-core";
 import { shards } from "./shards";
 // TODO: handle types here
 // @ts-ignore
 import { timestamps } from "../utils/timestamp";
 
-// users table
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   ...timestamps,
 });
 
-export type UserTableType = typeof users;
-// separate followers join table
 export const followers = pgTable("followers", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   followerId: text("follower_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
@@ -24,7 +21,6 @@ export const followers = pgTable("followers", {
   ...timestamps,
 });
 
-// relations
 export const usersRelations = relations(users, ({ many }) => ({
   following: many(followers),
   followers: many(followers),

@@ -49,12 +49,18 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async getFiles(id: number): Promise<File[]> {
-    const files = await this.db.query.files.findMany({
-      where: (files) => eq(files.shardId, id),
-    });
+  async getFiles(id: number): Promise<File[] | null> {
+    try {
+      const files = await this.db.query.files.findMany({
+        where: (files) => eq(files.shardId, id),
+      });
+      
+      return files;
+    } catch (error) {
+      logger.debug("Unexpected error", error)
+      return null;
+    }
 
-    return files;
   }
 
   async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
