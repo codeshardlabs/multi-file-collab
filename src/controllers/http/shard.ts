@@ -2,11 +2,14 @@ import type { NextFunction, Request, Response } from "express";
 import { shardRepo } from "../../db";
 import { logger } from "../../services/logger/logger";
 import {
+  FileInput,
   ShardModeType,
   ShardTemplateType,
   ShardTypeType,
 } from "../../interfaces/repositories/shard";
 import { AppError } from "../../errors";
+import { File } from "../../entities/file";
+import { Dependency } from "../../entities/dependency";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -60,8 +63,39 @@ export async function fetchShardById(
   }
 }
 
-export function saveShard(req: Request, res: Response) {
-  // TODO: implement this
+interface SaveShardRequestBody {
+  files: FileInput[],
+  dependencies: Dependency[]
+}
+
+export async function saveShard(req: Request, res: Response, next: NextFunction) {
+  const shardId = req.shard.id;
+  const body = req.body as SaveShardRequestBody;
+  try {
+    const existingFiles = await shardRepo.getFiles(shardId);
+    if(!existingFiles) return next(new AppError(400, "could not find shard by shard id"));
+
+    const alreadyInserted = existingFiles.length !== 0;
+    if(alreadyInserted) {
+     const out =  await shardRepo.updateFiles(shardId, body.files);
+     if(!out) return next(new AppError(500, "could not update files"))
+    }
+    else {
+    const out = await shardRepo.insertFiles(shardId, body.files);
+    if(!out) return next(new AppError(500, "could not insert files"))
+    }
+
+    res.status(200).json({
+      data: {
+        response : "OK"
+      },
+      error: null
+    })
+
+  } catch (error) {
+    logger.error("shardControlller > saveShard()", "error", error, "shardId", shardId);
+    next(new AppError(500, `could not save shard for ${shardId}`));
+  }
 }
 
 export async function likeShard(req: Request, res: Response, next: NextFunction) {

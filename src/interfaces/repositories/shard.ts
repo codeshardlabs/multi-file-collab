@@ -54,9 +54,10 @@ export interface IShardRepository {
   deleteById(id: number): Promise<"OK" | null>;
   findByUserId(id: string): Promise<Shard[] | null>;
   getFiles(id: number): Promise<File[] | null>;
+  updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;
+  insertFiles(id: number, fileInput: FileInput[]) : Promise<"OK" | null> 
   updateLastSyncTimestamp(id: number): Promise<"OK" | null>;
   getAllCollaborativeRooms(userId: string): Promise<Shard[] | null>;
-  updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;
   getShardWithFiles(id: number): Promise<ShardWithFiles | null>;
   patch(patchShardInput: PatchShardInput): Promise<"OK" | null>;
   getComments(id: number) : Promise<Comment[] | null>

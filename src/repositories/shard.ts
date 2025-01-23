@@ -67,6 +67,18 @@ export default class ShardRepository implements IShardRepository {
 
   }
 
+  async insertFiles(id: number, fileInput: FileInput[]): Promise<"OK" | null> {
+    try {
+      await this.db.insert(files).values(fileInput)
+      
+      return "OK";;
+    } catch (error) {
+      logger.debug("Unexpected error", error)
+      return null;
+    }
+
+  }
+
   async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
     //  const roomsDoc = await this.model.find({ mode: "collaboration" });
     try {
