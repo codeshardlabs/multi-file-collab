@@ -1,4 +1,5 @@
 import {
+  CommentInput,
   FileInput,
   IShardRepository,
   PatchShardInput,
@@ -11,6 +12,9 @@ import { ShardDbType } from "../db";
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { files } from "../db/tables/files";
 import { logger } from "../services/logger/logger";
+import { Comment } from "../entities/comment";
+import { likes } from "../db/tables/likes";
+import { comments } from "../db/tables/comments";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
@@ -133,6 +137,75 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
+  async getComments(id: number) : Promise<Comment[] | null> {
+    try {
+     const comments =  await this.db.query.comments.findMany({
+        where: (comments) => eq(comments.shardId, id)
+      });
+      return comments;
+    } catch (error) {
+      logger.error("shardRepository > getComments() error", error, "shardId", id)
+      return null;
+    }
+  }
+
+  async like(shardId: number, userId: string): Promise<"OK" | null> {
+    try {
+      await this.db.insert(likes).values(
+        {
+          shardId: shardId,
+          likedBy: userId,
+        }
+      );
+
+
+      return "OK";
+    } catch (error) {
+      logger.error("shardRepository > like()", "error", error, "shardId", shardId);
+      return null;
+    }
+  }
+
+  async dislike(shardId: number, userId: string): Promise<"OK" | null> {
+    try {
+      await this.db.delete(likes).where(and(
+        eq(likes.shardId, shardId),
+        eq(likes.likedBy, userId)
+      ))
+      
+      return "OK";
+    } catch (error) {
+      logger.error("shardRepository > dislike()", "error", error, "shardId", shardId);
+      return null;
+    }
+  }
+
+  async addComment(commentInput: CommentInput): Promise<"OK" | null> {
+    try {
+      await this.db.insert(comments).values({
+        message: commentInput.message,
+        shardId: commentInput.shardId,
+        userId: commentInput.userId
+      });
+      
+      return "OK";
+    } catch (error) {
+      logger.error("shardRepository > addComment()", "error", error, "shardId", commentInput.shardId);
+      return null;
+    }
+  }
+
+
+  async deleteComment(commentId: number): Promise<"OK" | null> {
+    try {
+      await this.db.delete(comments).where(eq(comments.id, commentId))
+      
+      return "OK";
+    } catch (error) {
+      logger.error("shardRepository > deleteComment()", "error", error, "commentId", commentId);
+      return null;
+    }
+  }
   async patch(patchShardInput: PatchShardInput): Promise<"OK" | null> {
     try {
       // TODO: implement this

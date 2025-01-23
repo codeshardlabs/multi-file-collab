@@ -9,15 +9,16 @@ const shardRouter = Router();
 interface ShardIdParams {
   id: number;
 }
-
-shardRouter.get("/", fetchShards);
-shardRouter.post("/", createShard);
-
+//middleware
 shardRouter.use(
   "/:id",
   paramsValidation<ShardIdParams>,
   populateShardId,
   shardIdRouter,
 );
+// route
+shardRouter.get("/", fetchShards);
+shardRouter.post("/", createShard);
+
 
 export default shardRouter;

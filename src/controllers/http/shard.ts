@@ -64,6 +64,86 @@ export function saveShard(req: Request, res: Response) {
   // TODO: implement this
 }
 
+export async function likeShard(req: Request, res: Response, next: NextFunction) {
+  const shardId = req.shard.id;
+  const userId = req.auth.user.id;
+  try {
+   const out =  await shardRepo.like(shardId, userId);
+   if(!out) return next(new AppError(500, "could not like shard"));
+   res.status(200).json({
+    data: { 
+      response : "OK"
+    },
+    error: null
+   });
+  } catch (error) {
+    logger.debug("shardController > likeShard() error", error, "shardId", shardId);
+    next(new AppError(500, `could not like shard for shard id: ${shardId}`));
+  }}
+
+  export async function dislikeShard(req: Request, res: Response, next: NextFunction) {
+    const shardId = req.shard.id;
+    const userId = req.auth.user.id;
+    try {
+     const out =  await shardRepo.dislike(shardId, userId);
+     if(!out) return next(new AppError(500, "could not dislike shard"));
+     res.status(200).json({
+      data: { 
+        response : "OK"
+      },
+      error: null
+     });
+    } catch (error) {
+      logger.debug("shardController > dislikeShard() error", error, "shardId", shardId);
+      next(new AppError(500, `could not dislike shard for shard id: ${shardId}`));
+    }}
+  
+
+export async function getComments(req: Request, res: Response, next: NextFunction) {
+  const shardId = req.shard.id;
+  try {
+   const comments =  await shardRepo.getComments(shardId);
+   if(!comments) return next(new AppError(500, "could not get comments for shard"));
+   res.status(200).json({
+    data: { 
+      comments
+    },
+    error: null
+   });
+  } catch (error) {
+    logger.debug("shardController > getComments() error", error, "shardId", shardId);
+    next(new AppError(500, `could not get comments for shard id: ${shardId}`));
+  }
+}
+
+interface AddCommentRequestBody {
+  message: string;
+  shardId: number;
+}
+
+export async function addComment(req: Request, res: Response, next: NextFunction) {
+  const body = req.body as AddCommentRequestBody;
+  const userId = req.auth.user.id;
+  try {
+   const out =  await shardRepo.addComment({
+    message: body.message,
+    shardId: body.shardId,
+    userId: userId
+   });
+   if(!out) return next(new AppError(500, "could not add comment to the shard"));
+   res.status(200).json({
+    data: { 
+      response: "OK"
+    },
+    error: null
+   });
+  } catch (error) {
+    logger.debug("shardController > addComment() error", error, "userId", userId);
+    next(new AppError(500, `could not add comment for user id: ${userId}`));
+  }
+}
+
+
 export async function createShard(req: Request, res: Response) {
   const userId = req.auth.user.id;
   const body = req.body as ShardPostRequestBody;

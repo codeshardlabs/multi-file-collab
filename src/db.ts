@@ -3,6 +3,8 @@ import * as dependencySchema from "./db/tables/dependencies";
 import * as fileSchema from "./db/tables/files";
 import * as shardSchema from "./db/tables/shards";
 import * as userSchema from "./db/tables/users";
+import * as commentSchema from "./db/tables/comments";
+import * as likeSchema from "./db/tables/likes";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import ShardRepository from "./repositories/shard";
@@ -18,6 +20,8 @@ export const shardDb = drizzle({
     ...shardSchema,
     ...fileSchema,
     ...dependencySchema,
+    ...commentSchema,
+    ...likeSchema
   },
 });
 

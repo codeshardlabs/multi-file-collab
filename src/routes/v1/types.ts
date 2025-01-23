@@ -17,6 +17,9 @@ declare module "express-serve-static-core" {
     };
     user: {
       id: string;
+    },
+    comment: {
+      id: number;
     }
   }
 }

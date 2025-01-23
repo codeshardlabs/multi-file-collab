@@ -1,3 +1,4 @@
+import { Comment } from "../../entities/comment";
 import { File } from "../../entities/file";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 
@@ -41,6 +42,12 @@ export interface PatchShardInput {
   userId: string;
 }
 
+export interface CommentInput {
+  message: string;
+  userId: string;
+  shardId: number;
+}
+
 export interface IShardRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
   findById(id: number): Promise<Shard | null>;
@@ -52,4 +59,9 @@ export interface IShardRepository {
   updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;
   getShardWithFiles(id: number): Promise<ShardWithFiles | null>;
   patch(patchShardInput: PatchShardInput): Promise<"OK" | null>;
+  getComments(id: number) : Promise<Comment[] | null>
+  like(shardId: number, userId: string) : Promise<"OK" | null>;
+  dislike(shardId: number, userId: string): Promise<"OK" | null>;
+  addComment(commentInput: CommentInput): Promise<"OK" | null>
+  deleteComment(commentId: number) : Promise<"OK" | null>
 }
