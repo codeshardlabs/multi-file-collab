@@ -10,3 +10,5 @@ interface CommentIdParams {
     id: number;
 }
 commentRouter.delete("/:id", paramsValidation<CommentIdParams>, populateCommentId, deleteComment);
+
+export default commentRouter;
