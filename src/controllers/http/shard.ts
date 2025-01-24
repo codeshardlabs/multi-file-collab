@@ -8,10 +8,10 @@ import {
   ShardTypeType,
 } from "../../interfaces/repositories/db/shard";
 import { AppError } from "../../errors";
-import { File } from "../../entities/file";
 import { Dependency } from "../../entities/dependency";
 import { Shard } from "../../entities/shard";
 import { redisRepo } from "../../repositories/cache/redis";
+import { Comment } from "../../entities/comment";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -148,9 +148,18 @@ export async function likeShard(req: Request, res: Response, next: NextFunction)
 
 export async function getComments(req: Request, res: Response, next: NextFunction) {
   const shardId = req.shard.id;
+  let comments : Comment[];
   try {
-   const comments =  await shardRepo.getComments(shardId);
-   if(!comments) return next(new AppError(500, "could not get comments for shard"));
+    let cachedComments = await redisRepo.getComments(shardId);
+    if(!cachedComments) {
+      const dbComments =  await shardRepo.getComments(shardId);
+      if(!dbComments) return next(new AppError(500, "could not get comments for shard"));
+      comments = dbComments;
+      await redisRepo.saveComments(shardId, dbComments);
+    }
+    else {
+      comments = cachedComments;
+    }
    res.status(200).json({
     data: { 
       comments
@@ -172,12 +181,21 @@ export async function addComment(req: Request, res: Response, next: NextFunction
   const body = req.body as AddCommentRequestBody;
   const userId = req.auth.user.id;
   try {
-   const out =  await shardRepo.addComment({
-    message: body.message,
-    shardId: body.shardId,
-    userId: userId
-   });
+    let commentInput = {
+      message: body.message,
+      shardId: body.shardId,
+      userId: userId
+     };
+
+     
+   const out =  await shardRepo.addComment(commentInput);
    if(!out) return next(new AppError(500, "could not add comment to the shard"));
+   else {
+    let out = await redisRepo.addComment(body.shardId, commentInput);
+    if(!out) {
+      logger.warn("could not add new comment to the cache", "ShardId", body.shardId)
+    }
+   }
    res.status(200).json({
     data: { 
       response: "OK"
@@ -191,19 +209,34 @@ export async function addComment(req: Request, res: Response, next: NextFunction
 }
 
 
-export async function createShard(req: Request, res: Response) {
+export async function createShard(req: Request, res: Response, next: NextFunction) {
   const userId = req.auth.user.id;
   const body = req.body as ShardPostRequestBody;
   // TODO: add validation
   try {
-    await shardRepo.create({
+    const shard = await shardRepo.create({
       title: "Untitled",
       userId: userId,
       templateType: body.templateType,
       mode: body.mode,
       type: body.type,
     });
-  } catch (error) {}
+
+    if(!shard) {
+      return next(new AppError(500, "could not create shard"));
+    }
+
+    res.status(200).json({
+      data: {
+        shard: shard
+      },
+      error: null
+    })
+  } catch (error) {
+    logger.error("createShard error", error);
+    next(new AppError(500, "could not create shard"));
+
+  }
 }
 
 export async function updateShard(

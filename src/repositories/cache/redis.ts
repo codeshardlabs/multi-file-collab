@@ -1,8 +1,11 @@
+import { Comment } from "../../entities/comment";
+import { File } from "../../entities/file";
 import { Shard, ShardWithFiles } from "../../entities/shard";
-import { User } from "../../entities/user";
 import { IRedisRepository } from "../../interfaces/repositories/cache/redis";
+import { CommentInput } from "../../interfaces/repositories/db/shard";
 import { UserWithFollowersAndFollowering } from "../../interfaces/repositories/db/user";
 import { IKVService } from "../../interfaces/services/redis";
+import { logger } from "../../services/logger/logger";
 import { kvStore } from "../../services/redis/kvStore";
 
 
@@ -55,7 +58,34 @@ class RedisRepository implements IRedisRepository {
         const key = this.getShardKey(id);
        const res =  await this.cache.get(key);
        if(!res) return null;
-       return JSON.parse(res) as ShardWithFiles;
+
+       const shard = JSON.parse(res) as ShardWithFiles;
+       if(shard.mode === "collaboration") {
+           const shardWithFilesKeyPattern = `${key}:file:*`;
+           const keys = await this.cache.keys(shardWithFilesKeyPattern);
+           let files : File[] = [];
+           const pipeline = this.cache.pipeline();
+           for(let key of keys) {
+                pipeline.get(key);
+           }
+
+          const res =  await pipeline.exec();
+          if(!res) {
+              logger.warn("redisRepository > getShardWithFiles() pipeline execution error")
+              return null;
+          }
+            for(let record of res!) {
+                if(record[0] !== null) {
+                    logger.warn("redisRepository > getShardWithFiles() error", record[0]);
+                    return null;
+                }
+                let temp = record[1] as string;
+                let file = JSON.parse(temp) as File;
+                files.push(file);
+            }
+           shard.files = files;
+        }
+       return shard;
     }
 
     async saveShardWithFiles(id: number, shard: ShardWithFiles): Promise<"OK" | null> {
@@ -63,14 +93,63 @@ class RedisRepository implements IRedisRepository {
         return await this.cache.set(key, JSON.stringify(shard), this.defaultTTL);
     }
 
+    async getComments(id: number): Promise<Comment[] | null> {
+        const key = this.getShardCommentsKey(id);
+        const res = await this.cache.get(key);
+        if(!res) return null;
+        return JSON.parse(res) as Comment[];
+    }
+
+    async saveComments(id: number, comments: Comment[]): Promise<"OK" | null> {
+        const key = this.getShardCommentsKey(id);
+        return await this.cache.set(key, JSON.stringify(comments), this.ttl);
+    }
+
+    async addComment(shardId: number, commentInput: CommentInput): Promise<"OK" | null> {
+         const comments =  await this.getComments(shardId);
+         await this.deleteAllComments(shardId);
+           if(!comments) {
+            logger.warn("could not get comments", "shardId", shardId);
+            return null;
+           }
+            comments.push(commentInput as Comment);
+            return await redisRepo.saveComments(shardId, comments);
+    }
+
+    async deleteAllComments(shardId: number) : Promise<number> {
+        return await this.cache.del(this.getShardCommentsKey(shardId));
+    }
+
+    async deleteComment(shardId: number, commentId: number): Promise<"OK" | null> {
+    const comments =  await this.getComments(shardId);
+    await this.cache.del(this.getShardCommentsKey(shardId));
+    if(!comments) return null;
+    // Reference: https://stackoverflow.com/a/5767357
+    const index = comments.findIndex((comment) => comment.id === commentId);
+    if (index !== -1) { 
+        comments.splice(index, 1); 
+        return await this.saveComments(shardId, comments);
+     }
+
+     return "OK";
+    }
+
     private getUserKey(userId: string) : string {
         return `user:${userId}`;
+    }
+
+    private getShardCommentsKey(shardId: number) : string {
+        let shardKey = this.getShardKey(shardId);
+        return `${shardKey}:comments`;
     }
 
     private getShardKey(shardId: number) : string {
         return `shard:${shardId}`;
     }
 
+    private getFileKey(fileId: number) : string {
+        return `file:${fileId}`;
+    }
    
 
 }

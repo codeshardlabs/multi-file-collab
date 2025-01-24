@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
 import { shardRepo } from "../../db";
-import { kvStore } from "../../services/redis/kvStore";
 import { AppError } from "../../errors";
-import { Shard } from "../../entities/shard";
+import { Shard, ShardWithFiles } from "../../entities/shard";
 import { redisRepo } from "../../repositories/cache/redis";
+import { FileInput } from "../../interfaces/repositories/db/shard";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -12,54 +12,43 @@ export async function fetchLatestRoomFilesState(
   next: NextFunction,
 ) {
   const id = req.shard.id;
-  let shard = await shardRepo.getShardWithFiles(id);
-  if (!shard) {
-    next(new AppError(500, "Could not find resource by room ID"));
-  }
-
-  let pattern = `editor:${id}:*:pending`;
-  const keys = await kvStore.keys(pattern);
-  if (keys.length == 0) {
-    // cache not populated
-    // room found
-    res.status(200).json({
-      error: null,
-      data: {
-        source: "db",
-        shard: shard,
-      },
-    });
-    return;
-  } else {
-    let files = [];
-    for (let key of keys) {
-      // TODO: optimize the asynchronous code
-      logger.debug("fetchLatestRoomFilesState(): key", {
-        key: key,
-      });
-      const record = await kvStore.hgetall(key);
-      let temp = key;
-      let keyParts = temp.split(":");
-      if (record) {
-        files.push({
-          code: record.code,
-          name: keyParts[2],
-        });
-      } else {
-        return next(new AppError(500, "could not find value from redis key"));
+  let shard : ShardWithFiles;
+  try {
+    let cachedShard = await redisRepo.getShardWithFiles(id);
+    if(!cachedShard) {
+      let dbShard = await shardRepo.getShardWithFiles(id);
+      if (!dbShard) {
+        return next(new AppError(500, "Could not find resource by room ID"));
+      }
+      shard = dbShard;
+      let out = await redisRepo.saveShardWithFiles(id, dbShard);
+      if(!out) {
+        logger.warn("could not save shard with files to cache", "shardId", id)
       }
     }
+    else {
+      shard = cachedShard;
+      let out = await shardRepo.updateFiles(id, shard.files as FileInput[]);
+      if(!out) {
+        logger.warn("could not save updated files to db", "shardId", id)
+      }
+    }
+    
 
-    await shardRepo.updateFiles(id, files);
     res.status(200).json({
-      error: null,
       data: {
-        source: "cache",
-        id: id,
+        shard
       },
-    });
-    return;
+      error: null
+    })
+  } catch (error) {
+    logger.error("fetchLatestRoomFilesState() route error", error);
+    return next(new AppError(500, "could not fetch room files latest state info."));
   }
+
+   
+
+   
 }
 
 export async function fetchAllRooms(

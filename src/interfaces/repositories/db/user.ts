@@ -1,3 +1,4 @@
+import { IRepository } from "..";
 import { Follower } from "../../../entities/follower";
 import { User } from "../../../entities/user";
 
@@ -10,7 +11,7 @@ export interface UserWithFollowersAndFollowering extends User {
   following: Follower[],
 }
 
-export interface IUserRepository {
+export interface IUserRepository extends IRepository {
   findById: (id: string) => Promise<User | null>;
   onboard: (userInput: UserInput) => Promise<User | null>;
   findByIdWithFollowersList(id: string): Promise<UserWithFollowersAndFollowering | null>;

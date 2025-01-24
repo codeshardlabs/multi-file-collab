@@ -1,3 +1,4 @@
+import { IRepository } from "..";
 import { Comment } from "../../../entities/comment";
 import { File } from "../../../entities/file";
 import { Shard, ShardWithFiles } from "../../../entities/shard";
@@ -48,7 +49,7 @@ export interface CommentInput {
   shardId: number;
 }
 
-export interface IShardRepository {
+export interface IShardRepository extends IRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
   findById(id: number): Promise<Shard | null>;
   deleteById(id: number): Promise<"OK" | null>;

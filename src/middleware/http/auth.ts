@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { errorMessage, errors } from "../../config";
 import { userRepo } from "../../db";
+import { AppError } from "../../errors";
 
 export async function authMiddleware(
   req: Request,
@@ -10,48 +11,18 @@ export async function authMiddleware(
   const token = req.headers["authorization"];
 
   if (!token) {
-    res.json({
-      data: null,
-      error: {
-        message: errorMessage.get(errors.TOKEN_NOT_FOUND),
-      },
-      status: {
-        code: 400,
-        message: "Not Found",
-      },
-    });
-    return;
+    return next(new AppError(400, errorMessage.get(errors.TOKEN_NOT_FOUND)!));
   }
 
   let parts = token.split(" ");
   let creator = parts[1];
   if (!creator) {
-    res.json({
-      data: null,
-      error: {
-        message: errorMessage.get(errors.USER_NOT_FOUND),
-      },
-      status: {
-        code: 400,
-        message: "Not Found",
-      },
-    });
-    return;
+    return next(new AppError(400, errorMessage.get(errors.USER_NOT_FOUND)!));
   }
 
   const user = await userRepo.findById(creator);
   if (!user) {
-    res.json({
-      data: null,
-      error: {
-        message: errorMessage.get(errors.USER_NOT_FOUND),
-      },
-      status: {
-        code: 400,
-        message: "Not Found",
-      },
-    });
-    return;
+    return next(new AppError(400, errorMessage.get(errors.USER_NOT_FOUND)!));
   }
 
   req.auth.user = user;

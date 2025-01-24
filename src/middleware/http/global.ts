@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
+import { errorMessage, errors } from "../../config";
 
 export function errorHandler(
   err: Error,
@@ -24,7 +25,7 @@ export function errorHandler(
       message: "Internal Server Error",
     },
   });
-  return;
+
 }
 
 export function paramsValidation<T>(
