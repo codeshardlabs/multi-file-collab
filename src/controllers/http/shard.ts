@@ -6,10 +6,12 @@ import {
   ShardModeType,
   ShardTemplateType,
   ShardTypeType,
-} from "../../interfaces/repositories/shard";
+} from "../../interfaces/repositories/db/shard";
 import { AppError } from "../../errors";
 import { File } from "../../entities/file";
 import { Dependency } from "../../entities/dependency";
+import { Shard } from "../../entities/shard";
+import { redisRepo } from "../../repositories/cache/redis";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -23,13 +25,24 @@ export async function fetchShards(
   next: NextFunction,
 ) {
   const userId = req.auth.user.id;
+  let shards : Shard[];
 
   try {
-    const shards = await shardRepo.findByUserId(userId);
-    if (!shards) {
-      return next(new AppError(500, "could not fetch shards by user id"));
+    let cachedShards = await redisRepo.findShardsByUserId(userId);
+    if(!cachedShards) {
+      const dbShards = await shardRepo.findByUserId(userId);
+      if (!dbShards) {
+        return next(new AppError(500, "could not fetch shards by user id"));
+      }
+      shards = dbShards;
+      const out = await redisRepo.saveShardsByUserId(userId, dbShards);
+      if(!out) {
+        logger.warn("could not save shards by user id to cache", "userId", userId)
+      }
     }
-
+     else {
+      shards = cachedShards;
+     }
     res.status(200).json({
       data: {
         shards: shards,

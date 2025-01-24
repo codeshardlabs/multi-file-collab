@@ -7,8 +7,8 @@ import * as commentSchema from "./db/tables/comments";
 import * as likeSchema from "./db/tables/likes";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import ShardRepository from "./repositories/shard";
-import UserRepository from "./repositories/user";
+import ShardRepository from "./repositories/db/shard";
+import UserRepository from "./repositories/db/user";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

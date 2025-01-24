@@ -1,6 +1,6 @@
-import { Comment } from "../../entities/comment";
-import { File } from "../../entities/file";
-import { Shard, ShardWithFiles } from "../../entities/shard";
+import { Comment } from "../../../entities/comment";
+import { File } from "../../../entities/file";
+import { Shard, ShardWithFiles } from "../../../entities/shard";
 
 export interface FileInput {
   code: string;

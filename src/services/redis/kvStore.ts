@@ -1,8 +1,9 @@
 import Redis, { Callback, ChainableCommander, RedisKey } from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
+import { IKVService } from "../../interfaces/services/redis";
 
-export class KVService {
+export class KVService implements IKVService {
   private client: Redis;
   constructor() {
     const redisManager = RedisManager.getInstance();
@@ -104,6 +105,10 @@ export class KVService {
   ): Promise<string | null> {
     return await this.client.hget(key, field, cb);
   }
+
+  
+
+
 }
 
 export const kvStore = new KVService();

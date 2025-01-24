@@ -4,17 +4,17 @@ import {
   IShardRepository,
   PatchShardInput,
   ShardInput,
-} from "../interfaces/repositories/shard";
-import { File } from "../entities/file";
-import { Shard, ShardWithFiles } from "../entities/shard";
-import { shards } from "../db/tables/shards";
-import { ShardDbType } from "../db";
+} from "../../interfaces/repositories/db/shard";
+import { File } from "../../entities/file";
+import { Shard, ShardWithFiles } from "../../entities/shard";
+import { shards } from "../../db/tables/shards";
+import { ShardDbType } from "../../db";
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
-import { files } from "../db/tables/files";
-import { logger } from "../services/logger/logger";
-import { Comment } from "../entities/comment";
-import { likes } from "../db/tables/likes";
-import { comments } from "../db/tables/comments";
+import { files } from "../../db/tables/files";
+import { logger } from "../../services/logger/logger";
+import { Comment } from "../../entities/comment";
+import { likes } from "../../db/tables/likes";
+import { comments } from "../../db/tables/comments";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;

@@ -1,5 +1,5 @@
-import { Follower } from "../../entities/follower";
-import { User } from "../../entities/user";
+import { Follower } from "../../../entities/follower";
+import { User } from "../../../entities/user";
 
 export interface UserInput {
   id: string;

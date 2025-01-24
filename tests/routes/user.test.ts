@@ -11,7 +11,6 @@ describe("/users Router", () => {
 
   describe("/users POST saveUserMetadata", () => {
     // public route
-   
   })
 
   describe("/users/{id} GET getUserInfo", () => {

@@ -3,6 +3,8 @@ import { logger } from "../../services/logger/logger";
 import { shardRepo } from "../../db";
 import { kvStore } from "../../services/redis/kvStore";
 import { AppError } from "../../errors";
+import { Shard } from "../../entities/shard";
+import { redisRepo } from "../../repositories/cache/redis";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -66,10 +68,22 @@ export async function fetchAllRooms(
   next: NextFunction,
 ) {
   const userId = req.auth.user.id;
+  let rooms : Shard[];
   try {
-    const rooms = await shardRepo.getAllCollaborativeRooms(userId);
-    if (!rooms) {
-      return next(new AppError(500, "could not fetch rooms"));
+    let cachedRooms = await redisRepo.getAllCollaborativeRooms(userId);
+    if(!cachedRooms) {
+      const dbRooms = await shardRepo.getAllCollaborativeRooms(userId);
+      if (!dbRooms) {
+        return next(new AppError(500, "could not fetch rooms"));
+      }
+      rooms = dbRooms;
+      let out = await redisRepo.saveAllCollaborativeRooms(userId, dbRooms);
+      if(!out) {
+        logger.warn("could not save collaborative rooms in shard", "userId", userId);
+      }
+    }
+    else {
+      rooms = cachedRooms;
     }
 
     res.status(200).json({

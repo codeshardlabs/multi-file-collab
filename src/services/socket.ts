@@ -2,13 +2,13 @@ import { Server } from "socket.io";
 import { pubsub, PubSubService } from "./redis/pubsub";
 import { KVService, kvStore } from "./redis/kvStore";
 import { EditorStateManager } from "./redis/editorStateManager";
-import { IShardRepository } from "../interfaces/repositories/shard";
+import { IShardRepository } from "../interfaces/repositories/db/shard";
 import {
   joinRoom,
   propagateRealtimeCodeUpdates,
   propagateVisibleFiles,
 } from "../controllers/ws/room";
-import { IUserRepository } from "../interfaces/repositories/user";
+import { IUserRepository } from "../interfaces/repositories/db/user";
 import { fetchUserFromToken } from "../middleware/ws/room";
 import { env } from "../config";
 import { logger } from "./logger/logger";

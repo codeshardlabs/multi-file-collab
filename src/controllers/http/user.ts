@@ -2,6 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import { userRepo } from "../../db";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
+import { redisRepo } from "../../repositories/cache/redis";
+import { User } from "../../entities/user";
+import { UserWithFollowersAndFollowering } from "../../interfaces/repositories/db/user";
 
  interface UserPostRequestBody {
   id: string;
@@ -32,10 +35,22 @@ export async function saveUserMetadata(
 }
 
 export async function getUserInfo(req: Request, res: Response, next: NextFunction) {
+  let user: UserWithFollowersAndFollowering;
   try {
     const id = req.user.id;
-    const user = await userRepo.findByIdWithFollowersList(id);
-    if(!user) return next(new AppError(400, `user with user id ${id} not found`))
+    const cachedUser = await redisRepo.getUserInfo(id);
+    if(!cachedUser) {
+       const dbUser = await userRepo.findByIdWithFollowersList(id);
+      if(!dbUser) return next(new AppError(400, `user with user id ${id} not found`))
+        user = dbUser;
+      const out = await redisRepo.saveUserInfo(dbUser);
+      if(!out) {
+        logger.warn("could save user info to cache")
+      }
+    }
+  else {
+    user = cachedUser;
+  }
     res.status(200).json({
   data: {
     user
