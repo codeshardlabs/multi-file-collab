@@ -2,11 +2,12 @@ import { Pool } from "pg";
 import ShardRepository from "../../src/repositories/shard";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { ShardDbType } from "../../src/db";
+import { shardDb, ShardDbType } from "../../src/db";
 import * as dependencySchema from "../../src/db/tables/dependencies";
 import * as fileSchema from "../../src/db/tables/files";
 import * as shardSchema from "../../src/db/tables/shards";
 import * as userSchema from "../../src/db/tables/users";
+import * as likeSchema from "../../src/db/tables/likes";
 import { sql } from "drizzle-orm";
 
 describe("Shard Repository", () => {
@@ -29,14 +30,7 @@ describe("Shard Repository", () => {
     });
 
     // Initialize Drizzle
-    db = drizzle(client, {
-      schema: {
-        ...shardSchema,
-        ...fileSchema,
-        ...dependencySchema,
-        ...userSchema,
-      },
-    });
+    db = shardDb;
 
     // create enums
     await db.transaction(async (tx) => {
@@ -92,7 +86,7 @@ describe("Shard Repository", () => {
   }, 30000);
 
   beforeEach(async () => {
-    shardRepo = new ShardRepository(db, shardSchema.shards, fileSchema.files);
+    shardRepo = new ShardRepository(db);
   });
 
   describe("create()", () => {
@@ -217,7 +211,7 @@ describe("Shard Repository", () => {
 
     it("should return null for non-existent shard", async () => {
       const files = await shardRepo.getFiles(33333);
-      expect(files.length).toBe(0);
+      expect(files!.length).toBe(0);
     });
   });
 
@@ -277,8 +271,8 @@ describe("Shard Repository", () => {
       expect(newShard).not.toBeNull();
       expect(newShard?.length).toBe(1);
 
-      const rooms = await shardRepo.getAllCollaborativeRooms();
-      for (let room of rooms) {
+      const rooms = await shardRepo.getAllCollaborativeRooms(user[0].id);
+      for (let room of rooms!) {
         expect(room.mode).toBe("collaboration");
       }
       await db.execute(
@@ -325,13 +319,13 @@ describe("Shard Repository", () => {
 
       expect(res).toBe("OK");
       const updatedFile = await shardRepo.getFiles(newShard?.at(0)?.id!);
-      expect(file[0].code).not.toBe(updatedFile[0].code);
+      expect(file[0].code).not.toBe(updatedFile![0].code);
 
       await db.execute(
         sql`DELETE FROM shards WHERE id = ${newShard?.at(0)?.id!}`,
       );
       await db.execute(sql`DELETE FROM users WHERE id = ${user[0].id}`);
-      await db.execute(sql`DELETE FROM files WHERE id = ${updatedFile[0].id}`);
+      await db.execute(sql`DELETE FROM files WHERE id = ${updatedFile![0].id}`);
     });
   });
 

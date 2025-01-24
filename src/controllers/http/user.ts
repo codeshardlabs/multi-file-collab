@@ -35,6 +35,13 @@ export async function getUserInfo(req: Request, res: Response, next: NextFunctio
   try {
     const id = req.user.id;
     const user = await userRepo.findByIdWithFollowersList(id);
+    if(!user) return next(new AppError(400, `user with user id ${id} not found`))
+    res.status(200).json({
+  data: {
+    user
+  },
+  error: null
+  })
   } catch (error) {
     logger.debug("userController > getUserInfo() error", error);
     next(new AppError(500, "could not get user info"));
