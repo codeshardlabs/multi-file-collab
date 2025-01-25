@@ -192,15 +192,15 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async addComment(commentInput: CommentInput): Promise<"OK" | null> {
+  async addComment(commentInput: CommentInput): Promise<Comment | null> {
     try {
-      await this.db.insert(comments).values({
+      const out = await this.db.insert(comments).values({
         message: commentInput.message,
         shardId: commentInput.shardId,
         userId: commentInput.userId
-      });
+      }).returning();
       
-      return "OK";
+      return out[0];
     } catch (error) {
       logger.error("shardRepository > addComment()", "error", error, "shardId", commentInput.shardId);
       return null;

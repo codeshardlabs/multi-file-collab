@@ -2,7 +2,7 @@ import { Comment } from "../../entities/comment";
 import { File } from "../../entities/file";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 import { IRedisRepository } from "../../interfaces/repositories/cache/redis";
-import { CommentInput } from "../../interfaces/repositories/db/shard";
+import { CommentInput, PatchShardInput } from "../../interfaces/repositories/db/shard";
 import { UserWithFollowersAndFollowering } from "../../interfaces/repositories/db/user";
 import { IKVService } from "../../interfaces/services/redis";
 import { logger } from "../../services/logger/logger";
@@ -105,7 +105,7 @@ class RedisRepository implements IRedisRepository {
         return await this.cache.set(key, JSON.stringify(comments), this.ttl);
     }
 
-    async addComment(shardId: number, commentInput: CommentInput): Promise<"OK" | null> {
+    async addComment(shardId: number, commentInput: CommentInput): Promise<Comment | null> {
          const comments =  await this.getComments(shardId);
          await this.deleteAllComments(shardId);
            if(!comments) {
@@ -113,7 +113,9 @@ class RedisRepository implements IRedisRepository {
             return null;
            }
             comments.push(commentInput as Comment);
-            return await redisRepo.saveComments(shardId, comments);
+            let out =  await redisRepo.saveComments(shardId, comments);
+            if(!out) return null;
+            return commentInput as Comment;
     }
 
     async deleteAllComments(shardId: number) : Promise<number> {
@@ -134,6 +136,23 @@ class RedisRepository implements IRedisRepository {
      return "OK";
     }
 
+     async patchShard(shardId: number, patchShardInput: PatchShardInput): Promise<"OK" | null> {
+        try {
+        
+          let key = this.getShardKey(shardId);
+          const out = await this.cache.get(key);
+          if(!out) return null;
+          let shard = JSON.parse(out) as ShardWithFiles;
+          await this.cache.del(key);
+          shard.type = patchShardInput.type;
+          if(patchShardInput.title) shard.title = patchShardInput.title;
+          return await this.saveShardWithFiles(shardId, shard);
+        } catch (error) {
+          logger.error("redis repository patchShard error", error);
+          return null;
+        }
+      }
+
     private getUserKey(userId: string) : string {
         return `user:${userId}`;
     }
@@ -147,9 +166,7 @@ class RedisRepository implements IRedisRepository {
         return `shard:${shardId}`;
     }
 
-    private getFileKey(fileId: number) : string {
-        return `file:${fileId}`;
-    }
+   
    
 
 }

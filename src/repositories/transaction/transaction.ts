@@ -1,12 +1,16 @@
+import { Comment } from "../../entities/comment";
 import { logger } from "../../services/logger/logger";
+import { isOfType } from "../../utils";
 
 type funcType<T> = (...args: any[]) => Promise<T>;
-
 
 interface TransactionOperation<T, U> {
   execute: funcType<T>;
   rollback: funcType<U>;
   done: boolean;
+  out: unknown | null;
+  execType: T,
+  rbType: U
 }
 
 class Transaction {
@@ -23,7 +27,10 @@ class Transaction {
     this.operations.push({
       execute,
       rollback,
-      done: false
+      done: false,
+      out: null,
+      execType: {} as T,
+      rbType: {} as U
     });
     return this;
   }
@@ -35,12 +42,18 @@ class Transaction {
       for (const op of this.operations) {
         try {
           
-          await op.execute();
+          const out = await op.execute();
+          if(!out) {
+            throw new Error("could not execute operation of Tx")
+          }
           executedOps.push(op);
           op.done = true;
         } catch (error) {
           op.done = false;
-          logger.error("could not execute transaction operation");
+          logger.error("could not execute transaction operation", {
+            error: error,
+            operationType: op.execType
+          });
           throw error;
         }
       }
@@ -50,6 +63,9 @@ class Transaction {
       for (const op of executedOps.reverse()) {
         try {
           if(op.done) {
+            if (isOfType<Comment>(op.out, ['id', 'message', 'shardId', 'userId'])) {
+              await op.rollback(op.out.id);
+            }
             await op.rollback();
           }
         } catch (rollbackError) {
@@ -62,6 +78,8 @@ class Transaction {
       throw error;
     }
   }
+
+  
 }
 
 export { Transaction, TransactionOperation };

@@ -9,9 +9,10 @@ import {
 } from "../../interfaces/repositories/db/shard";
 import { AppError } from "../../errors";
 import { Dependency } from "../../entities/dependency";
-import { Shard } from "../../entities/shard";
+import { Shard, ShardWithFiles } from "../../entities/shard";
 import { redisRepo } from "../../repositories/cache/redis";
 import { Comment } from "../../entities/comment";
+import { txRepo } from "../../repositories/transaction";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -61,9 +62,18 @@ export async function fetchShardById(
   next: NextFunction,
 ) {
   const id = req.shard.id;
+  let shard : ShardWithFiles;
   try {
-    const shard = await shardRepo.getShardWithFiles(id);
-    if (!shard) return next(new AppError(400, "id does not exist"));
+    let cachedShard = await redisRepo.getShardWithFiles(id);
+    if(!cachedShard) {
+      const dbShard = await shardRepo.getShardWithFiles(id);
+      if (!dbShard) return next(new AppError(400, "id does not exist"));
+      shard = dbShard;
+      await redisRepo.saveShardWithFiles(id, dbShard);
+    }
+    else {
+      shard = cachedShard;
+    }
     res.status(200).json({
       error: null,
       data: {
@@ -187,15 +197,7 @@ export async function addComment(req: Request, res: Response, next: NextFunction
       userId: userId
      };
 
-     
-   const out =  await shardRepo.addComment(commentInput);
-   if(!out) return next(new AppError(500, "could not add comment to the shard"));
-   else {
-    let out = await redisRepo.addComment(body.shardId, commentInput);
-    if(!out) {
-      logger.warn("could not add new comment to the cache", "ShardId", body.shardId)
-    }
-   }
+     await txRepo.addComment(commentInput);
    res.status(200).json({
     data: { 
       response: "OK"
@@ -245,16 +247,16 @@ export async function updateShard(
   next: NextFunction,
 ) {
   const userId = req.auth.user.id;
+  const shardId = req.shard.id; 
   const query = req.query;
   const type = query.type ? (query.type as ShardTypeType) : "public";
   const title = query.title ? (query.title as string) : "";
   try {
-    const out = await shardRepo.patch({
-      type: type,
-      userId: userId,
-      title: title,
-    });
-    if (!out) next(new AppError(500, "could not patch shard"));
+    await txRepo.updateShard(shardId, {
+      type: type, 
+      title: title, 
+      userId: userId
+    })
 
     res.status(200).json({
       error: null,

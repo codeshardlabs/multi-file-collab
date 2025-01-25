@@ -64,6 +64,6 @@ export interface IShardRepository extends IRepository {
   getComments(id: number) : Promise<Comment[] | null>
   like(shardId: number, userId: string) : Promise<"OK" | null>;
   dislike(shardId: number, userId: string): Promise<"OK" | null>;
-  addComment(commentInput: CommentInput): Promise<"OK" | null>
+  addComment(commentInput: CommentInput): Promise<Comment | null>
   deleteComment(commentId: number) : Promise<"OK" | null>
 }
