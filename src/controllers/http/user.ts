@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { userRepo } from "../../db";
+import { userDb, userRepo } from "../../db";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
 import { redisRepo } from "../../repositories/cache/redis";
 import { User } from "../../entities/user";
 import { UserWithFollowersAndFollowering } from "../../interfaces/repositories/db/user";
+import { and, eq } from "drizzle-orm";
 
  interface UserPostRequestBody {
   id: string;
@@ -69,6 +70,16 @@ export async function followUser(req: Request, res: Response, next: NextFunction
   try {
    const out = await userRepo.follow(followerId, followingId);
    if(!out) return next(new AppError(500, `${followerId} could not follow ${followingId}`));
+   else {
+    const followingUserInfo = await userDb.query.followers.findFirst({
+      where: (followers) => and(
+        eq(followers.followerId, followerId),
+        eq(followers.followingId, followingId)
+      )
+    });
+    let out = await redisRepo.followUser(followerId, followingUserInfo!);
+    if(!out) logger.warn("could could follow user in the cache")
+   }
 res.status(200).json({
 error: null,
 data: {

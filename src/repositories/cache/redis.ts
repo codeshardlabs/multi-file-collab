@@ -1,5 +1,6 @@
 import { Comment } from "../../entities/comment";
 import { File } from "../../entities/file";
+import { Follower } from "../../entities/follower";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 import { IRedisRepository } from "../../interfaces/repositories/cache/redis";
 import { CommentInput, PatchShardInput } from "../../interfaces/repositories/db/shard";
@@ -12,7 +13,7 @@ import { kvStore } from "../../services/redis/kvStore";
 
 class RedisRepository implements IRedisRepository {
     private cache : IKVService;
-    private defaultTTL : number = 60000; // 1minute
+    private defaultTTL : number = 5000; // 5s
     private ttl: number;
     constructor(_cache: IKVService, ttl?: number) {
         this.cache = _cache;
@@ -159,6 +160,14 @@ class RedisRepository implements IRedisRepository {
           logger.error("redis repository patchShard error", error);
           return null;
         }
+      }
+
+      async followUser(followerId: string, followingUser: Follower): Promise<"OK" | null> {
+       const user =  await this.getUserInfo(followerId);
+       if(!user) return null;
+       
+       user.following.push(followingUser);
+       return await this.saveUserInfo(user);
       }
 
     private getUserKey(userId: string) : string {

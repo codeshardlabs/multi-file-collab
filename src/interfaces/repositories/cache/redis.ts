@@ -18,4 +18,5 @@ export interface IRedisRepository extends IRepository {
     deleteComment(shardId: number, commentId: number): Promise<"OK" | null>
     addComment(shardId: number, commentInput: CommentInput): Promise<Comment | null>
     deleteAllComments(shardId: number) : Promise<number>
+    addShard(userId: string, shard: Shard) : Promise<"OK" | null>
 }
