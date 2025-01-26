@@ -13,7 +13,7 @@ import { kvStore } from "../../services/redis/kvStore";
 
 class RedisRepository implements IRedisRepository {
     private cache : IKVService;
-    private defaultTTL : number = 5000; // 5s
+    private defaultTTL : number = 3000; // 3s
     private ttl: number;
     constructor(_cache: IKVService, ttl?: number) {
         this.cache = _cache;
@@ -116,7 +116,6 @@ class RedisRepository implements IRedisRepository {
 
     async addComment(shardId: number, commentInput: CommentInput): Promise<Comment | null> {
          const comments =  await this.getComments(shardId);
-         await this.deleteAllComments(shardId);
            if(!comments) {
             logger.warn("could not get comments", "shardId", shardId);
             return null;
@@ -133,7 +132,6 @@ class RedisRepository implements IRedisRepository {
 
     async deleteComment(shardId: number, commentId: number): Promise<"OK" | null> {
     const comments =  await this.getComments(shardId);
-    await this.cache.del(this.getShardCommentsKey(shardId));
     if(!comments) return null;
     // Reference: https://stackoverflow.com/a/5767357
     const index = comments.findIndex((comment) => comment.id === commentId);
@@ -152,7 +150,6 @@ class RedisRepository implements IRedisRepository {
           const out = await this.cache.get(key);
           if(!out) return null;
           let shard = JSON.parse(out) as ShardWithFiles;
-          await this.cache.del(key);
           shard.type = patchShardInput.type;
           if(patchShardInput.title) shard.title = patchShardInput.title;
           return await this.saveShardWithFiles(shardId, shard);
@@ -160,6 +157,20 @@ class RedisRepository implements IRedisRepository {
           logger.error("redis repository patchShard error", error);
           return null;
         }
+      }
+
+      async deleteShard(shardId: number): Promise<"OK" | null> {
+          let key = this.getShardKey(shardId);
+          let num = await this.cache.del(key);
+          if(num === 0) {
+           logger.error("could not delete shard", {
+            source: "cache",
+            key: key,
+            shardId: shardId
+           })
+            return null;
+          }
+          return "OK";
       }
 
       async followUser(followerId: string, followingUser: Follower): Promise<"OK" | null> {

@@ -1,14 +1,14 @@
 import { commentRepo, shardRepo, userRepo } from "../../db";
 import { Comment } from "../../entities/comment";
+import { Shard, ShardWithFiles } from "../../entities/shard";
 import { AppError } from "../../errors";
 import { IRepository } from "../../interfaces/repositories";
 import { ICommentRepository } from "../../interfaces/repositories/db/comment";
-import { CommentInput, PatchShardInput } from "../../interfaces/repositories/db/shard";
+import { CommentInput, PatchShardInput, ShardInput } from "../../interfaces/repositories/db/shard";
 import { redisRepo } from "../cache/redis";
 import { Transaction } from "./transaction";
 
-      type deleteCommentPromiseAwaitedType = "OK" | null;
-      type addCommentPromiseAwaitedType = Comment | null;
+      type okAwaitedType = "OK" | null;
       
 
 type repos = "shard" | "user" | "redis" | "comment";
@@ -30,14 +30,13 @@ class TransactionRepository {
                 userId: comment.userId
             }
         const tx = Transaction.begin();
-     
-   
-         tx.add<deleteCommentPromiseAwaitedType, addCommentPromiseAwaitedType>(
+        type commentAwaitedType = Comment | null;
+         tx.add<okAwaitedType, commentAwaitedType>(
           () => shardRepo.deleteComment(commentId),// execute 
           () => shardRepo.addComment(commentInput)// rollback
         );
       
-         tx.add<deleteCommentPromiseAwaitedType, addCommentPromiseAwaitedType>(
+         tx.add<okAwaitedType, commentAwaitedType>(
           () => redisRepo.deleteComment(commentInput.shardId, commentId),// execute 
           () => redisRepo.addComment(commentInput.shardId, commentInput)// rollback 
          )
@@ -47,13 +46,13 @@ class TransactionRepository {
 
     async addComment(commentInput: CommentInput) {
         const tx = Transaction.begin();
-
-         tx.add<addCommentPromiseAwaitedType, deleteCommentPromiseAwaitedType>(
+        type commentAwaitedType = Comment | null;
+         tx.add<commentAwaitedType, okAwaitedType>(
           () => shardRepo.addComment(commentInput),// execute 
           (id: number) => shardRepo.deleteComment(id)// rollback
         );
       
-         tx.add<addCommentPromiseAwaitedType, deleteCommentPromiseAwaitedType>(
+         tx.add<commentAwaitedType, okAwaitedType>(
           () => redisRepo.addComment(commentInput.shardId, commentInput),// execute 
           (id: number) => redisRepo.deleteComment(commentInput.shardId, id)// rollback 
          )
@@ -64,10 +63,9 @@ class TransactionRepository {
     async updateShard(shardId: number, patchShardInput: PatchShardInput) {
         const shardDetails = await shardRepo.getShardWithFiles(shardId);
         if(!shardDetails) throw new Error("could not get shard details");
-        type updateShardPromiseAwaitedType = "OK" | null;
         const tx = Transaction.begin();
 
-         tx.add<updateShardPromiseAwaitedType, updateShardPromiseAwaitedType>(
+         tx.add<okAwaitedType, okAwaitedType>(
             () => shardRepo.patch(patchShardInput),
             () => shardRepo.patch({ // rollback
                 type: shardDetails.type!,
@@ -76,7 +74,7 @@ class TransactionRepository {
             })
         );
       
-         tx.add<updateShardPromiseAwaitedType, updateShardPromiseAwaitedType>(
+         tx.add<okAwaitedType, okAwaitedType>(
             () => redisRepo.patchShard(shardId, patchShardInput),
             () => redisRepo.patchShard(shardId, {
                 type: shardDetails.type!,
@@ -86,6 +84,25 @@ class TransactionRepository {
          )
       
          await tx.exec();
+    }
+
+    async deleteShard(shardId: number) {
+        const shardWithFiles  = await shardRepo.getShardWithFiles(shardId);
+        if(!shardWithFiles) throw new AppError(400, "could not find shard by shard id");
+        const shard: Omit<ShardWithFiles, "files"> = shardWithFiles;
+        const tx = Transaction.begin();
+        tx.add<okAwaitedType, Shard[] | null>(
+           () => shardRepo.deleteById(shardId),
+           () => shardRepo.create({
+            ...shard as ShardInput
+           }))
+     
+        tx.add<okAwaitedType, okAwaitedType>(
+           () => redisRepo.deleteShard(shardId),
+           () => redisRepo.saveShardWithFiles(shardId, shardWithFiles)
+        )
+     
+        await tx.exec();
     }
     
 }
