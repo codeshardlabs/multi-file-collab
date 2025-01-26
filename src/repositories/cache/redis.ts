@@ -42,6 +42,14 @@ class RedisRepository implements IRedisRepository {
        return await this.cache.set(key, JSON.stringify(shards), this.ttl);
     }
 
+    async addShard(userId: string, shard: Shard) : Promise<"OK" | null> {
+        const key = this.getUserKey(userId);
+        const shards = await this.findShardsByUserId(userId);
+        if(!shards) return null;
+        shards.push(shard);
+        return await this.saveShardsByUserId(userId, shards);
+    }
+
     async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
         const key = this.getUserKey(userId);
         const res = await this.cache.get(key);

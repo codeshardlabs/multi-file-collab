@@ -227,6 +227,12 @@ export async function createShard(req: Request, res: Response, next: NextFunctio
     if(!shard) {
       return next(new AppError(500, "could not create shard"));
     }
+    else {
+      let out = await redisRepo.addShard(userId, shard[0]!);
+      if (!out) {
+        logger.warn("could not update shard with latest info...");
+      }
+    }
 
     res.status(200).json({
       data: {
