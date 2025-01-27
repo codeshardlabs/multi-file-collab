@@ -58,25 +58,23 @@ export default class ShardRepository implements IShardRepository {
       const files = await this.db.query.files.findMany({
         where: (files) => eq(files.shardId, id),
       });
-      
+
       return files;
     } catch (error) {
-      logger.debug("Unexpected error", error)
+      logger.debug("Unexpected error", error);
       return null;
     }
-
   }
 
   async insertFiles(id: number, fileInput: FileInput[]): Promise<"OK" | null> {
     try {
-      await this.db.insert(files).values(fileInput)
-      
-      return "OK";;
+      await this.db.insert(files).values(fileInput);
+
+      return "OK";
     } catch (error) {
-      logger.debug("Unexpected error", error)
+      logger.debug("Unexpected error", error);
       return null;
     }
-
   }
 
   async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
@@ -149,72 +147,99 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async getComments(id: number) : Promise<Comment[] | null> {
+  async getComments(id: number): Promise<Comment[] | null> {
     try {
-     const comments =  await this.db.query.comments.findMany({
-        where: (comments) => eq(comments.shardId, id)
+      const comments = await this.db.query.comments.findMany({
+        where: (comments) => eq(comments.shardId, id),
       });
       return comments;
     } catch (error) {
-      logger.error("shardRepository > getComments() error", error, "shardId", id)
+      logger.error(
+        "shardRepository > getComments() error",
+        error,
+        "shardId",
+        id,
+      );
       return null;
     }
   }
 
   async like(shardId: number, userId: string): Promise<"OK" | null> {
     try {
-      await this.db.insert(likes).values(
-        {
-          shardId: shardId,
-          likedBy: userId,
-        }
-      );
-
+      await this.db.insert(likes).values({
+        shardId: shardId,
+        likedBy: userId,
+      });
 
       return "OK";
     } catch (error) {
-      logger.error("shardRepository > like()", "error", error, "shardId", shardId);
+      logger.error(
+        "shardRepository > like()",
+        "error",
+        error,
+        "shardId",
+        shardId,
+      );
       return null;
     }
   }
 
   async dislike(shardId: number, userId: string): Promise<"OK" | null> {
     try {
-      await this.db.delete(likes).where(and(
-        eq(likes.shardId, shardId),
-        eq(likes.likedBy, userId)
-      ))
-      
+      await this.db
+        .delete(likes)
+        .where(and(eq(likes.shardId, shardId), eq(likes.likedBy, userId)));
+
       return "OK";
     } catch (error) {
-      logger.error("shardRepository > dislike()", "error", error, "shardId", shardId);
+      logger.error(
+        "shardRepository > dislike()",
+        "error",
+        error,
+        "shardId",
+        shardId,
+      );
       return null;
     }
   }
 
   async addComment(commentInput: CommentInput): Promise<Comment | null> {
     try {
-      const out = await this.db.insert(comments).values({
-        message: commentInput.message,
-        shardId: commentInput.shardId,
-        userId: commentInput.userId
-      }).returning();
-      
+      const out = await this.db
+        .insert(comments)
+        .values({
+          message: commentInput.message,
+          shardId: commentInput.shardId,
+          userId: commentInput.userId,
+        })
+        .returning();
+
       return out[0];
     } catch (error) {
-      logger.error("shardRepository > addComment()", "error", error, "shardId", commentInput.shardId);
+      logger.error(
+        "shardRepository > addComment()",
+        "error",
+        error,
+        "shardId",
+        commentInput.shardId,
+      );
       return null;
     }
   }
 
-
   async deleteComment(commentId: number): Promise<"OK" | null> {
     try {
-      await this.db.delete(comments).where(eq(comments.id, commentId))
-      
+      await this.db.delete(comments).where(eq(comments.id, commentId));
+
       return "OK";
     } catch (error) {
-      logger.error("shardRepository > deleteComment()", "error", error, "commentId", commentId);
+      logger.error(
+        "shardRepository > deleteComment()",
+        "error",
+        error,
+        "commentId",
+        commentId,
+      );
       return null;
     }
   }

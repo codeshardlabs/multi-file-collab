@@ -24,7 +24,6 @@ export function errorHandler(
       message: "Internal Server Error",
     },
   });
-
 }
 
 export function paramsValidation<T>(
@@ -72,10 +71,3 @@ export function queryValidation<T>(
 
   next();
 }
-
-
-
-
-
-
-

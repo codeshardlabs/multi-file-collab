@@ -1,17 +1,11 @@
-
 describe("/users Router", () => {
+  beforeAll(() => {});
 
-  beforeAll( () => {
-
-  });
-
-  beforeEach( () => {
-  });
-
+  beforeEach(() => {});
 
   describe("/users POST saveUserMetadata", () => {
     // public route
-  })
+  });
 
   describe("/users/{id} GET getUserInfo", () => {
     // protected route
@@ -20,21 +14,16 @@ describe("/users Router", () => {
     });
     it("should populate user id as a custom property to the express request", () => {
       //TODO implement this
-    })
+    });
     it("should return status code 400 if invalid user id", () => {
       //TODO implement this
-    })
+    });
     it("should return status code 200 and user info. on valid user id", () => {
       //TODO implement this
-    })
-  })
-
-
-  afterEach( () => {
-   
+    });
   });
 
-  afterAll( () => {
-  
-  });
+  afterEach(() => {});
+
+  afterAll(() => {});
 });

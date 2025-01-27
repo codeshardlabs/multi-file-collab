@@ -12,7 +12,12 @@ interface RoomIdParams {
   id: number;
 }
 
-roomRouter.get("/:id", paramsValidation<RoomIdParams>, populateShardId, fetchLatestRoomFilesState);
+roomRouter.get(
+  "/:id",
+  paramsValidation<RoomIdParams>,
+  populateShardId,
+  fetchLatestRoomFilesState,
+);
 roomRouter.get("/", fetchAllRooms);
 
 export default roomRouter;

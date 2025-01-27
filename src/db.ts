@@ -1,4 +1,3 @@
-
 import * as dependencySchema from "./db/tables/dependencies";
 import * as fileSchema from "./db/tables/files";
 import * as shardSchema from "./db/tables/shards";
@@ -22,10 +21,9 @@ export const shardDb = drizzle({
     ...fileSchema,
     ...dependencySchema,
     ...commentSchema,
-    ...likeSchema
+    ...likeSchema,
   },
 });
-
 
 export type ShardDbType = typeof shardDb;
 
@@ -42,7 +40,7 @@ export const commentDb = drizzle({
   schema: {
     ...commentSchema,
   },
-})
+});
 
 export type CommentDbType = typeof commentDb;
 

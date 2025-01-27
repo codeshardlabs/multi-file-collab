@@ -68,12 +68,8 @@
           "name": "comments_user_id_users_id_fk",
           "tableFrom": "comments",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -81,12 +77,8 @@
           "name": "comments_shard_id_shards_id_fk",
           "tableFrom": "comments",
           "tableTo": "shards",
-          "columnsFrom": [
-            "shard_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["shard_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -126,12 +118,8 @@
           "name": "replies_comment_id_comments_id_fk",
           "tableFrom": "replies",
           "tableTo": "comments",
-          "columnsFrom": [
-            "comment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["comment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -139,12 +127,8 @@
           "name": "replies_parent_id_comments_id_fk",
           "tableFrom": "replies",
           "tableTo": "comments",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -225,12 +209,8 @@
           "name": "dependencies_shard_id_shards_id_fk",
           "tableFrom": "dependencies",
           "tableTo": "shards",
-          "columnsFrom": [
-            "shard_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["shard_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -326,12 +306,8 @@
           "name": "files_shard_id_shards_id_fk",
           "tableFrom": "files",
           "tableTo": "shards",
-          "columnsFrom": [
-            "shard_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["shard_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -400,12 +376,8 @@
           "name": "likes_shard_id_shards_id_fk",
           "tableFrom": "likes",
           "tableTo": "shards",
-          "columnsFrom": [
-            "shard_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["shard_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -413,12 +385,8 @@
           "name": "likes_liked_by_users_id_fk",
           "tableFrom": "likes",
           "tableTo": "users",
-          "columnsFrom": [
-            "liked_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["liked_by"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -503,12 +471,8 @@
           "name": "shards_user_id_users_id_fk",
           "tableFrom": "shards",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -561,12 +525,8 @@
           "name": "followers_follower_id_users_id_fk",
           "tableFrom": "followers",
           "tableTo": "users",
-          "columnsFrom": [
-            "follower_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["follower_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -574,12 +534,8 @@
           "name": "followers_following_id_users_id_fk",
           "tableFrom": "followers",
           "tableTo": "users",
-          "columnsFrom": [
-            "following_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["following_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -627,10 +583,7 @@
     "public.mode": {
       "name": "mode",
       "schema": "public",
-      "values": [
-        "normal",
-        "collaboration"
-      ]
+      "values": ["normal", "collaboration"]
     },
     "public.template_type": {
       "name": "template_type",
@@ -658,11 +611,7 @@
     "public.type": {
       "name": "type",
       "schema": "public",
-      "values": [
-        "public",
-        "private",
-        "forked"
-      ]
+      "values": ["public", "private", "forked"]
     }
   },
   "schemas": {},

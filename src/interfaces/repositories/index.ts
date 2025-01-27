@@ -1,5 +1,3 @@
-
-
 export interface IRepository {
-    [key: string]: any;
-  }
+  [key: string]: any;
+}

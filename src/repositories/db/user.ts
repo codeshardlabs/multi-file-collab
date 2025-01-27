@@ -1,4 +1,8 @@
-import { IUserRepository, UserInput,UserWithFollowersAndFollowering } from "../../interfaces/repositories/db/user";
+import {
+  IUserRepository,
+  UserInput,
+  UserWithFollowersAndFollowering,
+} from "../../interfaces/repositories/db/user";
 import { User } from "../../entities/user";
 import { UserDbType } from "../../db";
 import { and, eq } from "drizzle-orm";
@@ -27,20 +31,24 @@ export default class UserRepository implements IUserRepository {
     return doc;
   }
 
-  async findByIdWithFollowersList(id: string): Promise<UserWithFollowersAndFollowering | null> {
+  async findByIdWithFollowersList(
+    id: string,
+  ): Promise<UserWithFollowersAndFollowering | null> {
     try {
       const doc = await this.db.query.users.findFirst({
         where: (users) => eq(users.id, id),
         with: {
           followers: true,
-          following: true
-        }
+          following: true,
+        },
       });
       if (!doc) return null;
       return doc;
-      
     } catch (error) {
-      logger.error("shardRepository > findByIdWithFollowersList() error", error);
+      logger.error(
+        "shardRepository > findByIdWithFollowersList() error",
+        error,
+      );
       return null;
     }
   }
@@ -49,7 +57,7 @@ export default class UserRepository implements IUserRepository {
     try {
       await this.db.insert(followers).values({
         followerId: followerId,
-        followingId: followingId
+        followingId: followingId,
       });
       return "OK";
     } catch (error) {
@@ -57,12 +65,19 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
-  async unfollow(followerId: string, followingId: string): Promise<"OK" | null> {
+  async unfollow(
+    followerId: string,
+    followingId: string,
+  ): Promise<"OK" | null> {
     try {
-      await this.db.delete(followers).where(and(
-        eq(followers.followerId,followerId),
-        eq(followers.followingId, followingId)
-      ))
+      await this.db
+        .delete(followers)
+        .where(
+          and(
+            eq(followers.followerId, followerId),
+            eq(followers.followingId, followingId),
+          ),
+        );
       return "OK";
     } catch (error) {
       return null;

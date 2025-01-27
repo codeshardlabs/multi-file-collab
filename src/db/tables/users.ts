@@ -11,7 +11,7 @@ export const users = pgTable("users", {
 });
 
 export const followers = pgTable("followers", {
-  id: serial("id").primaryKey(), 
+  id: serial("id").primaryKey(),
   followerId: text("follower_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),

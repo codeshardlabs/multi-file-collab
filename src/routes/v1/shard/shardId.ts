@@ -7,12 +7,12 @@ import {
   getComments,
   likeShard,
   dislikeShard,
-  addComment
+  addComment,
 } from "../../../controllers/http/shard";
 
 const shardIdRouter = Router();
 shardIdRouter.get("/", fetchShardById);
-shardIdRouter.put("/", saveShard); 
+shardIdRouter.put("/", saveShard);
 shardIdRouter.patch("/", updateShard);
 shardIdRouter.delete("/", deleteShardById);
 shardIdRouter.get("/comments", getComments);

@@ -7,14 +7,16 @@ export interface UserInput {
 }
 
 export interface UserWithFollowersAndFollowering extends User {
-  followers: Follower[],
-  following: Follower[],
+  followers: Follower[];
+  following: Follower[];
 }
 
 export interface IUserRepository extends IRepository {
   findById: (id: string) => Promise<User | null>;
   onboard: (userInput: UserInput) => Promise<User | null>;
-  findByIdWithFollowersList(id: string): Promise<UserWithFollowersAndFollowering | null>;
-  follow(followerId: string, followingId: string) : Promise<"OK" | null>;
+  findByIdWithFollowersList(
+    id: string,
+  ): Promise<UserWithFollowersAndFollowering | null>;
+  follow(followerId: string, followingId: string): Promise<"OK" | null>;
   unfollow(followerId: string, followingId: string): Promise<"OK" | null>;
 }

@@ -17,13 +17,10 @@ app.use(
 
 app.use(express.json());
 app.use("/api/v1", v1Router);
-app.get('/metrics', async (req: Request, res: Response, next: NextFunction) => {
-  res.setHeader('Content-Type', registry.contentType);
+app.get("/metrics", async (req: Request, res: Response) => {
+  res.setHeader("Content-Type", registry.contentType);
   res.send(await registry.metrics());
-  next();
 });
-
-
 
 async function init() {
   const httpServer = http.createServer(app);

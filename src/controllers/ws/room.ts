@@ -1,18 +1,17 @@
 import { Server, Socket } from "socket.io";
-import { KVService } from "../../services/redis/kvStore";
+import { KVService, kvStore } from "../../services/redis/kvStore";
 import { IShardRepository } from "../../interfaces/repositories/db/shard";
-import { PubSubService } from "../../services/redis/pubsub";
+import { pubsub, PubSubService } from "../../services/redis/pubsub";
 import { EditorStateManager } from "../../services/redis/editorStateManager";
 import { validateRoomId } from "../../middleware/ws/room";
 import { errorMessage, errors } from "../../config";
 import { logger } from "../../services/logger/logger";
+import { shardRepo } from "../../db";
 
 export function joinRoom(
   roomId: string,
   io: Server,
-  socket: Socket,
-  kvStore: KVService,
-  shardRepo: IShardRepository,
+  socket: Socket
 ) {
   // validate room id: library not required
   logger.info("joinRoom() called", {
@@ -43,7 +42,7 @@ export function joinRoom(
                 code: file.code,
                 lastModified: timestamp,
               });
-              // pipeline.zadd(`project:${roomId}:changes`, "XX", , file.name); // TODO: implement this 
+              // pipeline.zadd(`project:${roomId}:changes`, "XX", , file.name); // TODO: implement this
             }
             await pipeline.exec();
           } else {
@@ -72,7 +71,6 @@ export async function propagateRealtimeCodeUpdates(
   roomId: string,
   io: Server,
   _: Socket,
-  pubsub: PubSubService,
   editorManager: EditorStateManager,
 ) {
   logger.debug("propagateRealtimeCodeUpdates() called", {
@@ -111,8 +109,7 @@ export async function propagateVisibleFiles(
   files: string[],
   roomId: string,
   io: Server,
-  socket: Socket,
-  pubsub: PubSubService,
+  socket: Socket
 ) {
   logger.debug("propagateVisibleFiles() called", {
     files: files,
