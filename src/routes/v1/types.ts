@@ -20,6 +20,10 @@ declare module "express-serve-static-core" {
     },
     comment: {
       id: number;
+    },
+    metrics: {
+      startTime: number;
+      endTime: number;
     }
   }
 }

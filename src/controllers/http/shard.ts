@@ -14,6 +14,7 @@ import { Shard, ShardWithFiles } from "../../entities/shard";
 import { redisRepo } from "../../repositories/cache/redis";
 import { Comment } from "../../entities/comment";
 import { txRepo } from "../../repositories/transaction";
+import httpRequestTimer from "../../prometheus/histogram";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -28,6 +29,7 @@ export async function fetchShards(
 ) {
   const userId = req.auth.user.id;
   let shards: Shard[];
+  let start = Date.now();
 
   try {
     let cachedShards = await redisRepo.findShardsByUserId(userId);
@@ -54,6 +56,10 @@ export async function fetchShards(
   } catch (error) {
     logger.error("fetchShards() error", error);
     return next(new AppError(500, "could not fetch shards by user id"));
+  }
+  finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }
 

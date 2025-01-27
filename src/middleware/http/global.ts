@@ -73,3 +73,17 @@ export function queryValidation<T>(
 
   next();
 }
+
+
+
+
+export function setStartTime(
+  req: Request,
+  _: Response,
+  next: NextFunction,
+) {
+  req.metrics.startTime = Date.now();
+  next();
+}
+
+
