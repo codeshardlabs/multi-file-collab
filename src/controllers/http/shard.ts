@@ -69,6 +69,7 @@ export async function fetchShardById(
   next: NextFunction,
 ) {
   const id = req.shard.id;
+  const start = Date.now();
   let shard: ShardWithFiles;
   try {
     let cachedShard = await redisRepo.getShardWithFiles(id);
@@ -90,6 +91,10 @@ export async function fetchShardById(
   } catch (error) {
     logger.error("fetchShardById() error", error);
     return next(new AppError(500, "could not fetch shard by id"));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
+
   }
 }
 
@@ -105,6 +110,7 @@ interface SaveShardRequestBody {
 export async function saveShard(req: Request, res: Response, next: NextFunction) {
   const shardId = req.shard.id;
   const body = req.body as SaveShardRequestBody;
+  let start = Date.now();
   try {
     const existingFiles = await shardRepo.getFiles(shardId);
     if (!existingFiles) return next(new AppError(400, "could not find shard by shard id"));
@@ -129,12 +135,17 @@ export async function saveShard(req: Request, res: Response, next: NextFunction)
   } catch (error) {
     logger.error("shardControlller > saveShard()", "error", error, "shardId", shardId);
     next(new AppError(500, `could not save shard for ${shardId}`));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
+
   }
 }
 
 export async function likeShard(req: Request, res: Response, next: NextFunction) {
   const shardId = req.shard.id;
   const userId = req.auth.user.id;
+  let start = Date.now();
   try {
     const out = await shardRepo.like(shardId, userId);
     if (!out) return next(new AppError(500, "could not like shard"));
@@ -147,12 +158,16 @@ export async function likeShard(req: Request, res: Response, next: NextFunction)
   } catch (error) {
     logger.debug("shardController > likeShard() error", error, "shardId", shardId);
     next(new AppError(500, `could not like shard for shard id: ${shardId}`));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }
 
 export async function dislikeShard(req: Request, res: Response, next: NextFunction) {
   const shardId = req.shard.id;
   const userId = req.auth.user.id;
+  let start = Date.now();
   try {
     const out = await shardRepo.dislike(shardId, userId);
     if (!out) return next(new AppError(500, "could not dislike shard"));
@@ -165,6 +180,9 @@ export async function dislikeShard(req: Request, res: Response, next: NextFuncti
   } catch (error) {
     logger.debug("shardController > dislikeShard() error", error, "shardId", shardId);
     next(new AppError(500, `could not dislike shard for shard id: ${shardId}`));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }
 
@@ -172,6 +190,7 @@ export async function dislikeShard(req: Request, res: Response, next: NextFuncti
 export async function getComments(req: Request, res: Response, next: NextFunction) {
   const shardId = req.shard.id;
   let comments: Comment[];
+  let start = Date.now();
   try {
     let cachedComments = await redisRepo.getComments(shardId);
     if (!cachedComments) {
@@ -192,6 +211,9 @@ export async function getComments(req: Request, res: Response, next: NextFunctio
   } catch (error) {
     logger.debug("shardController > getComments() error", error, "shardId", shardId);
     next(new AppError(500, `could not get comments for shard id: ${shardId}`));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }
 
@@ -203,6 +225,7 @@ interface AddCommentRequestBody {
 export async function addComment(req: Request, res: Response, next: NextFunction) {
   const body = req.body as AddCommentRequestBody;
   const userId = req.auth.user.id;
+  let start = Date.now();
   try {
     let commentInput = {
       message: body.message,
@@ -220,6 +243,9 @@ export async function addComment(req: Request, res: Response, next: NextFunction
   } catch (error) {
     logger.debug("shardController > addComment() error", error, "userId", userId);
     next(new AppError(500, `could not add comment for user id: ${userId}`));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs);
   }
 }
 
@@ -228,6 +254,7 @@ export async function addComment(req: Request, res: Response, next: NextFunction
 export async function createShard(req: Request, res: Response, next: NextFunction) {
   const userId = req.auth.user.id;
   const body = req.body as ShardPostRequestBody;
+  let start = Date.now();
   // TODO: add validation
   try {
     const shard = await shardRepo.create({
@@ -261,6 +288,10 @@ export async function createShard(req: Request, res: Response, next: NextFunctio
     });
     next(new AppError(500, "could not create shard"));
   }
+  finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
+  }
 }
 
 // 1. update in db
@@ -275,6 +306,7 @@ export async function updateShard(
   const query = req.query;
   const type = query.type ? (query.type as ShardTypeType) : "public";
   const title = query.title ? (query.title as string) : "";
+  let start = Date.now();
   try {
     const patchShardInput: PatchShardInput = {
       type: type,
@@ -302,6 +334,9 @@ export async function updateShard(
   } catch (error) {
     logger.error("updateShard error", error);
     next(new AppError(500, "could not patch shard"));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }
 
@@ -314,8 +349,9 @@ export async function deleteShardById(
   res: Response,
   next: NextFunction,
 ) {
+  const id = req.shard.id;
+  let start = Date.now();
   try {
-    const id = req.shard.id;
     await txRepo.deleteShard(id);
     res.status(200).json({
       error: null,
@@ -326,5 +362,8 @@ export async function deleteShardById(
   } catch (error) {
     logger.error("deleteShardById() error", error);
     next(new AppError(500, "could not delete shard by id"));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }

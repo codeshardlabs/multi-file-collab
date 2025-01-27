@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
-import { errorMessage, errors } from "../../config";
 
 export function errorHandler(
   err: Error,
@@ -77,13 +76,6 @@ export function queryValidation<T>(
 
 
 
-export function setStartTime(
-  req: Request,
-  _: Response,
-  next: NextFunction,
-) {
-  req.metrics.startTime = Date.now();
-  next();
-}
+
 
 

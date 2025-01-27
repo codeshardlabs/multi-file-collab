@@ -5,6 +5,7 @@ import { AppError } from "../../errors";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 import { redisRepo } from "../../repositories/cache/redis";
 import { FileInput } from "../../interfaces/repositories/db/shard";
+import httpRequestTimer from "../../prometheus/histogram";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -13,6 +14,7 @@ export async function fetchLatestRoomFilesState(
 ) {
   const id = req.shard.id;
   let shard : ShardWithFiles;
+  let start = Date.now();
   try {
     let cachedShard = await redisRepo.getShardWithFiles(id);
     if(!cachedShard) {
@@ -33,7 +35,6 @@ export async function fetchLatestRoomFilesState(
         logger.warn("could not save updated files to db", "shardId", id)
       }
     }
-    
 
     res.status(200).json({
       data: {
@@ -43,12 +44,11 @@ export async function fetchLatestRoomFilesState(
     })
   } catch (error) {
     logger.error("fetchLatestRoomFilesState() route error", error);
-    return next(new AppError(500, "could not fetch room files latest state info."));
+     next(new AppError(500, "could not fetch room files latest state info."));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
-
-   
-
-   
 }
 
 export async function fetchAllRooms(
@@ -58,6 +58,7 @@ export async function fetchAllRooms(
 ) {
   const userId = req.auth.user.id;
   let rooms : Shard[];
+  let start = Date.now();
   try {
     let cachedRooms = await redisRepo.getAllCollaborativeRooms(userId);
     if(!cachedRooms) {
@@ -83,6 +84,9 @@ export async function fetchAllRooms(
     });
   } catch (error) {
     logger.error("fetchAllRoom() route error", error);
-    return next(new AppError(500, "could not fetch collaborative rooms info."));
+     next(new AppError(500, "could not fetch collaborative rooms info."));
+  } finally {
+    const responseTimeInMs = Date.now() - start;
+    httpRequestTimer.labels(req.method, req.route.path, res.statusCode.toString()).observe(responseTimeInMs)
   }
 }

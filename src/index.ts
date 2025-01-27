@@ -1,6 +1,6 @@
 import http from "http";
 import cors from "cors";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { env } from "./config";
 import { logger } from "./services/logger/logger";
 import v1Router from "./routes/v1";
@@ -17,9 +17,10 @@ app.use(
 
 app.use(express.json());
 app.use("/api/v1", v1Router);
-app.get('/metrics', async (req: Request, res: Response) => {
+app.get('/metrics', async (req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Content-Type', registry.contentType);
   res.send(await registry.metrics());
+  next();
 });
 
 
