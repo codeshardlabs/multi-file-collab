@@ -5,6 +5,8 @@ import userRouter from "./user";
 import { authMiddleware } from "../../middleware/http/auth";
 import { errorHandler } from "../../middleware/http/global";
 import commentRouter from "./comment";
+import swaggerUi from "swagger-ui-express";
+import * as swaggerDoc from "./openapi.json"; // mark resolveJsonModule as true in the tsconfig.json
 
 const v1Router = express.Router();
 
@@ -26,6 +28,7 @@ const randomizeResponse = (req: Request, res: Response, next: NextFunction) => {
 v1Router.use(errorHandler);
 
 //routes
+v1Router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc))
 v1Router.use("/shards", authMiddleware, randomizeResponse, shardRouter);
 v1Router.use("/rooms", authMiddleware, randomizeResponse, roomRouter);
 v1Router.use("/users", randomizeResponse, userRouter);
