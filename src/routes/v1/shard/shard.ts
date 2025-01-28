@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { fetchShards, createShard } from "../../../controllers/http/shard";
-import {
-  paramsValidation,
-} from "../../../middleware/http/global";
+import { paramsValidation } from "../../../middleware/http/global";
 import shardIdRouter from "./shardId";
 import { populateShardId } from "../../../middleware/http/shard";
 

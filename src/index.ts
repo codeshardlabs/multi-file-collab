@@ -1,12 +1,12 @@
 import http from "http";
 import cors from "cors";
-import express, {  Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { env } from "./config";
 import { logger } from "./services/logger/logger";
 import v1Router from "./routes/v1";
 import { socketService } from "./services/socket";
 import registry from "./prometheus/registry";
-import morgan from "morgan"
+import morgan from "morgan";
 
 const app = express();
 
@@ -17,9 +17,11 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.urlencoded({
-  extended: true
-}))
+app.use(
+  express.urlencoded({
+    extended: true,
+  }),
+);
 const morganFormat = ":method :url :status :response-time ms";
 // API logs
 app.use(
@@ -27,7 +29,7 @@ app.use(
     stream: {
       write(message) {
         const [method, url, status, responseTime] = message.split(" ");
-        logger.info(JSON.stringify({method, url, status, responseTime}));
+        logger.info(JSON.stringify({ method, url, status, responseTime }));
       },
     },
   }),
@@ -50,8 +52,7 @@ async function init() {
 
 init();
 
-
-process.on("uncaughtException", error => {
+process.on("uncaughtException", (error) => {
   logger.error("Uncaught Exception Occurred: ", error.message);
 });
 

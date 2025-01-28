@@ -8,7 +8,7 @@ import { shardRepo } from "../../db";
 export class EditorStateManager {
   private queueService: QueueService;
   private static FLUSH_INTERVAL: number = 5000; // every 5 sec
-  private userId: string = ""
+  private userId: string = "";
   constructor() {
     logger.info("EditorStateManager instance created");
     this.queueService = new QueueService(

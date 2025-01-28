@@ -28,7 +28,7 @@ const randomizeResponse = (req: Request, res: Response, next: NextFunction) => {
 v1Router.use(errorHandler);
 
 //routes
-v1Router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc))
+v1Router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 v1Router.use("/shards", authMiddleware, randomizeResponse, shardRouter);
 v1Router.use("/rooms", authMiddleware, randomizeResponse, roomRouter);
 v1Router.use("/users", randomizeResponse, userRouter);

@@ -8,11 +8,7 @@ import { errorMessage, errors } from "../../config";
 import { logger } from "../../services/logger/logger";
 import { shardRepo } from "../../db";
 
-export function joinRoom(
-  roomId: string,
-  io: Server,
-  socket: Socket
-) {
+export function joinRoom(roomId: string, io: Server, socket: Socket) {
   // validate room id: library not required
   logger.info("joinRoom() called", {
     roomId,
@@ -109,7 +105,7 @@ export async function propagateVisibleFiles(
   files: string[],
   roomId: string,
   io: Server,
-  socket: Socket
+  socket: Socket,
 ) {
   logger.debug("propagateVisibleFiles() called", {
     files: files,

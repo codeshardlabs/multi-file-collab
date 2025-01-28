@@ -9,9 +9,7 @@ declare module "socket.io" {
   }
 }
 
-export async function fetchUserFromToken(
-  socket: Socket,
-) {
+export async function fetchUserFromToken(socket: Socket) {
   socket.use(async (_, next) => {
     const token = socket.handshake.auth.token as string;
     if (!token) next(new Error(errorMessage.get(errors.TOKEN_NOT_FOUND)));
@@ -23,7 +21,6 @@ export async function fetchUserFromToken(
     next();
   });
 }
-
 
 export async function validateRoomId(roomId: string, socket: Socket) {
   socket.use((_, next) => {
