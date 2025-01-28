@@ -107,4 +107,5 @@ PORT=8080
 6. Run the development server using `yarn dev`. It will first run the predev script, which will format all your code via prettier and then start the development server.
 
 ### Contributing
+
 Follow the [contributing.md](https://github.com/codeshardlabs/multi-file-collab/blob/main/contributing.md) guide to resolve the issues on the basis of current order of issues to be resolved: [here](https://doc.clickup.com/9016677894/d/h/8cpz5g6-236/55cb95fbe534cf5)

@@ -4,10 +4,26 @@
     "title": "CodeShard API Documentation",
     "version": "1.0.0"
   },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
   "paths": {
     "/api/v1/shards": {
       "get": {
         "summary": "Fetch all shards",
+        "tags" : [
+          "shards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list of shards"
@@ -16,6 +32,14 @@
       },
       "post": {
         "summary": "Create a new shard",
+        "tags" : [
+          "shards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Shard created"
@@ -26,6 +50,14 @@
     "/api/v1/shards/{id}": {
       "get": {
         "summary": "Fetch shard by ID",
+        "tags" : [
+          "shards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -44,6 +76,14 @@
       },
       "put": {
         "summary": "Save shard",
+        "tags" : [
+          "shards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -62,6 +102,14 @@
       },
       "patch": {
         "summary": "Update shard",
+        "tags" : [
+          "shards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -80,6 +128,14 @@
       },
       "delete": {
         "summary": "Delete shard by ID",
+        "tags" : [
+          "shards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -100,6 +156,15 @@
     "/api/v1/shards/{id}/comments": {
       "get": {
         "summary": "Get comments for a shard",
+        "tags" : [
+          "shards",
+          "comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -118,6 +183,15 @@
       },
       "post": {
         "summary": "Add a comment to a shard",
+        "tags" : [
+          "shards",
+          "comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -138,6 +212,15 @@
     "/api/v1/shards/{id}/likes": {
       "post": {
         "summary": "Like a shard",
+        "tags" : [
+          "shards",
+          "likes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -156,6 +239,15 @@
       },
       "delete": {
         "summary": "Dislike a shard",
+        "tags" : [
+          "shards",
+          "likes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -176,6 +268,14 @@
     "/api/v1/rooms": {
       "get": {
         "summary": "Fetch all rooms",
+        "tags" : [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list of rooms"
@@ -186,6 +286,14 @@
     "/api/v1/rooms/{id}": {
       "get": {
         "summary": "Fetch latest room files state",
+        "tags" : [
+          "rooms"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -206,6 +314,9 @@
     "/api/v1/users": {
       "post": {
         "summary": "Save user metadata",
+        "tags" : [
+          "users"
+        ],
         "responses": {
           "201": {
             "description": "User metadata saved"
@@ -216,6 +327,14 @@
     "/api/v1/users/{id}": {
       "get": {
         "summary": "Get user info",
+        "tags" : [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -236,6 +355,14 @@
     "/api/v1/comments/{id}": {
       "delete": {
         "summary": "Delete a comment",
+        "tags" : [
+          "comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
