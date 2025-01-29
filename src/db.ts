@@ -8,7 +8,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import ShardRepository from "./repositories/db/shard";
 import UserRepository from "./repositories/db/user";
-import CommentRepository from "./repositories/db/comment";
+import CommentRepository from "./repositories/db/usecases/comment";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

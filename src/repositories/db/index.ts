@@ -3,9 +3,9 @@ import { IRepository } from "../../interfaces/repositories";
 import { ICommentRepository } from "../../interfaces/repositories/db/comment";
 import { IShardRepository } from "../../interfaces/repositories/db/shard";
 import { IUserRepository } from "../../interfaces/repositories/db/user";
-import CommentRepository from "./comment";
-import ShardRepository from "./shard";
-import UserRepository from "./user";
+import CommentRepository from "./usecases/comment";
+import ShardRepository from "./usecases/shard";
+import UserRepository from "./usecases/user";
 
 
 type repos = "comment" | "shard" | "user";

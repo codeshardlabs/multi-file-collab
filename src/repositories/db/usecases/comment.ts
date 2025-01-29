@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { CommentDbType } from "../../db";
-import { Comment } from "../../entities/comment";
+import { CommentDbType } from "../../../db";
+import { Comment } from "../../../entities/comment";
 
 class CommentRepository {
   private db: CommentDbType;

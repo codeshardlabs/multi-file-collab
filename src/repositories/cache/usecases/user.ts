@@ -1,7 +1,7 @@
-import { Follower } from "../../entities/follower";
-import { UserWithFollowersAndFollowering } from "../../entities/user";
-import { IUserRepository } from "../../interfaces/repositories/cache/user";
-import { IKVService } from "../../interfaces/services/redis";
+import { Follower } from "../../../entities/follower";
+import { UserWithFollowersAndFollowering } from "../../../entities/user";
+import { IUserRepository } from "../../../interfaces/repositories/cache/user";
+import { IKVService } from "../../../interfaces/services/redis";
 
 
 export default class UserRepository implements IUserRepository {

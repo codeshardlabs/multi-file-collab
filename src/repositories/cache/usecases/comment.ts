@@ -1,7 +1,7 @@
-import { Follower } from "../../entities/follower";
-import { UserWithFollowersAndFollowering } from "../../entities/user";
-import { ICommentRepository } from "../../interfaces/repositories/cache/comment";
-import { IKVService } from "../../interfaces/services/redis";
+import { Follower } from "../../../entities/follower";
+import { UserWithFollowersAndFollowering } from "../../../entities/user";
+import { ICommentRepository } from "../../../interfaces/repositories/cache/comment";
+import { IKVService } from "../../../interfaces/services/redis";
 
 
 

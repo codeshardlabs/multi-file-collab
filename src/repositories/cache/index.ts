@@ -5,9 +5,9 @@ import { IShardRepository } from "../../interfaces/repositories/cache/shard";
 import { IUserRepository } from "../../interfaces/repositories/cache/user";
 import { IKVService } from "../../interfaces/services/redis";
 import { kvStore } from "../../services/redis/kvStore";
-import CommentRepository from "./comment";
-import ShardRepository from "./shard";
-import UserRepository from "./user";
+import CommentRepository from "./usecases/comment";
+import ShardRepository from "./usecases/shard";
+import UserRepository from "./usecases/user";
 
 
 type repos = "comment" | "shard" | "user";
