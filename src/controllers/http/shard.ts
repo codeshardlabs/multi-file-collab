@@ -11,7 +11,6 @@ import { AppError } from "../../errors";
 import { Dependency } from "../../entities/dependency";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 import { Comment } from "../../entities/comment";
-import { txRepo } from "../../repositories/transaction";
 import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
@@ -34,14 +33,15 @@ export async function fetchShards(
   let { limit, offset } = req.pagination;
 
   try {
-    let cachedShards = await cache.shard.findShardsByUserId(userId);
+    let page = Math.floor(offset/limit) + 1;
+    let cachedShards = await cache.shard.findShardsByUserId(userId, page);
     if (!cachedShards) {
       const dbShards = await db.shard.findByUserId(userId, limit, offset);
       if (!dbShards) {
         return next(new AppError(500, "could not fetch shards by user id"));
       }
       shards = dbShards;
-      const out = await cache.shard.saveShardsByUserId(userId, dbShards);
+      const out = await cache.shard.saveShardsByUserId(userId, dbShards, page);
       if (!out) {
         logger.warn(
           "could not save shards by user id to cache",
@@ -107,6 +107,7 @@ export async function fetchShardById(
 interface SaveShardRequestBody {
   files: FileInput[];
   dependencies: Dependency[];
+  
 }
 
 // 1. Get files from db By shard Id.
@@ -234,13 +235,14 @@ export async function getComments(
   let start = Date.now();
   let { limit, offset } = req.pagination;
   try {
-    let cachedComments = await cache.shard.getComments(shardId);
+    let page = Math.floor(offset/limit) + 1;
+    let cachedComments = await cache.shard.getComments(shardId, page);
     if (!cachedComments) {
       const dbComments = await db.shard.getComments(shardId, limit, offset);
       if (!dbComments)
         return next(new AppError(500, "could not get comments for shard"));
       comments = dbComments;
-      await cache.shard.saveComments(shardId, dbComments);
+      await cache.shard.saveComments(shardId, dbComments, page);
     } else {
       comments = cachedComments;
     }
@@ -286,7 +288,19 @@ export async function addComment(
       userId: userId,
     };
 
-    await txRepo.addComment(commentInput);
+   const comment =  await db.shard.addComment(commentInput);
+   if(!comment) {
+    return next(new AppError(500, "could not add comment"));
+   } 
+   else {
+    // invalidate all the comment pages
+   let out =  await cache.shard.removeCommentPages(body.shardId);
+   if(!out) {
+    logger.warn("could not invalidate the comment pages", {
+      shardId: body.shardId
+    })
+   }
+   }
     res.status(200).json({
       data: {
         response: "OK",
@@ -332,12 +346,13 @@ export async function createShard(
     if (!shard) {
       return next(new AppError(500, "could not create shard"));
     }
-    // else {
-    //   let out = await redisRepo.addShard(userId, shard[0]!);
-    //   if (!out) {
-    //     logger.warn("could not update shard with latest info...");
-    //   }
-    // }
+    else {
+      // invalidate all the shard pages
+      let out = await cache.shard.removeShardPages(userId);
+      if (!out) {
+        logger.warn("could not update shard with latest info...");
+      }
+    }
 
     res.status(200).json({
       data: {
@@ -421,14 +436,21 @@ export async function deleteShardById(
 ) {
   const id = req.shard.id;
   let start = Date.now();
+  const userId = req.auth.user.id;
   try {
-    await txRepo.deleteShard(id);
+  const out = await db.shard.deleteById(id);
+  if(!out) {
+    next(new AppError(500, "could not delete shard by id"));
+  }
+  else {
+    await cache.shard.deleteShard(id, userId);
     res.status(200).json({
       error: null,
       data: {
         response: "OK",
       },
     });
+  }
   } catch (error) {
     logger.error("deleteShardById() error", error);
     next(new AppError(500, "could not delete shard by id"));

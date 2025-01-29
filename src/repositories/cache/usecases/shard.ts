@@ -8,19 +8,20 @@ import {
 } from "../../../interfaces/repositories/db/shard";
 import { IKVService } from "../../../interfaces/services/redis";
 import { logger } from "../../../services/logger/logger";
-import { getUserKey } from "../utils";
+import { getShardKey, getShardsByUserIdKey, getUserKey } from "../utils";
 
 export default class ShardRepository implements IShardRepository {
   private cache: IKVService;
-  private defaultTTL: number = 3000; // 3s
+  private defaultTTL: number = 60000; // 1min
   private ttl: number;
   constructor(_cache: IKVService, ttl?: number) {
     this.cache = _cache;
     this.ttl = ttl ?? this.defaultTTL;
   }
 
-  async findShardsByUserId(userId: string): Promise<Shard[] | null> {
-    const key = getUserKey(userId);
+  async findShardsByUserId(userId: string, page: number): Promise<Shard[] | null> {
+    const key =getShardsByUserIdKey(userId, page);
+    // key : `user:{userId}:shards:page:{page}`
     const res = await this.cache.get(key);
     if (!res) return null;
     return JSON.parse(res) as Shard[];
@@ -29,17 +30,38 @@ export default class ShardRepository implements IShardRepository {
   async saveShardsByUserId(
     userId: string,
     shards: Shard[],
+    page: number
   ): Promise<"OK" | null> {
-    const key = getUserKey(userId);
+    const key = getShardsByUserIdKey(userId, page);
     return await this.cache.set(key, JSON.stringify(shards), this.ttl);
   }
 
-  async addShard(userId: string, shard: Shard): Promise<"OK" | null> {
-    const key = getUserKey(userId);
-    const shards = await this.findShardsByUserId(userId);
-    if (!shards) return null;
-    shards.push(shard);
-    return await this.saveShardsByUserId(userId, shards);
+  async removeShardPages(userId: string): Promise<"OK" | null> {
+    let pattern = `${getUserKey(userId)}:shards:page:*`;
+    const keys = await this.cache.keys(pattern);
+    let count = await this.cache.del(...keys);
+    if(keys.length> 0 && count == 0) {
+      logger.debug("could not delete any key from cache", {
+        userId: userId,
+        source: "cacheRepository"
+      })
+      return null;
+    }
+    return "OK";
+  }
+
+  async removeCommentPages(shardId: number): Promise<"OK" | null> {
+    let pattern = `${this.getShardCommentsKey(shardId)}:page:*`;
+    const keys = await this.cache.keys(pattern);
+    let count = await this.cache.del(...keys);
+    if(keys.length> 0 && count == 0) {
+      logger.debug("could not delete any key from cache", {
+        shardId: shardId,
+        source: "cacheRepository>removeCommentPages(shardId)"
+      })
+      return null;
+    }
+    return "OK";
   }
 
   async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
@@ -49,6 +71,16 @@ export default class ShardRepository implements IShardRepository {
     return JSON.parse(res) as Shard[];
   }
 
+  async getFiles(shardId: number) : Promise<File[] | null> {
+    const key = `${getShardKey(shardId)}:files`;
+    let out = await this.cache.get(key);
+    if(!out) return null;
+    return JSON.parse(out) as File[];
+  }
+  async saveFiles(shardId: number, files: File[]) : Promise<"OK" | null> {
+    const key = `${getShardKey(shardId)}:files`;
+    return await this.cache.set(key, JSON.stringify(files), this.ttl);
+  }
   async saveAllCollaborativeRooms(
     userId: string,
     shards: Shard[],
@@ -101,29 +133,31 @@ export default class ShardRepository implements IShardRepository {
     return await this.cache.set(key, JSON.stringify(shard), this.ttl);
   }
 
-  async getComments(id: number): Promise<Comment[] | null> {
-    const key = this.getShardCommentsKey(id);
+  async getComments(id: number, page: number): Promise<Comment[] | null> {
+    const key = `${this.getShardCommentsKey(id)}:page:${page}`;
+    
     const res = await this.cache.get(key);
     if (!res) return null;
     return JSON.parse(res) as Comment[];
   }
 
-  async saveComments(id: number, comments: Comment[]): Promise<"OK" | null> {
-    const key = this.getShardCommentsKey(id);
-    return await this.cache.set(key, JSON.stringify(comments), this.ttl);
+  async saveComments(id: number, comments: Comment[], page: number): Promise<"OK" | null> {
+    const key = `${this.getShardCommentsKey(id)}:page:${page}`;
+        return await this.cache.set(key, JSON.stringify(comments), this.ttl);
   }
 
   async addComment(
     shardId: number,
     commentInput: CommentInput,
+    page: number
   ): Promise<Comment | null> {
-    const comments = await this.getComments(shardId);
+    const comments = await this.getComments(shardId, page);
     if (!comments) {
       logger.warn("could not get comments", "shardId", shardId);
       return null;
     }
     comments.push(commentInput as Comment);
-    let out = await this.saveComments(shardId, comments);
+    let out = await this.saveComments(shardId, comments, page);
     if (!out) return null;
     return commentInput as Comment;
   }
@@ -135,14 +169,15 @@ export default class ShardRepository implements IShardRepository {
   async deleteComment(
     shardId: number,
     commentId: number,
+    page: number
   ): Promise<"OK" | null> {
-    const comments = await this.getComments(shardId);
+    const comments = await this.getComments(shardId, page);
     if (!comments) return null;
     // Reference: https://stackoverflow.com/a/5767357
     const index = comments.findIndex((comment) => comment.id === commentId);
     if (index !== -1) {
       comments.splice(index, 1);
-      return await this.saveComments(shardId, comments);
+      return await this.saveComments(shardId, comments, page);
     }
 
     return "OK";
@@ -159,6 +194,7 @@ export default class ShardRepository implements IShardRepository {
       let shard = JSON.parse(out) as ShardWithFiles;
       shard.type = patchShardInput.type;
       if (patchShardInput.title) shard.title = patchShardInput.title;
+      await this.removeShardPages(patchShardInput.userId);
       return await this.saveShardWithFiles(shardId, shard);
     } catch (error) {
       logger.error("redis repository patchShard error", error);
@@ -166,9 +202,10 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async deleteShard(shardId: number): Promise<"OK" | null> {
+  async deleteShard(shardId: number, userId: string): Promise<"OK" | null> {
     let key = this.getShardKey(shardId);
     let num = await this.cache.del(key);
+    await this.removeShardPages(userId);
     if (num === 0) {
       logger.error("could not delete shard", {
         source: "cache",

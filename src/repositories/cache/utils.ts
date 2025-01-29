@@ -14,3 +14,7 @@ export function getUserKey(userId: string): string {
 export function getCommentKey(commentId: number): string {
   return `comment:${commentId}`;
 }
+
+export function getShardsByUserIdKey(userId: string, page: number) : string {
+  return `${getUserKey(userId)}:shards:page:${page}`
+}

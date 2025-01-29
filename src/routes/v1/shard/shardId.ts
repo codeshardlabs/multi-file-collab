@@ -18,7 +18,7 @@ interface GetCommentsQueryParams {
 
 const shardIdRouter = Router();
 shardIdRouter.get("/", fetchShardById);
-shardIdRouter.put("/", saveShard);
+shardIdRouter.put("/", saveShard); 
 shardIdRouter.patch("/", updateShard);
 shardIdRouter.delete("/", deleteShardById);
 shardIdRouter.get("/comments", queryValidation<GetCommentsQueryParams>, populateLimitOffset, getComments);

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 export async function populateCommentId(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction,
 ) {
   const id = req.params["id"];
