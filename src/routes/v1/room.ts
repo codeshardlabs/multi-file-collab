@@ -3,7 +3,7 @@ import {
   fetchAllRooms,
   fetchLatestRoomFilesState,
 } from "../../controllers/http/room";
-import { paramsValidation } from "../../middleware/http/global";
+import { paramsValidation, populateLimitOffset, queryValidation } from "../../middleware/http/global";
 import { populateShardId } from "../../middleware/http/shard";
 
 const roomRouter = Router();
@@ -18,6 +18,11 @@ roomRouter.get(
   populateShardId,
   fetchLatestRoomFilesState,
 );
-roomRouter.get("/", fetchAllRooms);
+
+interface FetchRoomsQueryParams{
+  limit:number;
+  offset: number;
+}
+roomRouter.get("/", queryValidation<FetchRoomsQueryParams>, populateLimitOffset, fetchAllRooms);
 
 export default roomRouter;

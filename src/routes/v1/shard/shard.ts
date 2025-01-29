@@ -2,11 +2,11 @@ import { Router } from "express";
 import { fetchShards, createShard } from "../../../controllers/http/shard";
 import {
   paramsValidation,
+  populateLimitOffset,
   queryValidation,
 } from "../../../middleware/http/global";
 import shardIdRouter from "./shardId";
 import {
-  populateLimitOffset,
   populateShardId,
 } from "../../../middleware/http/shard";
 

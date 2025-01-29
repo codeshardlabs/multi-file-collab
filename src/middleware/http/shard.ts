@@ -10,15 +10,4 @@ export async function populateShardId(
   next();
 }
 
-export async function populateLimitOffset(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  const limit = req.query["limit"];
-  const offset = req.query["offset"];
 
-  req.pagination.limit = Number(limit);
-  req.pagination.offset = Number(offset);
-  next();
-}
