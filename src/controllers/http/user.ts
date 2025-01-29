@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
-import { userDb, userRepo } from "../../db";
+import { userDb } from "../../db";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
-import { redisRepo } from "../../repositories/cache/redis";
-import { UserWithFollowersAndFollowering } from "../../interfaces/repositories/db/user";
 import { and, eq } from "drizzle-orm";
 import httpRequestTimer from "../../prometheus/histogram";
+import { db } from "../../repositories/db";
+import { UserWithFollowersAndFollowering } from "../../entities/user";
+import { cache } from "../../repositories/cache";
 
 interface UserPostRequestBody {
   id: string;
@@ -19,7 +20,7 @@ export async function saveUserMetadata(
   const body = req.body as UserPostRequestBody;
   let start = Date.now();
   try {
-    const user = await userRepo.onboard({
+    const user = await db.user.onboard({
       id: body.id,
     });
     if (!user)
@@ -50,13 +51,13 @@ export async function getUserInfo(
   const id = req.user.id;
   let start = Date.now();
   try {
-    const cachedUser = await redisRepo.getUserInfo(id);
+    const cachedUser = await cache.user.getUserInfo(id);
     if (!cachedUser) {
-      const dbUser = await userRepo.findByIdWithFollowersList(id);
+      const dbUser = await db.user.findByIdWithFollowersList(id);
       if (!dbUser)
         return next(new AppError(400, `user with user id ${id} not found`));
       user = dbUser;
-      const out = await redisRepo.saveUserInfo(dbUser);
+      const out = await cache.user.saveUserInfo(dbUser);
       if (!out) {
         logger.warn("could save user info to cache");
       }
@@ -89,7 +90,7 @@ export async function followUser(
   const followingId = req.user.id;
   let start = Date.now();
   try {
-    const out = await userRepo.follow(followerId, followingId);
+    const out = await db.user.follow(followerId, followingId);
     if (!out)
       return next(
         new AppError(500, `${followerId} could not follow ${followingId}`),
@@ -102,7 +103,7 @@ export async function followUser(
             eq(followers.followingId, followingId),
           ),
       });
-      let out = await redisRepo.followUser(followerId, followingUserInfo!);
+      let out = await cache.user.followUser(followerId, followingUserInfo!);
       if (!out) logger.warn("could could follow user in the cache");
     }
     res.status(200).json({
@@ -131,7 +132,7 @@ export async function unfollowUser(
   const followingId = req.user.id;
   let start = Date.now();
   try {
-    const out = await userRepo.unfollow(followerId, followingId);
+    const out = await db.user.unfollow(followerId, followingId);
     if (!out)
       return next(
         new AppError(500, `${followerId} could not unfollow ${followingId}`),

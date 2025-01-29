@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
-import { shardRepo } from "../../db";
 import { AppError } from "../../errors";
 import { Shard, ShardWithFiles } from "../../entities/shard";
-import { redisRepo } from "../../repositories/cache/redis";
 import { FileInput } from "../../interfaces/repositories/db/shard";
 import httpRequestTimer from "../../prometheus/histogram";
+import { db } from "../../repositories/db";
+import { cache } from "../../repositories/cache";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -16,20 +16,20 @@ export async function fetchLatestRoomFilesState(
   let shard: ShardWithFiles;
   let start = Date.now();
   try {
-    let cachedShard = await redisRepo.getShardWithFiles(id);
+    let cachedShard = await cache.shard.getShardWithFiles(id);
     if (!cachedShard) {
-      let dbShard = await shardRepo.getShardWithFiles(id);
+      let dbShard = await db.shard.getShardWithFiles(id);
       if (!dbShard) {
         return next(new AppError(500, "Could not find resource by room ID"));
       }
       shard = dbShard;
-      let out = await redisRepo.saveShardWithFiles(id, dbShard);
+      let out = await cache.shard.saveShardWithFiles(id, dbShard);
       if (!out) {
         logger.warn("could not save shard with files to cache", "shardId", id);
       }
     } else {
       shard = cachedShard;
-      let out = await shardRepo.updateFiles(id, shard.files as FileInput[]);
+      let out = await db.shard.updateFiles(id, shard.files as FileInput[]);
       if (!out) {
         logger.warn("could not save updated files to db", "shardId", id);
       }
@@ -61,14 +61,14 @@ export async function fetchAllRooms(
   let rooms: Shard[];
   let start = Date.now();
   try {
-    let cachedRooms = await redisRepo.getAllCollaborativeRooms(userId);
+    let cachedRooms = await cache.shard.getAllCollaborativeRooms(userId);
     if (!cachedRooms) {
-      const dbRooms = await shardRepo.getAllCollaborativeRooms(userId);
+      const dbRooms = await db.shard.getAllCollaborativeRooms(userId);
       if (!dbRooms) {
         return next(new AppError(500, "could not fetch rooms"));
       }
       rooms = dbRooms;
-      let out = await redisRepo.saveAllCollaborativeRooms(userId, dbRooms);
+      let out = await cache.shard.saveAllCollaborativeRooms(userId, dbRooms);
       if (!out) {
         logger.warn(
           "could not save collaborative rooms in shard",

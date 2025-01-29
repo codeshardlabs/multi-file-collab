@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from "express";
-import { shardRepo } from "../../db";
 import { logger } from "../../services/logger/logger";
 import {
   FileInput,
@@ -11,10 +10,11 @@ import {
 import { AppError } from "../../errors";
 import { Dependency } from "../../entities/dependency";
 import { Shard, ShardWithFiles } from "../../entities/shard";
-import { redisRepo } from "../../repositories/cache/redis";
 import { Comment } from "../../entities/comment";
 import { txRepo } from "../../repositories/transaction";
 import httpRequestTimer from "../../prometheus/histogram";
+import { db } from "../../repositories/db";
+import { cache } from "../../repositories/cache";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -32,14 +32,15 @@ export async function fetchShards(
   let start = Date.now();
 
   try {
-    let cachedShards = await redisRepo.findShardsByUserId(userId);
+    let cachedShards = await cache.shard.findShardsByUserId(userId);
     if (!cachedShards) {
-      const dbShards = await shardRepo.findByUserId(userId);
+      
+      const dbShards = await db.shard.findByUserId(userId);
       if (!dbShards) {
         return next(new AppError(500, "could not fetch shards by user id"));
       }
       shards = dbShards;
-      const out = await redisRepo.saveShardsByUserId(userId, dbShards);
+      const out = await cache.shard.saveShardsByUserId(userId, dbShards);
       if (!out) {
         logger.warn(
           "could not save shards by user id to cache",
@@ -76,12 +77,12 @@ export async function fetchShardById(
   const start = Date.now();
   let shard: ShardWithFiles;
   try {
-    let cachedShard = await redisRepo.getShardWithFiles(id);
+    let cachedShard = await cache.shard.getShardWithFiles(id);
     if (!cachedShard) {
-      const dbShard = await shardRepo.getShardWithFiles(id);
+      const dbShard = await db.shard.getShardWithFiles(id);
       if (!dbShard) return next(new AppError(400, "id does not exist"));
       shard = dbShard;
-      await redisRepo.saveShardWithFiles(id, dbShard);
+      await cache.shard.saveShardWithFiles(id, dbShard);
     } else {
       shard = cachedShard;
     }
@@ -120,16 +121,16 @@ export async function saveShard(
   const body = req.body as SaveShardRequestBody;
   let start = Date.now();
   try {
-    const existingFiles = await shardRepo.getFiles(shardId);
+    const existingFiles = await db.shard.getFiles(shardId);
     if (!existingFiles)
       return next(new AppError(400, "could not find shard by shard id"));
 
     const alreadyInserted = existingFiles.length !== 0;
     if (alreadyInserted) {
-      const out = await shardRepo.updateFiles(shardId, body.files);
+      const out = await db.shard.updateFiles(shardId, body.files);
       if (!out) return next(new AppError(500, "could not update files"));
     } else {
-      const out = await shardRepo.insertFiles(shardId, body.files);
+      const out = await db.shard.insertFiles(shardId, body.files);
       if (!out) return next(new AppError(500, "could not insert files"));
     }
 
@@ -165,7 +166,7 @@ export async function likeShard(
   const userId = req.auth.user.id;
   let start = Date.now();
   try {
-    const out = await shardRepo.like(shardId, userId);
+    const out = await db.shard.like(shardId, userId);
     if (!out) return next(new AppError(500, "could not like shard"));
     res.status(200).json({
       data: {
@@ -198,7 +199,7 @@ export async function dislikeShard(
   const userId = req.auth.user.id;
   let start = Date.now();
   try {
-    const out = await shardRepo.dislike(shardId, userId);
+    const out = await db.shard.dislike(shardId, userId);
     if (!out) return next(new AppError(500, "could not dislike shard"));
     res.status(200).json({
       data: {
@@ -231,13 +232,13 @@ export async function getComments(
   let comments: Comment[];
   let start = Date.now();
   try {
-    let cachedComments = await redisRepo.getComments(shardId);
+    let cachedComments = await cache.shard.getComments(shardId);
     if (!cachedComments) {
-      const dbComments = await shardRepo.getComments(shardId);
+      const dbComments = await db.shard.getComments(shardId);
       if (!dbComments)
         return next(new AppError(500, "could not get comments for shard"));
       comments = dbComments;
-      await redisRepo.saveComments(shardId, dbComments);
+      await cache.shard.saveComments(shardId, dbComments);
     } else {
       comments = cachedComments;
     }
@@ -318,7 +319,7 @@ export async function createShard(
   let start = Date.now();
   // TODO: add validation
   try {
-    const shard = await shardRepo.create({
+    const shard = await db.shard.create({
       title: "Untitled",
       userId: userId,
       templateType: body.templateType,
@@ -375,13 +376,13 @@ export async function updateShard(
       title: title,
       userId: userId,
     };
-    const out = await shardRepo.patch(patchShardInput);
+    const out = await db.shard.patch(patchShardInput);
     if (!out)
       return next(
         new AppError(500, `could not patch shard with shard id: ${shardId}`),
       );
     else {
-      const out = await redisRepo.patchShard(shardId, patchShardInput);
+      const out = await cache.shard.patchShard(shardId, patchShardInput);
       if (!out) {
         logger.warn("could not update shard", {
           shardId,

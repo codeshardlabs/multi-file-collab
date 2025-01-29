@@ -1,14 +1,8 @@
 import { IRepository } from "..";
-import { Follower } from "../../../entities/follower";
-import { User } from "../../../entities/user";
+import { User, UserWithFollowersAndFollowering } from "../../../entities/user";
 
 export interface UserInput {
   id: string;
-}
-
-export interface UserWithFollowersAndFollowering extends User {
-  followers: Follower[];
-  following: Follower[];
 }
 
 export interface IUserRepository extends IRepository {
