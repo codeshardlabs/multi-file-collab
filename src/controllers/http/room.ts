@@ -60,10 +60,15 @@ export async function fetchAllRooms(
   const userId = req.auth.user.id;
   let rooms: Shard[];
   let start = Date.now();
+  let { limit, offset } = req.pagination;
   try {
     let cachedRooms = await cache.shard.getAllCollaborativeRooms(userId);
     if (!cachedRooms) {
-      const dbRooms = await db.shard.getAllCollaborativeRooms(userId);
+      const dbRooms = await db.shard.getAllCollaborativeRooms(
+        userId,
+        limit,
+        offset,
+      );
       if (!dbRooms) {
         return next(new AppError(500, "could not fetch rooms"));
       }

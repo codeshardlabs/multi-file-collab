@@ -1,20 +1,20 @@
+import { and, eq, inArray, sql, SQL } from "drizzle-orm";
+import { ShardDbType } from "../../../db";
+import { shards } from "../../../db/tables/shards";
+import { Shard, ShardWithFiles } from "../../../entities/shard";
 import {
   CommentInput,
   FileInput,
   IShardRepository,
   PatchShardInput,
   ShardInput,
-} from "../../interfaces/repositories/db/shard";
-import { File } from "../../entities/file";
-import { Shard, ShardWithFiles } from "../../entities/shard";
-import { shards } from "../../db/tables/shards";
-import { ShardDbType } from "../../db";
-import { and, eq, inArray, sql, SQL } from "drizzle-orm";
-import { files } from "../../db/tables/files";
-import { logger } from "../../services/logger/logger";
-import { Comment } from "../../entities/comment";
-import { likes } from "../../db/tables/likes";
-import { comments } from "../../db/tables/comments";
+} from "../../../interfaces/repositories/db/shard";
+import { logger } from "../../../services/logger/logger";
+import { File } from "../../../entities/file";
+import { files } from "../../../db/tables/files";
+import { Comment } from "../../../entities/comment";
+import { likes } from "../../../db/tables/likes";
+import { comments } from "../../../db/tables/comments";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
@@ -40,13 +40,19 @@ export default class ShardRepository implements IShardRepository {
     return doc;
   }
 
-  async findByUserId(id: string): Promise<Shard[] | null> {
+  async findByUserId(
+    id: string,
+    limit: number,
+    offset: number,
+  ): Promise<Shard[] | null> {
     try {
-      const users = await this.db.query.shards.findMany({
+      const shards = await this.db.query.shards.findMany({
         where: (shards) => eq(shards.userId, id),
+        limit: limit, // no. of rows to be limited to
+        offset: offset, // no. of rows to skip
       });
 
-      return users;
+      return shards;
     } catch (error) {
       logger.error("shard repository find by user id error", error);
       return null;
@@ -77,12 +83,18 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async getAllCollaborativeRooms(userId: string): Promise<Shard[] | null> {
+  async getAllCollaborativeRooms(
+    userId: string,
+    limit: number,
+    offset: number,
+  ): Promise<Shard[] | null> {
     //  const roomsDoc = await this.model.find({ mode: "collaboration" });
     try {
       const rooms = await this.db.query.shards.findMany({
         where: (shards) =>
           and(eq(shards.mode, "collaboration"), eq(shards.userId, userId)),
+        limit: limit,
+        offset: offset,
       });
 
       return rooms;
@@ -147,10 +159,16 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async getComments(id: number): Promise<Comment[] | null> {
+  async getComments(
+    id: number,
+    limit: number,
+    offset: number,
+  ): Promise<Comment[] | null> {
     try {
       const comments = await this.db.query.comments.findMany({
         where: (comments) => eq(comments.shardId, id),
+        limit: limit,
+        offset: offset,
       });
       return comments;
     } catch (error) {

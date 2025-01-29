@@ -31,11 +31,12 @@ export async function fetchShards(
   let shards: Shard[];
   let start = Date.now();
 
+  let { limit, offset } = req.pagination;
+
   try {
     let cachedShards = await cache.shard.findShardsByUserId(userId);
     if (!cachedShards) {
-      
-      const dbShards = await db.shard.findByUserId(userId);
+      const dbShards = await db.shard.findByUserId(userId, limit, offset);
       if (!dbShards) {
         return next(new AppError(500, "could not fetch shards by user id"));
       }
@@ -231,10 +232,11 @@ export async function getComments(
   const shardId = req.shard.id;
   let comments: Comment[];
   let start = Date.now();
+  let { limit, offset } = req.pagination;
   try {
     let cachedComments = await cache.shard.getComments(shardId);
     if (!cachedComments) {
-      const dbComments = await db.shard.getComments(shardId);
+      const dbComments = await db.shard.getComments(shardId, limit, offset);
       if (!dbComments)
         return next(new AppError(500, "could not get comments for shard"));
       comments = dbComments;

@@ -7,17 +7,16 @@ import CommentRepository from "./usecases/comment";
 import ShardRepository from "./usecases/shard";
 import UserRepository from "./usecases/user";
 
-
 type repos = "comment" | "shard" | "user";
 
 type RepositoryMap = {
-    comment: ICommentRepository;
-    shard: IShardRepository;
-    user: IUserRepository;
-}
+  comment: ICommentRepository;
+  shard: IShardRepository;
+  user: IUserRepository;
+};
 
 class DbRepository {
-    private repos :  Map<repos,IRepository> = new Map<repos, IRepository>();
+  private repos: Map<repos, IRepository> = new Map<repos, IRepository>();
   constructor() {
     this.repos.set("comment", new CommentRepository(commentDb));
     this.repos.set("shard", new ShardRepository(shardDb));
@@ -27,24 +26,22 @@ class DbRepository {
   public get<K extends repos>(key: K): RepositoryMap[K] {
     const repo = this.repos.get(key);
     if (!repo) {
-        throw new Error(`Repository ${key} not found`);
+      throw new Error(`Repository ${key} not found`);
     }
     return repo as RepositoryMap[K];
-}
+  }
 
   public get comment(): ICommentRepository {
     return this.get("comment");
-}
+  }
 
-public get shard(): IShardRepository {
+  public get shard(): IShardRepository {
     return this.get("shard");
-}
+  }
 
-public get user(): IUserRepository {
+  public get user(): IUserRepository {
     return this.get("user");
-}
-
-  
+  }
 }
 
 export const db = new DbRepository();

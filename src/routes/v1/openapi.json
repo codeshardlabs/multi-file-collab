@@ -16,9 +16,7 @@
     "/api/v1/shards": {
       "get": {
         "summary": "Fetch all shards",
-        "tags" : [
-          "shards"
-        ],
+        "tags": ["shards"],
         "security": [
           {
             "bearerAuth": []
@@ -32,9 +30,7 @@
       },
       "post": {
         "summary": "Create a new shard",
-        "tags" : [
-          "shards"
-        ],
+        "tags": ["shards"],
         "security": [
           {
             "bearerAuth": []
@@ -50,9 +46,7 @@
     "/api/v1/shards/{id}": {
       "get": {
         "summary": "Fetch shard by ID",
-        "tags" : [
-          "shards"
-        ],
+        "tags": ["shards"],
         "security": [
           {
             "bearerAuth": []
@@ -76,9 +70,7 @@
       },
       "put": {
         "summary": "Save shard",
-        "tags" : [
-          "shards"
-        ],
+        "tags": ["shards"],
         "security": [
           {
             "bearerAuth": []
@@ -102,9 +94,7 @@
       },
       "patch": {
         "summary": "Update shard",
-        "tags" : [
-          "shards"
-        ],
+        "tags": ["shards"],
         "security": [
           {
             "bearerAuth": []
@@ -128,9 +118,7 @@
       },
       "delete": {
         "summary": "Delete shard by ID",
-        "tags" : [
-          "shards"
-        ],
+        "tags": ["shards"],
         "security": [
           {
             "bearerAuth": []
@@ -156,10 +144,7 @@
     "/api/v1/shards/{id}/comments": {
       "get": {
         "summary": "Get comments for a shard",
-        "tags" : [
-          "shards",
-          "comments"
-        ],
+        "tags": ["shards", "comments"],
         "security": [
           {
             "bearerAuth": []
@@ -183,10 +168,7 @@
       },
       "post": {
         "summary": "Add a comment to a shard",
-        "tags" : [
-          "shards",
-          "comments"
-        ],
+        "tags": ["shards", "comments"],
         "security": [
           {
             "bearerAuth": []
@@ -212,10 +194,7 @@
     "/api/v1/shards/{id}/likes": {
       "post": {
         "summary": "Like a shard",
-        "tags" : [
-          "shards",
-          "likes"
-        ],
+        "tags": ["shards", "likes"],
         "security": [
           {
             "bearerAuth": []
@@ -239,10 +218,7 @@
       },
       "delete": {
         "summary": "Dislike a shard",
-        "tags" : [
-          "shards",
-          "likes"
-        ],
+        "tags": ["shards", "likes"],
         "security": [
           {
             "bearerAuth": []
@@ -268,9 +244,7 @@
     "/api/v1/rooms": {
       "get": {
         "summary": "Fetch all rooms",
-        "tags" : [
-          "rooms"
-        ],
+        "tags": ["rooms"],
         "security": [
           {
             "bearerAuth": []
@@ -286,9 +260,7 @@
     "/api/v1/rooms/{id}": {
       "get": {
         "summary": "Fetch latest room files state",
-        "tags" : [
-          "rooms"
-        ],
+        "tags": ["rooms"],
         "security": [
           {
             "bearerAuth": []
@@ -314,9 +286,7 @@
     "/api/v1/users": {
       "post": {
         "summary": "Save user metadata",
-        "tags" : [
-          "users"
-        ],
+        "tags": ["users"],
         "responses": {
           "201": {
             "description": "User metadata saved"
@@ -327,9 +297,7 @@
     "/api/v1/users/{id}": {
       "get": {
         "summary": "Get user info",
-        "tags" : [
-          "users"
-        ],
+        "tags": ["users"],
         "security": [
           {
             "bearerAuth": []
@@ -355,9 +323,7 @@
     "/api/v1/comments/{id}": {
       "delete": {
         "summary": "Delete a comment",
-        "tags" : [
-          "comments"
-        ],
+        "tags": ["comments"],
         "security": [
           {
             "bearerAuth": []

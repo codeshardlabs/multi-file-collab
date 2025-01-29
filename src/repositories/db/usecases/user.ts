@@ -1,13 +1,12 @@
+import { and, eq } from "drizzle-orm";
+import { UserDbType } from "../../../db";
+import { followers, users } from "../../../db/tables/users";
+import { User, UserWithFollowersAndFollowering } from "../../../entities/user";
 import {
   IUserRepository,
   UserInput,
-  UserWithFollowersAndFollowering,
-} from "../../interfaces/repositories/db/user";
-import { User } from "../../entities/user";
-import { UserDbType } from "../../db";
-import { and, eq } from "drizzle-orm";
-import { followers, users } from "../../db/tables/users";
-import { logger } from "../../services/logger/logger";
+} from "../../../interfaces/repositories/db/user";
+import { logger } from "../../../services/logger/logger";
 
 export default class UserRepository implements IUserRepository {
   private db: UserDbType;

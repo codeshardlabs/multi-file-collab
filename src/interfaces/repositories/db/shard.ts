@@ -53,15 +53,27 @@ export interface IShardRepository extends IRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
   findById(id: number): Promise<Shard | null>;
   deleteById(id: number): Promise<"OK" | null>;
-  findByUserId(id: string): Promise<Shard[] | null>;
+  findByUserId(
+    id: string,
+    limit: number,
+    offset: number,
+  ): Promise<Shard[] | null>;
   getFiles(id: number): Promise<File[] | null>;
   updateFiles(id: number, files: FileInput[] | FileInput): Promise<"OK" | null>;
   insertFiles(id: number, fileInput: FileInput[]): Promise<"OK" | null>;
   updateLastSyncTimestamp(id: number): Promise<"OK" | null>;
-  getAllCollaborativeRooms(userId: string): Promise<Shard[] | null>;
+  getAllCollaborativeRooms(
+    userId: string,
+    limit: number,
+    offset: number,
+  ): Promise<Shard[] | null>;
   getShardWithFiles(id: number): Promise<ShardWithFiles | null>;
   patch(patchShardInput: PatchShardInput): Promise<"OK" | null>;
-  getComments(id: number): Promise<Comment[] | null>;
+  getComments(
+    id: number,
+    limit: number,
+    offset: number,
+  ): Promise<Comment[] | null>;
   like(shardId: number, userId: string): Promise<"OK" | null>;
   dislike(shardId: number, userId: string): Promise<"OK" | null>;
   addComment(commentInput: CommentInput): Promise<Comment | null>;

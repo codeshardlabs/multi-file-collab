@@ -1,4 +1,3 @@
-import {  shardRepo } from "../../db";
 import { Comment } from "../../entities/comment";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 import { AppError } from "../../errors";
@@ -15,7 +14,6 @@ type okAwaitedType = "OK" | null;
 
 type repos = "shard" | "user" | "redis" | "comment";
 class TransactionRepository {
-  
   async deleteComment(commentId: number) {
     const comment = await db.comment.getComment(commentId);
     if (!comment) throw new AppError(400, "not valid comment id");
@@ -27,13 +25,13 @@ class TransactionRepository {
     const tx = Transaction.begin();
     type commentAwaitedType = Comment | null;
     tx.add<okAwaitedType, commentAwaitedType>(
-      () => shardRepo.deleteComment(commentId), // execute
-      () => shardRepo.addComment(commentInput), // rollback
+      () => db.shard.deleteComment(commentId), // execute
+      () => db.shard.addComment(commentInput), // rollback
     );
 
     tx.add<okAwaitedType, commentAwaitedType>(
-      () =>  cache.shard.deleteComment(commentInput.shardId, commentId), // execute
-      () =>  cache.shard.addComment(commentInput.shardId, commentInput), // rollback
+      () => cache.shard.deleteComment(commentInput.shardId, commentId), // execute
+      () => cache.shard.addComment(commentInput.shardId, commentInput), // rollback
     );
 
     await tx.exec();
@@ -44,7 +42,7 @@ class TransactionRepository {
     type commentAwaitedType = Comment | null;
     tx.add<commentAwaitedType, okAwaitedType>(
       () => db.shard.addComment(commentInput), // execute
-      (id: number) =>  db.shard.deleteComment(id), // rollback
+      (id: number) => db.shard.deleteComment(id), // rollback
     );
 
     tx.add<commentAwaitedType, okAwaitedType>(

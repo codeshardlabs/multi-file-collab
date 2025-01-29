@@ -1,8 +1,14 @@
 import { Router } from "express";
 import { fetchShards, createShard } from "../../../controllers/http/shard";
-import { paramsValidation } from "../../../middleware/http/global";
+import {
+  paramsValidation,
+  queryValidation,
+} from "../../../middleware/http/global";
 import shardIdRouter from "./shardId";
-import { populateShardId } from "../../../middleware/http/shard";
+import {
+  populateLimitOffset,
+  populateShardId,
+} from "../../../middleware/http/shard";
 
 const shardRouter = Router();
 
@@ -16,8 +22,18 @@ shardRouter.use(
   populateShardId,
   shardIdRouter,
 );
+
+interface FetchShardsQueryParams {
+  limit: number;
+  offset: number;
+}
 // route
-shardRouter.get("/", fetchShards);
+shardRouter.get(
+  "/",
+  queryValidation<FetchShardsQueryParams>,
+  populateLimitOffset,
+  fetchShards,
+);
 shardRouter.post("/", createShard);
 
 export default shardRouter;
