@@ -15,8 +15,8 @@ interface TransactionOperation<T, U> {
 
 class Transaction {
   private operations: TransactionOperation<any, any>[] = [];
-constructor() {
-  
+private constructor() {
+
 }
   static begin(): Transaction {
     return new Transaction();
