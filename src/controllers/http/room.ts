@@ -15,6 +15,7 @@ export async function fetchLatestRoomFilesState(
   const id = req.shard.id;
   let shard: ShardWithFiles;
   let start = Date.now();
+  let source : "db" | "cache" = "db";
   try {
     let cachedShard = await cache.shard.getShardWithFiles(id);
     if (!cachedShard) {
@@ -23,12 +24,14 @@ export async function fetchLatestRoomFilesState(
         return next(new AppError(500, "Could not find resource by room ID"));
       }
       shard = dbShard;
+      source = "db";
       let out = await cache.shard.saveShardWithFiles(id, dbShard);
       if (!out) {
         logger.warn("could not save shard with files to cache", "shardId", id);
       }
     } else {
       shard = cachedShard;
+      source = "cache";
       let out = await db.shard.updateFiles(id, shard.files as FileInput[]);
       if (!out) {
         logger.warn("could not save updated files to db", "shardId", id);
@@ -61,6 +64,7 @@ export async function fetchAllRooms(
   let rooms: Shard[];
   let start = Date.now();
   let { limit, offset } = req.pagination;
+  let source : "db" | "cache" = "db";
   try {
     let cachedRooms = await cache.shard.getAllCollaborativeRooms(userId);
     if (!cachedRooms) {
@@ -73,6 +77,7 @@ export async function fetchAllRooms(
         return next(new AppError(500, "could not fetch rooms"));
       }
       rooms = dbRooms;
+      source = "db";
       let out = await cache.shard.saveAllCollaborativeRooms(userId, dbRooms);
       if (!out) {
         logger.warn(
@@ -83,11 +88,13 @@ export async function fetchAllRooms(
       }
     } else {
       rooms = cachedRooms;
+      source = "cache";
     }
 
     res.status(200).json({
       data: {
         rooms,
+        source
       },
       error: null,
     });
