@@ -1,34 +1,38 @@
 import request from 'supertest';
 import { jest } from '@jest/globals';
 import {app} from "../../../src/app"
+import { NextFunction, Request, Response } from 'express';
+import { cache as originalCache } from '../../../src/repositories/cache';
+import { db as originalDb } from '../../../src/repositories/db';
 
-// Mock dependencies
-jest.mock('../../../src/repositories/cache',  () => ({
-  cache: {
+import {User} from "../../../src/entities/user";
+import { Shard, ShardWithFiles } from '../../../src/entities/shard';
+
+// Adding custom property to Express Request: https://stackoverflow.com/questions/71122741/how-do-i-add-custom-property-to-express-request-in-typescript
+declare module "express-serve-static-core" {
+  interface Request {
     shard: {
-      getShardWithFiles: jest.fn(),
-      saveShardWithFiles: jest.fn(),
-      getAllCollaborativeRooms: jest.fn(),
-      saveAllCollaborativeRooms: jest.fn(),
-    }
+      id: number;
+    };
+    auth: {
+      user: User;
+    };
+    user: {
+      id: string;
+    };
+    comment: {
+      id: number;
+    };
+    pagination: {
+      limit: number;
+      offset: number;
+    };
   }
-}));
-jest.mock('../../../src/repositories/db', () => ({
-  db: {
-    shard: {
-      getShardWithFiles: jest.fn(),
-      updateFiles: jest.fn(),
-      getAllCollaborativeRooms: jest.fn(),
-    }
-  }
-}));
-jest.mock('../../../src/services/logger/logger', () => ({
-  logger: {
-    error: jest.fn(),
-    warn: jest.fn(),
-    info: jest.fn(),
-  }
-}));
+}
+const cache = jest.mocked(originalCache);
+const db = jest.mocked(originalDb);
+
+
 
 // Import your actual Express app
 describe('Room API Routes', () => {
@@ -56,7 +60,7 @@ describe('Room API Routes', () => {
 
     beforeEach(() => {
       // Setup middleware for test context
-      app.use('/rooms/:id', (req, res, next) => {
+      app.use('/rooms/:id', (req: Request, res: Response, next: NextFunction) => {
         req.shard = { id: 0 };
         next();
       });
@@ -64,8 +68,8 @@ describe('Room API Routes', () => {
 
     it('should fetch shard from cache when available', async () => {
       // Mock cache hit
-      cache.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles);
-      (db.shard.updateFiles as jest.Mock).mockResolvedValue(true);
+      cache.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles)
+      db.shard.updateFiles.mockResolvedValue("OK");
 
       const response = await request(app).get('/rooms/1');
 
@@ -77,11 +81,11 @@ describe('Room API Routes', () => {
 
     it('should fetch shard from db when cache misses', async () => {
       // Mock cache miss, db hit
-      (cache.shard.getShardWithFiles as jest.Mock).mockResolvedValue(null);
-      (db.shard.getShardWithFiles as jest.Mock).mockResolvedValue(mockShardWithFiles);
-      (cache.shard.saveShardWithFiles as jest.Mock).mockResolvedValue(true);
+      cache.shard.getShardWithFiles.mockResolvedValue(null);
+      db.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
+      cache.shard.saveShardWithFiles.mockResolvedValue("OK");
 
-      const response = await request(app).get('/1');
+      const response = await request(app).get('/rooms/1');
 
       expect(response.status).toBe(200);
       expect(response.body.data.shard).toEqual(mockShardWithFiles);
@@ -92,10 +96,10 @@ describe('Room API Routes', () => {
 
     it('should handle not found error', async () => {
       // Mock both cache and db miss
-      (cache.shard.getShardWithFiles as jest.Mock).mockResolvedValue(null);
-      (db.shard.getShardWithFiles as jest.Mock).mockResolvedValue(null);
+      cache.shard.getShardWithFiles.mockResolvedValue(null);
+      db.shard.getShardWithFiles.mockResolvedValue(null);
 
-      const response = await request(app).get('/1');
+      const response = await request(app).get('/rooms/1');
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Could not find resource by room ID');
@@ -103,11 +107,11 @@ describe('Room API Routes', () => {
 
     it('should handle cache save failure gracefully', async () => {
       // Mock cache miss, db hit, but cache save failure
-      (cache.shard.getShardWithFiles as jest.Mock).mockResolvedValue(null);
-      (db.shard.getShardWithFiles as jest.Mock).mockResolvedValue(mockShardWithFiles);
-      (cache.shard.saveShardWithFiles as jest.Mock).mockResolvedValue(false);
+      cache.shard.getShardWithFiles.mockResolvedValue(null);
+      db.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
+      cache.shard.saveShardWithFiles.mockResolvedValue("OK");
 
-      const response = await request(app).get('/1');
+      const response = await request(app).get('/rooms/1');
 
       expect(response.status).toBe(200);
       expect(response.body.data.shard).toEqual(mockShardWithFiles);
