@@ -1,7 +1,7 @@
 import { Socket } from "socket.io";
 import { errorMessage, errors } from "../../config";
 import { User } from "../../entities/user";
-import { userRepo } from "../../db";
+import { db } from "../../repositories/db";
 
 declare module "socket.io" {
   interface Socket {
@@ -14,7 +14,7 @@ export async function fetchUserFromToken(socket: Socket) {
     const token = socket.handshake.auth.token as string;
     if (!token) next(new Error(errorMessage.get(errors.TOKEN_NOT_FOUND)));
 
-    const user = await userRepo.findById(token);
+    const user = await db.user.findById(token);
 
     if (!user) next(new Error(errorMessage.get(errors.USER_NOT_FOUND)));
     socket.user = user!;

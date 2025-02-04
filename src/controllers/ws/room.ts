@@ -6,7 +6,7 @@ import { EditorStateManager } from "../../services/redis/editorStateManager";
 import { validateRoomId } from "../../middleware/ws/room";
 import { errorMessage, errors } from "../../config";
 import { logger } from "../../services/logger/logger";
-import { shardRepo } from "../../db";
+import { db } from "../../repositories/db";
 
 export function joinRoom(roomId: string, io: Server, socket: Socket) {
   // validate room id: library not required
@@ -27,7 +27,7 @@ export function joinRoom(roomId: string, io: Server, socket: Socket) {
         if (len == 1) {
           // first user joined the room
           // get the shard by room id
-          const files = await shardRepo.getFiles(Number(roomId));
+          const files = await db.shard.getFiles(Number(roomId));
           if (files) {
             // populate all the files to redis
             let pipeline = kvStore.multi();
