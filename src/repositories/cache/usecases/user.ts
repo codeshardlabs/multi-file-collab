@@ -1,13 +1,13 @@
 import { Follower } from "../../../entities/follower";
 import { UserWithFollowersAndFollowering } from "../../../entities/user";
 import { IUserRepository } from "../../../interfaces/repositories/cache/user";
-import { IKVService } from "../../../interfaces/services/redis";
+import { ICacheService } from "../../../interfaces/services/cache";
 
 export default class UserRepository implements IUserRepository {
-  private cache: IKVService;
+  private cache: ICacheService;
   private defaultTTL: number = 3000; // 3s
   private ttl: number;
-  constructor(_cache: IKVService, ttl?: number) {
+  constructor(_cache: ICacheService, ttl?: number) {
     this.cache = _cache;
     this.ttl = ttl ?? this.defaultTTL;
   }

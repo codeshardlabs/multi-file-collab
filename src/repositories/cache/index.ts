@@ -2,9 +2,9 @@ import { IRepository } from "../../interfaces/repositories";
 import { ICommentRepository } from "../../interfaces/repositories/cache/comment";
 import { IShardRepository } from "../../interfaces/repositories/cache/shard";
 import { IUserRepository } from "../../interfaces/repositories/cache/user";
-import { IKVService } from "../../interfaces/services/redis";
+import { ICacheService } from "../../interfaces/services/cache";
 import { logger } from "../../services/logger/logger";
-import { kvStore } from "../../services/redis/kvStore";
+import { cacheService } from "../../services/redis/cache/cache";
 import CommentRepository from "./usecases/comment";
 import ShardRepository from "./usecases/shard";
 import UserRepository from "./usecases/user";
@@ -24,11 +24,11 @@ interface QueueItem {
 
 class CacheRepository {
   private repos: Map<repos, IRepository> = new Map<repos, IRepository>();
-  private _globalCache: IKVService;
+  private _globalCache: ICacheService;
   private events: QueueItem[] = [];
   private maxRetryAttempts: number = 3;
   private eventListLimit: number = 50;
-  constructor(_cache: IKVService) {
+  constructor(_cache: ICacheService) {
     this.repos.set("comment", new CommentRepository(_cache));
     this.repos.set("shard", new ShardRepository(_cache));
     this.repos.set("user", new UserRepository(_cache));
@@ -114,4 +114,4 @@ class CacheRepository {
 }
 }
 
-export const cache = new CacheRepository(kvStore);
+export const cache = new CacheRepository(cacheService);

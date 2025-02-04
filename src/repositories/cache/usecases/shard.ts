@@ -6,15 +6,15 @@ import {
   CommentInput,
   PatchShardInput,
 } from "../../../interfaces/repositories/db/shard";
-import { IKVService } from "../../../interfaces/services/redis";
+import { ICacheService } from "../../../interfaces/services/cache";
 import { logger } from "../../../services/logger/logger";
 import { getShardKey, getShardsByUserIdKey, getUserKey } from "../utils";
 
 export default class ShardRepository implements IShardRepository {
-  private cache: IKVService;
+  private cache: ICacheService;
   private defaultTTL: number = 60000; // 1min
   private ttl: number;
-  constructor(_cache: IKVService, ttl?: number) {
+  constructor(_cache: ICacheService, ttl?: number) {
     this.cache = _cache;
     this.ttl = ttl ?? this.defaultTTL;
   }
