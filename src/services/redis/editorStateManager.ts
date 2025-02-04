@@ -3,7 +3,7 @@ import { KVService, kvStore } from "./kvStore";
 import { redisConfig } from "../../config";
 import { IShardRepository } from "../../interfaces/repositories/db/shard";
 import { logger } from "../logger/logger";
-import { shardRepo } from "../../db";
+import { db } from "../../repositories/db";
 
 export class EditorStateManager {
   private queueService: QueueService;
@@ -22,7 +22,7 @@ export class EditorStateManager {
           },
         },
       },
-      shardRepo,
+      db.shard,
     );
     this.startPeriodicFlush();
   }
@@ -40,7 +40,7 @@ export class EditorStateManager {
       try {
         // flush cache data to the DB
 
-        const rooms = await shardRepo.getAllCollaborativeRooms(this.userId);
+        const rooms = await db.shard.getAllCollaborativeRooms(this.userId,  1000000, 0);
         if (rooms && rooms.length > 0) {
           for (let room of rooms) {
             const id = String(room.id);
@@ -65,7 +65,7 @@ export class EditorStateManager {
                 }
               }
 
-              await shardRepo.updateLastSyncTimestamp(Number(id));
+              await db.shard.updateLastSyncTimestamp(Number(id));
             }
           }
         }

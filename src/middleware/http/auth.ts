@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { errorMessage, errors } from "../../config";
-import { userRepo } from "../../db";
 import { AppError } from "../../errors";
+import { db } from "../../repositories/db";
 
 export async function authMiddleware(
   req: Request,
@@ -20,7 +20,7 @@ export async function authMiddleware(
     return next(new AppError(400, errorMessage.get(errors.USER_NOT_FOUND)!));
   }
 
-  const user = await userRepo.findById(creator);
+  const user = await db.user.findById(creator);
   if (!user) {
     return next(new AppError(400, errorMessage.get(errors.USER_NOT_FOUND)!));
   }

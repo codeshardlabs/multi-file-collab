@@ -14,7 +14,6 @@ import { Comment } from "../../entities/comment";
 import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
-import { shardDb } from "../../db";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;

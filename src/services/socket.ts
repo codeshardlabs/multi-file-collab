@@ -10,7 +10,7 @@ import {
 import { fetchUserFromToken } from "../middleware/ws/room";
 import { env } from "../config";
 import { logger } from "./logger/logger";
-import { shardRepo } from "../db";
+import { db } from "../repositories/db";
 
 class SocketService {
   private _io: Server;
@@ -168,7 +168,7 @@ class SocketService {
           const len = await kvStore.llen(roomId);
           if (len == 0) {
             // all the users left the room -> depopulate the cache
-            const files = await shardRepo.getFiles(Number(roomId));
+            const files = await db.shard.getFiles(Number(roomId));
             const keys = [userId, roomId];
             if (files) {
               for (let file of files) {

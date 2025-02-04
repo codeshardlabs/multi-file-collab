@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, serial, pgTable, text } from "drizzle-orm/pg-core";
+import {  serial, pgTable, text } from "drizzle-orm/pg-core";
 import { shards } from "./shards";
 // TODO: handle types here
 // @ts-ignore
