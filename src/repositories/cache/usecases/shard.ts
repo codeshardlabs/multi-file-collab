@@ -40,8 +40,8 @@ export default class ShardRepository implements IShardRepository {
     let pattern = `${getUserKey(userId)}:shards:page:*`;
     const keys = await this.cache.keys(pattern);
     let count = await this.cache.del(...keys);
-    if(keys.length> 0 && count == 0) {
-      logger.debug("could not delete any key from cache", {
+    if(keys.length !== count) {
+      logger.debug(`could not delete ${keys.length - count} keys from cache`, {
         userId: userId,
         source: "cacheRepository"
       })
@@ -54,8 +54,8 @@ export default class ShardRepository implements IShardRepository {
     let pattern = `${this.getShardCommentsKey(shardId)}:page:*`;
     const keys = await this.cache.keys(pattern);
     let count = await this.cache.del(...keys);
-    if(keys.length> 0 && count == 0) {
-      logger.debug("could not delete any key from cache", {
+    if(keys.length !== count) {
+      logger.debug(`could not delete ${keys.length - count} keys from cache`, {
         shardId: shardId,
         source: "cacheRepository>removeCommentPages(shardId)"
       })

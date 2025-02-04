@@ -16,13 +16,22 @@ type RepositoryMap = {
   user: IUserRepository;
 };
 
+interface QueueItem {
+  key: string;
+}
+
 class CacheRepository {
   private repos: Map<repos, IRepository> = new Map<repos, IRepository>();
+  private _globalCache: IKVService;
+  private  events: QueueItem[] = [];
+  private eventListLimit : number = 50;
   constructor(_cache: IKVService) {
     this.repos.set("comment", new CommentRepository(_cache));
     this.repos.set("shard", new ShardRepository(_cache));
     this.repos.set("user", new UserRepository(_cache));
+    this._globalCache = _cache;
   }
+
 
   public get<K extends repos>(key: K): RepositoryMap[K] {
     const repo = this.repos.get(key);
@@ -30,6 +39,18 @@ class CacheRepository {
       throw new Error(`Repository ${key} not found`);
     }
     return repo as RepositoryMap[K];
+  }
+
+  public async addToDeadLetterQueue(queueItem : QueueItem) {
+    this.events.push(queueItem);
+    if(this.events.length === this.eventListLimit) {
+      let keys = [];
+      for(let item of this.events) {
+        keys.push(item.key);
+      }
+
+      await this._globalCache.del(...keys);
+    }
   }
 
   public get comment(): ICommentRepository {
