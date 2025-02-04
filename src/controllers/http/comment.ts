@@ -25,6 +25,10 @@ export async function deleteComment(
       // comment deleted
       let out = await cache.shard.removeCommentPages(body.shardId);
       if(!out) {
+        await cache.addToDeadLetterQueue({
+          identifier: `shard:${body.shardId}:comment:page:*`,
+          type: "pattern"
+        })
         logger.warn("could not remove comments pages", {
           commentId: commentId,
           shardId: body.shardId,

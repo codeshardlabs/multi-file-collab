@@ -3,6 +3,7 @@ import { ICommentRepository } from "../../interfaces/repositories/cache/comment"
 import { IShardRepository } from "../../interfaces/repositories/cache/shard";
 import { IUserRepository } from "../../interfaces/repositories/cache/user";
 import { IKVService } from "../../interfaces/services/redis";
+import { logger } from "../../services/logger/logger";
 import { kvStore } from "../../services/redis/kvStore";
 import CommentRepository from "./usecases/comment";
 import ShardRepository from "./usecases/shard";
@@ -17,14 +18,16 @@ type RepositoryMap = {
 };
 
 interface QueueItem {
-  key: string;
+  identifier: string;
+  type: "pattern" | "key";
 }
 
 class CacheRepository {
   private repos: Map<repos, IRepository> = new Map<repos, IRepository>();
   private _globalCache: IKVService;
-  private  events: QueueItem[] = [];
-  private eventListLimit : number = 50;
+  private events: QueueItem[] = [];
+  private maxRetryAttempts: number = 3;
+  private eventListLimit: number = 50;
   constructor(_cache: IKVService) {
     this.repos.set("comment", new CommentRepository(_cache));
     this.repos.set("shard", new ShardRepository(_cache));
@@ -41,17 +44,52 @@ class CacheRepository {
     return repo as RepositoryMap[K];
   }
 
-  public async addToDeadLetterQueue(queueItem : QueueItem) {
+  public async addToDeadLetterQueue(queueItem: QueueItem) {
     this.events.push(queueItem);
-    if(this.events.length === this.eventListLimit) {
-      let keys = [];
-      for(let item of this.events) {
-        keys.push(item.key);
+    if (this.events.length === this.eventListLimit) {
+      try {
+        await this.processDLQ();
+      } catch (finalError) {
+        // Handle final failure scenario
+        logger.error("Failed to process Dead Letter Queue after max attempts", {
+          error: finalError,
+          queueItems: this.events
+        });
       }
-
-      await this._globalCache.del(...keys);
     }
   }
+
+  private async processDLQ() {
+    for(let attempt = 1;attempt<= this.maxRetryAttempts;attempt++) {
+      const finalKeys = this.events.filter(item => item.type === "key").map((item) => item.identifier);
+      const queuePatterns = this.events.filter(item => item.type === "pattern");
+      for (let item of queuePatterns) {
+        const keys = await this._globalCache.keys(item.identifier);
+      finalKeys.push(...keys);
+      }
+      
+      try {
+        const count = await this._globalCache.del(...finalKeys);
+        
+        if (count === finalKeys.length) {
+          this.events = []; 
+          return;
+        }
+        
+        throw new Error("Could not delete all keys");
+      } catch (error) {
+        logger.warn(`DLQ deletion attempt ${attempt} failed`, {
+          error,
+          src: "CacheRepository > processDLQ()"
+        });
+  
+        await new Promise(resolve => 
+          setTimeout(resolve, Math.pow(2, attempt - 1) * 1000)
+        );
+  
+    }
+  }
+}
 
   public get comment(): ICommentRepository {
     return this.get("comment");
