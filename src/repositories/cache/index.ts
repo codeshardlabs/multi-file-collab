@@ -44,8 +44,8 @@ class CacheRepository {
     return repo as RepositoryMap[K];
   }
 
-  public async addToDeadLetterQueue(queueItem: QueueItem) {
-    this.events.push(queueItem);
+  public async addToDeadLetterQueue(...queueItems: QueueItem[]) {
+    this.events.push(...queueItems);
     if (this.events.length === this.eventListLimit) {
       try {
         await this.processDLQ();
@@ -60,12 +60,19 @@ class CacheRepository {
   }
 
   private async processDLQ() {
+    let localCache = new Map<string, string[]>();
     for(let attempt = 1;attempt<= this.maxRetryAttempts;attempt++) {
       const finalKeys = this.events.filter(item => item.type === "key").map((item) => item.identifier);
       const queuePatterns = this.events.filter(item => item.type === "pattern");
       for (let item of queuePatterns) {
-        const keys = await this._globalCache.keys(item.identifier);
-      finalKeys.push(...keys);
+        if(localCache.get(item.identifier) === undefined) {
+          const keys = await this._globalCache.keys(item.identifier);
+          localCache.set(item.identifier, keys);
+          finalKeys.push(...keys);
+        } 
+        else {
+          finalKeys.push(...localCache.get(item.identifier)!);
+        }
       }
       
       try {
@@ -83,6 +90,7 @@ class CacheRepository {
           src: "CacheRepository > processDLQ()"
         });
   
+        // exponential backoff
         await new Promise(resolve => 
           setTimeout(resolve, Math.pow(2, attempt - 1) * 1000)
         );

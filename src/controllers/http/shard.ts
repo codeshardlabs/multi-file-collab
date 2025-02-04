@@ -14,6 +14,7 @@ import { Comment } from "../../entities/comment";
 import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
+import { shardDb } from "../../db";
 
 export interface ShardPostRequestBody {
   templateType: ShardTemplateType;
@@ -296,6 +297,10 @@ export async function addComment(
     // invalidate all the comment pages
    let out =  await cache.shard.removeCommentPages(body.shardId);
    if(!out) {
+    await cache.addToDeadLetterQueue({
+      type: "pattern",
+      identifier: `shard:${body.shardId}:comments:page:*`
+    })
     logger.warn("could not invalidate the comment pages", {
       shardId: body.shardId
     })
@@ -350,6 +355,10 @@ export async function createShard(
       // invalidate all the shard pages
       let out = await cache.shard.removeShardPages(userId);
       if (!out) {
+        await cache.addToDeadLetterQueue({
+          type: "pattern",
+          identifier: `user:${userId}:shards:page:*`
+        })
         logger.warn("could not update shard with latest info...");
       }
     }
@@ -401,6 +410,14 @@ export async function updateShard(
     else {
       const out = await cache.shard.patchShard(shardId, patchShardInput);
       if (!out) {
+        await cache.addToDeadLetterQueue({
+          type: "key",
+          identifier: `shard:${shardId}`
+        }, 
+      {
+        type: "pattern",
+        identifier: `user:${patchShardInput.userId}:shards:page:*`
+      })
         logger.warn("could not update shard", {
           shardId,
           source: "cache",
@@ -443,7 +460,21 @@ export async function deleteShardById(
     next(new AppError(500, "could not delete shard by id"));
   }
   else {
-    await cache.shard.deleteShard(id, userId);
+    // invalidation
+    let out = await cache.shard.deleteShard(id, userId);
+    if(!out) {
+      await cache.addToDeadLetterQueue({
+        type: "key",
+        identifier: `shard:${id}`
+      }, {
+        type: "pattern",
+        identifier: `user:${userId}:shards:page:*`
+      })
+      logger.warn("could not invalidate shard by deleting it", {
+        shardId: id,
+        src: "shardController > deleteShardById()"
+      })
+    }
     res.status(200).json({
       error: null,
       data: {
