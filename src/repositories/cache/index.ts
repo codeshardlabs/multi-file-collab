@@ -59,6 +59,20 @@ class CacheRepository {
     }
   }
 
+  
+
+  public get comment(): ICommentRepository {
+    return this.get("comment");
+  }
+
+  public get shard(): IShardRepository {
+    return this.get("shard");
+  }
+
+  public get user(): IUserRepository {
+    return this.get("user");
+  }
+
   private async processDLQ() {
     let localCache = new Map<string, string[]>();
     for(let attempt = 1;attempt<= this.maxRetryAttempts;attempt++) {
@@ -98,18 +112,6 @@ class CacheRepository {
     }
   }
 }
-
-  public get comment(): ICommentRepository {
-    return this.get("comment");
-  }
-
-  public get shard(): IShardRepository {
-    return this.get("shard");
-  }
-
-  public get user(): IUserRepository {
-    return this.get("user");
-  }
 }
 
 export const cache = new CacheRepository(kvStore);

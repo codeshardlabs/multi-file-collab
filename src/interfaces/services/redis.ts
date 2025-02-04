@@ -2,7 +2,7 @@ import { ChainableCommander, RedisKey } from "ioredis";
 
 export interface IKVService {
   get(key: string): Promise<string | null>;
-  set(key: string, value: string, ttl?: number): Promise<"OK">;
+  set(key: string, value: string, ttl?: number): Promise<"OK" | null>;
   hset(key: string, obj: object, cb?: Callback<number>): Promise<number>;
   del(...keys: string[]): Promise<number>;
   exists(key: string): Promise<number>;

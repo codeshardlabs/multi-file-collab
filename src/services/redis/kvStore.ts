@@ -2,11 +2,15 @@ import Redis, { Callback, ChainableCommander, RedisKey } from "ioredis";
 import { RedisManager } from "./redisManager";
 import { redisConfig } from "../../config";
 import { IKVService } from "../../interfaces/services/redis";
+import CircuitBreaker from "./circuitBreaker";
 
-export class KVService implements IKVService {
+// TODO add circuit breaker here
+export class KVService implements IKVService { 
   private client: Redis;
+  private circuitBreaker: CircuitBreaker;
   constructor() {
     const redisManager = RedisManager.getInstance();
+    this.circuitBreaker = new CircuitBreaker(5, 30000);
     this.client = redisManager.getConnection(
       redisConfig.connection.CONN_KV_STORE,
     );
@@ -14,44 +18,53 @@ export class KVService implements IKVService {
 
   // get key from redis
   async get(key: string): Promise<string | null> {
-    return await this.client.get(key);
+    try {
+     return await this.circuitBreaker.execute(this.client.get(key));
+    } catch (error) {
+      return null;
+    }
   }
 
-  async set(key: string, value: string, ttl?: number): Promise<"OK"> {
-    if (ttl) {
-      // if ttl > 0, set expiry date
-      return await this.client.set(key, value, "EX", ttl);
+  async set(key: string, value: string, ttl?: number): Promise<"OK" | null> {
+    try {
+      if (ttl) {
+        // if ttl > 0, set expiry date
+        return await this.circuitBreaker.execute(this.client.set(key, value, "EX", ttl));
+      }
+      // otherwise set without expiry data
+      return await this.circuitBreaker.execute(this.client.set(key, value));
+    } catch (error) {
+      return null;
     }
-    // otherwise set without expiry data
-    return await this.client.set(key, value);
+    
   }
 
   async hset(key: string, obj: object, cb?: Callback<number>): Promise<number> {
-    return await this.client.hset(key, obj, cb);
+    return await this.circuitBreaker.execute(this.client.hset(key, obj, cb));
   }
 
   // delete key from redis
   async del(...keys: string[]): Promise<number> {
-    return await this.client.del(...keys);
+    return await this.circuitBreaker.execute(this.client.del(...keys));
   }
 
   // check if key exists or not
   async exists(key: string): Promise<number> {
-    return await this.client.exists(key);
+    return await this.circuitBreaker.execute(this.client.exists(key));
   }
 
   async keys(pattern: string): Promise<string[]> {
-    return await this.client.keys(pattern);
+    return await this.circuitBreaker.execute(this.client.keys(pattern));
   }
 
   // set TTL/expiry of key in seconds
   async expire(key: string, seconds: number): Promise<number> {
-    return await this.client.expire(key, seconds);
+    return await this.circuitBreaker.execute(this.client.expire(key, seconds));
   }
 
   // append data to the redis list
   async rpush(key: RedisKey, data: string | number): Promise<number> {
-    return await this.client.rpush(key, data);
+    return await this.circuitBreaker.execute(this.client.rpush(key, data));
   }
 
   // remove first k occurrence of element from list
