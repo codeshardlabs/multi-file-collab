@@ -6,6 +6,7 @@ const CONN_PUBLISHER = "conn:publisher";
 const CONN_SUBSCRIBER = "conn:subscriber";
 const CONN_KV_STORE = "conn:kvstore";
 const CONN_BULLMQ = "conn:bullmq";
+const CONN_CACHE = "conn:cache";
 
 // worker and queue events
 const EVENT_COMPLETED = "completed";
@@ -23,6 +24,7 @@ const redisConfig = {
     CONN_PUBLISHER,
     CONN_SUBSCRIBER,
     CONN_KV_STORE,
+    CONN_CACHE,
   },
   event: {
     EVENT_COMPLETED,

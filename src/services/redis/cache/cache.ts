@@ -9,10 +9,9 @@ export class CacheService implements ICacheService {
     private circuitBreaker: CircuitBreaker;
       constructor() {
       const redisManager = RedisManager.getInstance();
+      this.client = redisManager.getConnection(redisConfig.connection.CONN_CACHE);
       this.circuitBreaker = new CircuitBreaker(5, 30000);
-      this.client = redisManager.getConnection(
-        redisConfig.connection.CONN_KV_STORE,
-      );
+     
     }
   
     // get key from redis
