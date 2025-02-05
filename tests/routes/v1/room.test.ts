@@ -10,6 +10,9 @@ jest.mock('../../../src/repositories/db');
 
 import { cache as originalCache } from '../../../src/repositories/cache';
 import { db as originalDb } from '../../../src/repositories/db';
+import { User } from '../../../src/entities/user';
+import { populateShardId } from '../../../src/middleware/http/shard';
+import { populateLimitOffset } from '../../../src/middleware/http/global';
 
 
 const cache = originalCache as jest.Mocked<typeof originalCache>
@@ -130,7 +133,7 @@ describe('Room API Routes', () => {
     beforeEach(() => {
       // Setup middleware for test context
       app.use('/rooms', (req, res, next) => {
-        req.auth = { user: { id: 'user1' } };
+        req.auth = { user: { id: 'user1' } as User };
         req.pagination = { limit: 10, offset: 0 };
         next();
       });
@@ -138,7 +141,7 @@ describe('Room API Routes', () => {
 
     it('should fetch rooms from cache when available', async () => {
       // Mock cache hit
-      (cache.shard.getAllCollaborativeRooms as jest.Mock).mockResolvedValue(mockRooms);
+      cache.shard.getAllCollaborativeRooms.mockResolvedValue(mockRooms as Shard[]);
 
       const response = await request(app)
         .get('/')
@@ -153,9 +156,9 @@ describe('Room API Routes', () => {
 
     it('should fetch rooms from db when cache misses', async () => {
       // Mock cache miss, db hit
-      (cache.shard.getAllCollaborativeRooms as jest.Mock).mockResolvedValue(null);
-      (db.shard.getAllCollaborativeRooms as jest.Mock).mockResolvedValue(mockRooms);
-      (cache.shard.saveAllCollaborativeRooms as jest.Mock).mockResolvedValue(true);
+      cache.shard.getAllCollaborativeRooms.mockResolvedValue(null);
+      db.shard.getAllCollaborativeRooms.mockResolvedValue(mockRooms as Shard[]);
+      cache.shard.saveAllCollaborativeRooms.mockResolvedValue("OK");
 
       const response = await request(app)
         .get('/')
@@ -170,8 +173,8 @@ describe('Room API Routes', () => {
 
     it('should handle not found error', async () => {
       // Mock both cache and db miss
-      (cache.shard.getAllCollaborativeRooms as jest.Mock).mockResolvedValue(null);
-      (db.shard.getAllCollaborativeRooms as jest.Mock).mockResolvedValue(null);
+      cache.shard.getAllCollaborativeRooms.mockResolvedValue(null);
+      db.shard.getAllCollaborativeRooms.mockResolvedValue(null);
 
       const response = await request(app)
         .get('/')
