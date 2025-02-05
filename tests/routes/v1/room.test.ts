@@ -2,35 +2,18 @@ import request from 'supertest';
 import { jest } from '@jest/globals';
 import {app} from "../../../src/app"
 import { NextFunction, Request, Response } from 'express';
+import { Shard, ShardWithFiles } from '../../../src/entities/shard';
+
+// mock the modules
+jest.mock('../../../src/repositories/cache');
+jest.mock('../../../src/repositories/db');
+
 import { cache as originalCache } from '../../../src/repositories/cache';
 import { db as originalDb } from '../../../src/repositories/db';
 
-import {User} from "../../../src/entities/user";
-import { Shard, ShardWithFiles } from '../../../src/entities/shard';
 
-// Adding custom property to Express Request: https://stackoverflow.com/questions/71122741/how-do-i-add-custom-property-to-express-request-in-typescript
-declare module "express-serve-static-core" {
-  interface Request {
-    shard: {
-      id: number;
-    };
-    auth: {
-      user: User;
-    };
-    user: {
-      id: string;
-    };
-    comment: {
-      id: number;
-    };
-    pagination: {
-      limit: number;
-      offset: number;
-    };
-  }
-}
-const cache = jest.mocked(originalCache);
-const db = jest.mocked(originalDb);
+const cache = originalCache as jest.Mocked<typeof originalCache>
+const db = originalDb as jest.Mocked<typeof originalDb>
 
 
 

@@ -7,6 +7,7 @@ describe("/users Router", () => {
     it("should return status code 400 if id not found in the request body", (done) => {
       request(app)
       .post("/users")
+      .set("Accept", "application/json")
       .expect(400, done);
     })
 
