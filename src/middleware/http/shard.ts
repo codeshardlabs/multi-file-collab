@@ -6,7 +6,9 @@ export async function populateShardId(
   next: NextFunction,
 ) {
   const id = req.params["id"];
-  req.shard.id = Number(id);
+  req.shard = {
+    id: Number(id)
+  }
   next();
 }
 
