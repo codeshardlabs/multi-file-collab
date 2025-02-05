@@ -18,6 +18,7 @@ export async function saveUserMetadata(
   next: NextFunction,
 ) {
   const body = req.body as UserPostRequestBody;
+  // validate req body
   let start = Date.now();
   try {
     const user = await db.user.onboard({
