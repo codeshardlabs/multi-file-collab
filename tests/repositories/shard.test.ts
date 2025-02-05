@@ -1,5 +1,4 @@
 import { Pool } from "pg";
-import ShardRepository from "../../src/repositories/shard";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { shardDb, ShardDbType } from "../../src/db";
@@ -9,9 +8,11 @@ import * as shardSchema from "../../src/db/tables/shards";
 import * as userSchema from "../../src/db/tables/users";
 import * as likeSchema from "../../src/db/tables/likes";
 import { sql } from "drizzle-orm";
+import { IShardRepository } from "../interfaces/repositories/db/shard";
+import ShardRepository from "./db/usecases/shard";
 
 describe("Shard Repository", () => {
-  let shardRepo: ShardRepository;
+  let shardRepo: IShardRepository;
   let container: PostgreSqlContainer;
   let client: Pool;
   let db: ShardDbType;
@@ -271,7 +272,7 @@ describe("Shard Repository", () => {
       expect(newShard).not.toBeNull();
       expect(newShard?.length).toBe(1);
 
-      const rooms = await shardRepo.getAllCollaborativeRooms(user[0].id);
+      const rooms = await shardRepo.getAllCollaborativeRooms(user[0].id, 10, 0);
       for (let room of rooms!) {
         expect(room.mode).toBe("collaboration");
       }
