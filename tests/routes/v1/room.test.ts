@@ -27,7 +27,7 @@ describe('Room API Routes', () => {
     jest.clearAllMocks();
   });
 
-  describe('GET /rooms/:id - fetchLatestRoomFilesState', () => {
+  describe('GET /api/v1/rooms/:id - fetchLatestRoomFilesState', () => {
     const mockShardWithFiles = {
       id: 1,
       title: "Test Room",
@@ -46,7 +46,7 @@ describe('Room API Routes', () => {
 
     beforeEach(() => {
       // Setup middleware for test context
-      app.use('/rooms/:id', (req: Request, res: Response, next: NextFunction) => {
+      app.use('/api/v1/rooms/:id', (req: Request, res: Response, next: NextFunction) => {
         req.shard = { id: 0 };
         next();
       });
@@ -57,7 +57,7 @@ describe('Room API Routes', () => {
       cache.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles)
       db.shard.updateFiles.mockResolvedValue("OK");
 
-      const response = await request(app).get('/rooms/1');
+      const response = await request(app).get('/api/v1/rooms/1');
 
       expect(response.status).toBe(200);
       expect(response.body.data.shard).toEqual(mockShardWithFiles);
@@ -71,7 +71,7 @@ describe('Room API Routes', () => {
       db.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
       cache.shard.saveShardWithFiles.mockResolvedValue("OK");
 
-      const response = await request(app).get('/rooms/1');
+      const response = await request(app).get('/api/v1/rooms/1');
 
       expect(response.status).toBe(200);
       expect(response.body.data.shard).toEqual(mockShardWithFiles);
@@ -85,7 +85,7 @@ describe('Room API Routes', () => {
       cache.shard.getShardWithFiles.mockResolvedValue(null);
       db.shard.getShardWithFiles.mockResolvedValue(null);
 
-      const response = await request(app).get('/rooms/1');
+      const response = await request(app).get('/api/v1/rooms/1');
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Could not find resource by room ID');
@@ -97,14 +97,14 @@ describe('Room API Routes', () => {
       db.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
       cache.shard.saveShardWithFiles.mockResolvedValue("OK");
 
-      const response = await request(app).get('/rooms/1');
+      const response = await request(app).get('/api/v1/rooms/1');
 
       expect(response.status).toBe(200);
       expect(response.body.data.shard).toEqual(mockShardWithFiles);
     });
   });
 
-  describe('GET / - fetchAllRooms', () => {
+  describe('GET /api/v1/rooms - fetchAllRooms', () => {
     const mockRooms: Shard[] = [
       {
         id: 1,
@@ -132,7 +132,7 @@ describe('Room API Routes', () => {
 
     beforeEach(() => {
       // Setup middleware for test context
-      app.use('/rooms', (req, res, next) => {
+      app.use('/api/v1/rooms', (req, res, next) => {
         req.auth = { user: { id: 'user1' } as User };
         req.pagination = { limit: 10, offset: 0 };
         next();
@@ -144,7 +144,7 @@ describe('Room API Routes', () => {
       cache.shard.getAllCollaborativeRooms.mockResolvedValue(mockRooms as Shard[]);
 
       const response = await request(app)
-        .get('/')
+        .get('/api/v1/rooms')
         .query({ limit: 10, offset: 0 });
 
       expect(response.status).toBe(200);
@@ -161,7 +161,7 @@ describe('Room API Routes', () => {
       cache.shard.saveAllCollaborativeRooms.mockResolvedValue("OK");
 
       const response = await request(app)
-        .get('/')
+        .get('/api/v1/rooms')
         .query({ limit: 10, offset: 0 });
 
       expect(response.status).toBe(200);
@@ -177,7 +177,7 @@ describe('Room API Routes', () => {
       db.shard.getAllCollaborativeRooms.mockResolvedValue(null);
 
       const response = await request(app)
-        .get('/')
+        .get('/api/v1/rooms')
         .query({ limit: 10, offset: 0 });
 
       expect(response.status).toBe(500);
@@ -186,7 +186,7 @@ describe('Room API Routes', () => {
 
     it('should handle invalid pagination parameters', async () => {
       const response = await request(app)
-        .get('/')
+        .get('/api/v1/rooms')
         .query({ limit: 'invalid', offset: 'invalid' });
 
       expect(response.status).toBe(400);

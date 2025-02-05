@@ -105,7 +105,7 @@
     "drizzle.config.ts",
     "docker*.yml",
     "Dockerfile",
-    "jest.config.ts",
+    "jest.config.js",
     "monitoring"
   ]
 }
