@@ -11,11 +11,8 @@ export class CacheService implements ICacheService {
       const redisManager = RedisManager.getInstance();
       this.client = redisManager.getConnection(redisConfig.connection.CONN_CACHE);
       this.circuitBreaker = new CircuitBreaker(5, 30000);
-     
     }
-  
-    // get key from redis
-    async get(key: string): Promise<string | null> {
+      async get(key: string): Promise<string | null> {
       try {
        return await this.circuitBreaker.execute(this.client.get(key));
       } catch (error) {
@@ -34,9 +31,7 @@ export class CacheService implements ICacheService {
       }
       
     }
-  
-    // delete key from redis
-    async del(...keys: string[]): Promise<number> {
+      async del(...keys: string[]): Promise<number> {
       return await this.circuitBreaker.execute(this.client.del(...keys));
     }
   

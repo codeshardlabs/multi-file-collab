@@ -99,7 +99,6 @@
   },
   "exclude": [
     "node_modules",
-    "tests",
     "terraform",
     "public",
     "drizzle.config.ts",
