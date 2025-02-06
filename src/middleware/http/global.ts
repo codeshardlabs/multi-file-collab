@@ -57,13 +57,15 @@ export function queryValidation<T>(
   const missingFields: string[] = [];
 
   // Iterate over the keys of the interface T
+  console.log(req.query);
   for (const key of Object.keys(req.query) as Array<keyof T>) {
-    if (!req.params[key as string]) {
+    if (!req.query[key as string]) {
       missingFields.push(key as string);
     }
   }
 
   if (missingFields.length > 0) {
+    console.log(`Missing fields: ${missingFields.join(", ")}`);
     return next(
       new AppError(400, `Missing fields: ${missingFields.join(", ")}`),
     );
@@ -77,10 +79,13 @@ export async function populateLimitOffset(
   res: Response,
   next: NextFunction,
 ) {
-  const limit = req.query["limit"];
-  const offset = req.query["offset"];
+  const limit = req.query.limit;
+  const offset = req.query.offset;
 
-  req.pagination.limit = Number(limit);
-  req.pagination.offset = Number(offset);
+  req.pagination = {
+    limit: Number(limit),
+    offset: Number(offset)
+  }
+  console.log(req.pagination);
   next();
 }
