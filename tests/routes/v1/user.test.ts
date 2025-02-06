@@ -4,7 +4,8 @@ import { jest } from '@jest/globals';
 jest.mock("../../../src/repositories/db", () => ({
   db: {
     user: {
-      onboard: jest.fn()
+      onboard: jest.fn(),
+      findById: jest.fn()
     }
   }
 }));
@@ -13,10 +14,15 @@ const db = originalDb as jest.Mocked<typeof originalDb>
 
 describe("/users Router", () => {
 const mockUserDetails = {
-  id: "1",
+  id: "user1",
   createdAt: new Date(),
   updatedAt: new Date()
 }
+beforeEach(() => {
+  // Reset all mocks before each test
+  jest.clearAllMocks();
+});
+
   describe("/users POST saveUserMetadata", () => {
     // public route
     it("should return status code 400 if id not found in the request body", async () => {
@@ -32,7 +38,7 @@ const mockUserDetails = {
       db.user.onboard.mockResolvedValue(mockUserDetails);
      const response = await request(app)
       .post("/api/v1/users")
-      .send({id: "1"}) // req.body 
+      .send({id: "user1"}) // req.body 
       .set("Accept", "application/json")
       .set("Content-Type", "application/json")
 
@@ -45,7 +51,7 @@ const mockUserDetails = {
       db.user.onboard.mockResolvedValue(null);
       const response = await request(app)
       .post("/api/v1/users")
-      .send({id: "1"}) // req.body 
+      .send({id: "user1"}) // req.body 
       .set("Accept", "application/json")
       .set("Content-Type", "application/json")
       
@@ -55,31 +61,34 @@ const mockUserDetails = {
     })
   });
 
-  // describe("/users/{id} GET getUserInfo", () => {
-  //   // protected route
-  //   it("should return status code 400 if id params not found", async () => {
-  //   const response = await request(app)
-  //   .get("/api/v1/users");
+  describe("/users/{id} GET getUserInfo", () => {
+    // protected route
+    beforeEach(() => {
+      // find user by id: protected route
+    db.user.findById.mockResolvedValue(mockUserDetails);
+  });
+    it("should return status code 400 if id params not found", async () => {
+    const response = await request(app)
+    .get("/api/v1/users")
+    .auth("user1", {type: "bearer"})
     
-  //   expect(response.statusCode).toBe(400);
-  //   });
+    expect(response.statusCode).toBe(400);
+    });
 
-  //   it("should return status code 400 if invalid user id", async () => {
-  //   const response = await request(app)
-  //   .get("/api/v1/users/{fake_user_id}")
-  //   expect(response.status).toBe(400);
-  //   expect(response.headers["Content-Type"]).toMatch(/json/);
-  //   expect(response.body?.data).toBeNull();
-  //   });
+    it("should return status code 400 if invalid user id", async () => {
+    const response = await request(app)
+    .get("/api/v1/users/{fake_user_id}")
+    expect(response.status).toBe(400);
+    expect(response.body.data).toBeNull();
+    });
 
-  //   it("should return status code 200 and user info. on valid user id", async () => {
-  //    const response =  await request(app)
-  //     .get("/api/v1/users/{actual_user_id}")
-  //     expect(response.headers["Content-Type"]).toMatch(/json/);
-  //     expect(response.status).toBe(200);
-  //     expect(response.body?.error).toBeNull();
-  //     expect(response.body?.user?.id).toBe("{actual_user_id}");
-  //   });
-  // });
+    it("should return status code 200 and user info. on valid user id", async () => {
+     const response =  await request(app)
+      .get("/api/v1/users/user1")
+      expect(response.status).toBe(200);
+      expect(response.body.error).toBeNull();
+      expect(response.body.data.user.id).toBe("user1");
+    });
+  });
 
 });
