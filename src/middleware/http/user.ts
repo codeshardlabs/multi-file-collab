@@ -6,6 +6,8 @@ export async function populateUserId(
   next: NextFunction,
 ) {
   const id = req.params["id"];
-  req.user.id = id;
+  req.user = {
+    id
+  }
   next();
 }

@@ -5,12 +5,24 @@ jest.mock("../../../src/repositories/db", () => ({
   db: {
     user: {
       onboard: jest.fn(),
-      findById: jest.fn()
+      findByIdWithFollowersList: jest.fn()
+    }
+  }
+}));
+jest.mock("../../../src/repositories/cache", () => ({
+  cache: {
+    user: {
+      saveUserInfo: jest.fn(),
+      getUserInfo: jest.fn()
     }
   }
 }));
 import { db as originalDb} from "../../../src/repositories/db";
+import { cache as originalCache } from "../../../src/repositories/cache";
+import { UserWithFollowersAndFollowering } from "../../entities/user";
 const db = originalDb as jest.Mocked<typeof originalDb>
+const cache = originalCache as jest.Mocked<typeof originalCache>
+
 
 describe("/users Router", () => {
 const mockUserDetails = {
@@ -29,7 +41,7 @@ beforeEach(() => {
       const response = await request(app)
       .post("/api/v1/users")
       .set("Accept", "application/json")
-      .set("Content-Type", "application/json")
+      .set("Content-Type", "application/json")  
 
       expect(response.statusCode).toBe(400);
     })
@@ -61,34 +73,51 @@ beforeEach(() => {
     })
   });
 
-  describe("/users/{id} GET getUserInfo", () => {
-    // protected route
-    beforeEach(() => {
-      // find user by id: protected route
-    db.user.findById.mockResolvedValue(mockUserDetails);
-  });
-    it("should return status code 400 if id params not found", async () => {
-    const response = await request(app)
-    .get("/api/v1/users")
-    .auth("user1", {type: "bearer"})
-    
-    expect(response.statusCode).toBe(400);
-    });
-
-    it("should return status code 400 if invalid user id", async () => {
-    const response = await request(app)
-    .get("/api/v1/users/{fake_user_id}")
-    expect(response.status).toBe(400);
-    expect(response.body.data).toBeNull();
-    });
-
-    it("should return status code 200 and user info. on valid user id", async () => {
-     const response =  await request(app)
+  describe("api/v1/users/{id} GET getUserInfo", () => {
+    const mockUserDetails = {
+      id: "user1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      followers: [],
+      following: []
+    }
+    // cache hit
+    it("should return valid user from cache", async () => {
+      cache.user.getUserInfo.mockResolvedValue(mockUserDetails);
+      const response = await request(app)
       .get("/api/v1/users/user1")
+
       expect(response.status).toBe(200);
-      expect(response.body.error).toBeNull();
-      expect(response.body.data.user.id).toBe("user1");
+      expect(JSON.stringify(response.body.data.user)).toBe(JSON.stringify(mockUserDetails));
+      expect(cache.user.getUserInfo).toHaveBeenCalledWith("user1")
     });
+
+    it("should return valid user from db hit after cache miss", async () => {
+      cache.user.getUserInfo.mockResolvedValue(null);
+      db.user.findByIdWithFollowersList.mockResolvedValue(mockUserDetails);
+      cache.user.saveUserInfo.mockResolvedValue("OK");
+
+      const response = await request(app)
+      .get("/api/v1/users/user1")
+
+      expect(response.status).toBe(200);
+      expect(cache.user.getUserInfo).toHaveBeenCalled();
+      expect(db.user.findByIdWithFollowersList).toHaveBeenCalledWith("user1")
+      expect(cache.user.saveUserInfo).toHaveBeenCalledWith(mockUserDetails as UserWithFollowersAndFollowering)
+    })
+
+    it("should return status code 500 in case of db and cache miss", async ()=> {
+      cache.user.getUserInfo.mockResolvedValue(null);
+      db.user.findByIdWithFollowersList.mockResolvedValue(null);
+
+      const response = await request(app)
+      .get("/api/v1/users/user1")
+
+      expect(response.status).toBe(400);
+      expect(cache.user.getUserInfo).toHaveBeenCalledWith("user1");
+      expect(db.user.findByIdWithFollowersList).toHaveBeenCalledWith("user1");
+    })
+
   });
 
 });
