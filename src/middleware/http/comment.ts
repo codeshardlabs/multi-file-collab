@@ -6,6 +6,8 @@ export async function populateCommentId(
   next: NextFunction,
 ) {
   const id = req.params["id"];
-  req.comment.id = Number(id);
+  req.comment = {
+    id: Number(id)
+  }
   next();
 }
