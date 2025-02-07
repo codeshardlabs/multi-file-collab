@@ -31,50 +31,66 @@ const mockUserDetails = {
   createdAt: new Date(),
   updatedAt: new Date()
 }
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
   describe("api/v1/comments/{commentId} DELETE", () => {
       // protected route
-
     beforeEach(()=> {
         db.user.findById.mockResolvedValue(mockUserDetails);
     })
-    it("should return status code 400 if id not found in the request body", async () => {
+    it("should return status code 400 if bearer token not present", async ()=> {
       const response = await request(app)
-      .post("/api/v1/comments")
-      .set("Accept", "application/json")
-      .set("Content-Type", "application/json")  
+      .delete("/api/v1/comments")
+      expect(response.statusCode).toBe(400);
+    })
+   
 
+    it("should return status code 400 if shardId not found in the request body", async () => {
+      const response = await request(app)
+      .delete("/api/v1/comments/1")
+      .auth("user1", {type:"bearer"})
+
+      
+      console.log(response.error)
+      console.log(response.body.error)
       expect(response.statusCode).toBe(400);
     })
 
-    it("should return status code 201 if data saved successfully", async () => {
-      db.user.onboard.mockResolvedValue(mockUserDetails);
+    it("should return status code 500 if data could not be saved to db", async () => {
+      db.shard.deleteComment.mockResolvedValue(null);
      const response = await request(app)
-      .post("/api/v1/users")
-      .send({id: "user1"}) // req.body 
+      .delete("/api/v1/comments/1")
+      .auth("user1", {type:"bearer"})
+      .send({shardId: 1}) // req.body
       .set("Accept", "application/json")
       .set("Content-Type", "application/json")
 
-      expect(response.statusCode).toBe(201);
-      expect(JSON.stringify(response.body.data.user)).toBe(JSON.stringify(mockUserDetails))
-    })
-
-    it("should return status 500 if data could not be saved successfully", async ()=> {
-      // db save failure
-      db.user.onboard.mockResolvedValue(null);
-      const response = await request(app)
-      .post("/api/v1/users")
-      .send({id: "user1"}) // req.body 
-      .set("Accept", "application/json")
-      .set("Content-Type", "application/json")
-      
       expect(response.status).toBe(500);
-      expect(response.error).not.toBeNull();
-      
+      expect(db.shard.deleteComment).toHaveBeenCalledWith(1);
     })
+
+    it("should return status code 200 and commentId in the result", async () => {
+      db.shard.deleteComment.mockResolvedValue("OK");
+      cache.shard.removeCommentPages.mockResolvedValue("OK");
+      const response = await request(app)
+      .delete("/api/v1/comments/1")
+      .auth("user1", {type:"bearer"})
+      .send({shardId: 1}) // req.body
+      .set("Accept", "application/json")
+      .set("Content-Type", "application/json")
+
+      console.log(response.error)
+      console.log(response.body.error)
+      expect(response.status).toBe(200);
+      expect(db.shard.deleteComment).toHaveBeenCalledWith(1); 
+      expect(cache.shard.removeCommentPages).toHaveBeenCalledWith(1);
+      expect(cache.addToDeadLetterQueue).toHaveBeenCalled();
+
+    })
+
   });
 
 });

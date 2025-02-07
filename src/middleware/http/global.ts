@@ -41,6 +41,7 @@ export function paramsValidation<T>(
   }
 
   if (missingFields.length > 0) {
+    console.log(missingFields);
     return next(
       new AppError(400, `Missing fields: ${missingFields.join(", ")}`),
     );
