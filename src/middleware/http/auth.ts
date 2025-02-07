@@ -13,7 +13,6 @@ export async function authMiddleware(
   if (!token) {
     return next(new AppError(400, errorMessage.get(errors.TOKEN_NOT_FOUND)!));
   }
-console.log("token: ", token)
   let parts = token.split(" ");
   let creator = parts[1];
   if (!creator) {
@@ -21,7 +20,6 @@ console.log("token: ", token)
   }
 
   const user = await db.user.findById(creator);
-  console.log("user: ", user)
   if (!user) {
     return next(new AppError(400, errorMessage.get(errors.USER_NOT_FOUND)!));
   }

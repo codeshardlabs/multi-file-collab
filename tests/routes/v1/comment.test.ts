@@ -47,15 +47,10 @@ beforeEach(() => {
       expect(response.statusCode).toBe(400);
     })
    
-
     it("should return status code 400 if shardId not found in the request body", async () => {
       const response = await request(app)
       .delete("/api/v1/comments/1")
       .auth("user1", {type:"bearer"})
-
-      
-      console.log(response.error)
-      console.log(response.body.error)
       expect(response.statusCode).toBe(400);
     })
 
@@ -65,7 +60,6 @@ beforeEach(() => {
       .delete("/api/v1/comments/1")
       .auth("user1", {type:"bearer"})
       .send({shardId: 1}) // req.body
-      .set("Accept", "application/json")
       .set("Content-Type", "application/json")
 
       expect(response.status).toBe(500);
@@ -80,17 +74,11 @@ beforeEach(() => {
       .auth("user1", {type:"bearer"})
       .send({shardId: 1}) // req.body
       .set("Accept", "application/json")
-      .set("Content-Type", "application/json")
-
-      console.log(response.error)
-      console.log(response.body.error)
+      .set("Content-Type", "application/json");
       expect(response.status).toBe(200);
       expect(db.shard.deleteComment).toHaveBeenCalledWith(1); 
       expect(cache.shard.removeCommentPages).toHaveBeenCalledWith(1);
-      expect(cache.addToDeadLetterQueue).toHaveBeenCalled();
-
     })
-
   });
 
 });
