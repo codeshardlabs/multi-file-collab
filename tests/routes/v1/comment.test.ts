@@ -71,13 +71,30 @@ beforeEach(() => {
       cache.shard.removeCommentPages.mockResolvedValue("OK");
       const response = await request(app)
       .delete("/api/v1/comments/1")
-      .auth("user1", {type:"bearer"})
-      .send({shardId: 1}) // req.body
       .set("Accept", "application/json")
-      .set("Content-Type", "application/json");
+      .set("Content-Type", "application/json")
+      .send({shardId: 1}) // req.body
+      .auth("user1", {type:"bearer"})
       expect(response.status).toBe(200);
       expect(db.shard.deleteComment).toHaveBeenCalledWith(1); 
       expect(cache.shard.removeCommentPages).toHaveBeenCalledWith(1);
+      expect(cache.addToDeadLetterQueue).not.toHaveBeenCalled();
+    })
+
+    it("should add invalidation event to dlq upon failure", async () => {
+      db.shard.deleteComment.mockResolvedValue("OK");
+      cache.shard.removeCommentPages.mockResolvedValue(null);
+      cache.addToDeadLetterQueue.mockResolvedValue()
+      const response = await request(app)
+      .delete("/api/v1/comments/1")
+      .set("Accept", "application/json")
+      .set("Content-Type", "application/json")
+      .send({shardId: 1}) // req.body
+      .auth("user1", {type:"bearer"})
+      expect(response.status).toBe(200);
+      expect(db.shard.deleteComment).toHaveBeenCalledWith(1); 
+      expect(cache.shard.removeCommentPages).toHaveBeenCalledWith(1);
+      expect(cache.addToDeadLetterQueue).toHaveBeenCalled();
     })
   });
 

@@ -14,7 +14,9 @@ export async function deleteComment(
   next: NextFunction,
 ) {
   const commentId = req.comment.id;
+  console.log(commentId);
   const body = req.body as DeleteCommentRequestBody;
+  console.log(body);
   let start = Date.now();
   try {
     let out = await db.shard.deleteComment(commentId);
@@ -33,13 +35,13 @@ export async function deleteComment(
           commentId: commentId,
           shardId: body.shardId,
         })
-        res.status(200).json({
-          data: {
-            response: "OK",
-          },
-          error: null,
-        });
       }
+      res.status(200).json({
+        data: {
+          response: "OK",
+        },
+        error: null,
+      });
      }
   } catch (error) {
     logger.debug("commentController > addComment() error", error);
