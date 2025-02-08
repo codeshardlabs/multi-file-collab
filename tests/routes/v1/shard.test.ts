@@ -1,20 +1,27 @@
 import request from "supertest";
 import { app } from "../../../src/app";
 import { jest } from '@jest/globals';
+
+let calculatePageNo = (offset: number, limit: number) => {
+  return Math.floor(offset/limit) + 1;
+}
 jest.mock("../../../src/repositories/db", () => ({
   db: {
     user: {
      findById : jest.fn()
     },
     shard: {
-      create: jest.fn()
+      create: jest.fn(),
+      findByUserId: jest.fn()
     }
   }
 }));
 jest.mock("../../../src/repositories/cache", () => ({
   cache: {
     shard: {
-      removeShardPages: jest.fn()
+      removeShardPages: jest.fn(),
+      findShardsByUserId: jest.fn(),
+      saveShardsByUserId: jest.fn()
     },
     addToDeadLetterQueue: jest.fn()
   }
@@ -160,6 +167,59 @@ beforeEach(() => {
     })
   });
 
- 
+  describe("/api/v1/shards GET fetchShards", () => {
+    let limit = 10;
+    let offset = 0;
+    // protected route
+    beforeEach(()=> {
+      db.user.findById.mockResolvedValue(mockUserDetails);
+    })
+    it("should return status code 400 if bearer token not found", async () => {
+      const response = await request(app)
+      .get("/api/v1/shards")
+      expect(response.status).toBe(400);
+    })
+
+
+    it("should return status code 200 on cache hit", async ()=> {
+      // cache hit
+      cache.shard.findShardsByUserId.mockResolvedValue(mockShards);
+      const response = await request(app)
+      .get("/api/v1/shards")
+      .auth("user1", {type: "bearer"})
+      .query({limit, offset})
+      expect(response.status).toBe(200);
+      expect(cache.shard.findShardsByUserId).toHaveBeenCalledWith("user1", calculatePageNo(offset, limit));
+      expect(db.shard.findByUserId).not.toHaveBeenCalled();
+    })
+
+    it("should return status code 200 on db hit, cache miss", async () => {
+      // cache miss
+      cache.shard.findShardsByUserId.mockResolvedValue(null);
+      // db hit
+      db.shard.findByUserId.mockResolvedValue(mockShards);
+      const response = await request(app)
+      .get("/api/v1/shards")
+      .auth("user1", {type: "bearer"})
+      .query({limit: 10, offset: 0})
+      expect(response.status).toBe(200);
+      expect(cache.shard.findShardsByUserId).toHaveBeenCalledWith("user1", calculatePageNo(offset, limit));
+      expect(db.shard.findByUserId).toHaveBeenCalledWith("user1", limit, offset);
+    })
+
+    it("should return status code 500 on both cache and db miss", async ()=> {
+            // cache miss
+            cache.shard.findShardsByUserId.mockResolvedValue(null);
+            // db miss
+            db.shard.findByUserId.mockResolvedValue(null);
+            const response = await request(app)
+            .get("/api/v1/shards")
+            .auth("user1", {type: "bearer"})
+            .query({limit: 10, offset: 0})
+            expect(response.status).toBe(500);
+            expect(cache.shard.findShardsByUserId).toHaveBeenCalledWith("user1", calculatePageNo(offset, limit));
+            expect(db.shard.findByUserId).toHaveBeenCalledWith("user1", limit, offset);
+    })
+  })
 
 });

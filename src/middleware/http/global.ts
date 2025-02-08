@@ -58,7 +58,6 @@ export function queryValidation<T>(
   const missingFields: string[] = [];
 
   // Iterate over the keys of the interface T
-  console.log(req.query);
   for (const key of Object.keys(req.query) as Array<keyof T>) {
     if (!req.query[key as string]) {
       missingFields.push(key as string);
@@ -82,11 +81,14 @@ export async function populateLimitOffset(
 ) {
   const limit = req.query.limit;
   const offset = req.query.offset;
+  if(Number.isNaN(Number(limit)) || Number.isNaN(Number(offset))) {
+    logger.error("limit or offset not a number")
+    return next(new AppError(422, "validation error"))
+  }
 
   req.pagination = {
     limit: Number(limit),
     offset: Number(offset)
   }
-  console.log(req.pagination);
   next();
 }
