@@ -8,7 +8,9 @@ import {
 import shardIdRouter from "./shardId";
 import {
   populateShardId,
+  validateCreateShardRequestBody,
 } from "../../../middleware/http/shard";
+import { ShardModeType, ShardTemplateType, ShardTypeType } from "../../../interfaces/repositories/db/shard";
 
 const shardRouter = Router();
 
@@ -34,6 +36,14 @@ shardRouter.get(
   populateLimitOffset,
   fetchShards,
 );
-shardRouter.post("/", createShard);
+
+export interface ShardPostRequestBody {
+  templateType: ShardTemplateType;
+  mode: ShardModeType;
+  type: ShardTypeType;
+}
+
+
+shardRouter.post("/", validateCreateShardRequestBody, createShard);
 
 export default shardRouter;

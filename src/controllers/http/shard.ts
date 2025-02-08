@@ -14,12 +14,8 @@ import { Comment } from "../../entities/comment";
 import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
+import { ShardPostRequestBody } from "../../routes/v1/shard/shard";
 
-export interface ShardPostRequestBody {
-  templateType: ShardTemplateType;
-  mode: ShardModeType;
-  type: ShardTypeType;
-}
 
 export async function fetchShards(
   req: Request,
@@ -337,7 +333,7 @@ export async function createShard(
   const userId = req.auth.user.id;
   const body = req.body as ShardPostRequestBody;
   let start = Date.now();
-  // TODO: add validation
+ 
   try {
     const shard = await db.shard.create({
       title: "Untitled",
@@ -360,14 +356,15 @@ export async function createShard(
         })
         logger.warn("could not update shard with latest info...");
       }
+      res.status(200).json({
+        data: {
+          shard: shard,
+        },
+        error: null,
+      });
     }
 
-    res.status(200).json({
-      data: {
-        shard: shard,
-      },
-      error: null,
-    });
+    
   } catch (error) {
     logger.error("shardController > createShard()", {
       error: error,
