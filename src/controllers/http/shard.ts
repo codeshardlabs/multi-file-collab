@@ -15,6 +15,7 @@ import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
 import { ShardPostRequestBody } from "../../routes/v1/shard/shard";
+import { SaveShardRequestBody } from "../../routes/v1/shard/shardId";
 
 
 export async function fetchShards(
@@ -100,11 +101,7 @@ export async function fetchShardById(
   }
 }
 
-interface SaveShardRequestBody {
-  files: FileInput[];
-  dependencies: Dependency[];
-  
-}
+
 
 // 1. Get files from db By shard Id.
 // 2. if files already present, update the files in db.

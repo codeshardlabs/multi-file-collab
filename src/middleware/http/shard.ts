@@ -3,6 +3,9 @@ import { ShardPostRequestBody } from "../../routes/v1/shard/shard";
 import { AppError } from "../../errors";
 import { logger } from "../../services/logger/logger";
 import { isOfType, shardModeOptions, shardTemplateOptions, shardTypeOptions } from "../../utils";
+import { SaveShardRequestBody } from "../../routes/v1/shard/shardId";
+import { files } from "../../db/tables/files";
+import { Dependency } from "../../entities/dependency";
 
 export async function populateShardId(
   req: Request,
@@ -19,7 +22,7 @@ export async function populateShardId(
 
 export async function validateCreateShardRequestBody(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   const body = req.body as ShardPostRequestBody;
@@ -34,6 +37,33 @@ export async function validateCreateShardRequestBody(
   if(!shardTemplateOptions.includes(body.templateType)
      || !shardModeOptions.includes(body.mode)
     || !shardTypeOptions.includes(body.type)) {
+      logger.error("validation error", {
+        body: body,
+        reason: "shard field does not match"
+      })
+      return next(new AppError(422, "body validation error"));
+    }
+    next();
+}
+
+export async function validateSaveShardRequestBody(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  const body = req.body as SaveShardRequestBody;
+  // validate if all the fields present or not
+  if(!isOfType<SaveShardRequestBody>(body, ["files", "dependencies"])){
+    logger.error("validation error", {
+      reason: "all fields are not present"
+    })
+    return next(new AppError(422, "body validation error"));
+  }
+
+  if(
+    !body.files.every((file) => file.code && file.name) && 
+    !body.dependencies.every((dep) => isOfType<Dependency>(dep, ["id", "isDevDependency", "shardId", "version"]))
+) {
       logger.error("validation error", {
         body: body,
         reason: "shard field does not match"

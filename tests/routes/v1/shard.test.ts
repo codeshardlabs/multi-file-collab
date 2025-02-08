@@ -12,7 +12,11 @@ jest.mock("../../../src/repositories/db", () => ({
     },
     shard: {
       create: jest.fn(),
-      findByUserId: jest.fn()
+      findByUserId: jest.fn(),
+      getShardWithFiles: jest.fn(),
+      getFiles: jest.fn(),
+      updateFiles: jest.fn(),
+      insertFiles: jest.fn()
     }
   }
 }));
@@ -21,14 +25,17 @@ jest.mock("../../../src/repositories/cache", () => ({
     shard: {
       removeShardPages: jest.fn(),
       findShardsByUserId: jest.fn(),
-      saveShardsByUserId: jest.fn()
+      saveShardsByUserId: jest.fn(),
+      getShardWithFiles: jest.fn(),
+      saveShardWithFiles: jest.fn()
     },
     addToDeadLetterQueue: jest.fn()
   }
 }));
 import { db as originalDb} from "../../../src/repositories/db";
 import { cache as originalCache } from "../../../src/repositories/cache";
-import { Shard } from "../../entities/shard";
+import { Shard, ShardWithFiles } from "../../entities/shard";
+import { File } from "../../entities/file";
 const db = originalDb as jest.Mocked<typeof originalDb>
 const cache = originalCache as jest.Mocked<typeof originalCache>
 
@@ -52,6 +59,27 @@ const mockShards: Shard[] = [
     updatedAt: new Date()
   }
 ];
+
+const mockShardWithFiles = {
+  id: 1,
+  title: "Test Room",
+  userId: "user1",
+  templateType: "react",
+  mode: "normal",
+  type: "public",
+  lastSyncTimestamp: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  files: [
+    { id: 1, code: 'TEST123', name: 'test.txt', shardId: 1 },
+    { id: 2, code: 'TEST456', name: 'example.doc', shardId: 1 }
+  ]
+};
+
+const mockFiles = [
+  { id: 1, code: 'TEST123', name: 'test.txt', shardId: 1 },
+  { id: 2, code: 'TEST456', name: 'example.doc', shardId: 1 }
+] as File[];
 
 beforeEach(() => {
   // Reset all mocks before each test
@@ -222,4 +250,103 @@ beforeEach(() => {
     })
   })
 
+  describe("/api/v1/shards/{id} GET fetchShardById", () => {
+    // protected route
+    beforeEach(()=> {
+      db.user.findById.mockResolvedValue(mockUserDetails);
+    })
+
+    it("should return status code 400 if bearer token not found", async () => {
+      const response = await request(app)
+      .get("/api/v1/shards/1")
+      expect(response.status).toBe(400);
+    })
+
+    it("should return status code 200 on cache hit", async ()=> {
+      // cache hit
+      cache.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
+      const response = await request(app)
+      .get("/api/v1/shards/1")
+      .auth("user1", {type: "bearer"})
+      expect(response.status).toBe(200);
+      expect(cache.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+      expect(db.shard.getShardWithFiles).not.toHaveBeenCalled();
+    })
+
+    it("should return status code 200 on db hit, cache miss", async () => {
+      // cache miss
+      cache.shard.getShardWithFiles.mockResolvedValue(null);
+      // db hit
+      db.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
+      const response = await request(app)
+      .get("/api/v1/shards/1")
+      .auth("user1", {type: "bearer"})
+      expect(response.status).toBe(200);
+      expect(cache.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+      expect(db.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+    })
+
+    it("should return status code 400 on both cache and db miss", async ()=> {
+            // cache miss
+            cache.shard.getShardWithFiles.mockResolvedValue(null);
+            // db miss
+            db.shard.getShardWithFiles.mockResolvedValue(null);
+            const response = await request(app)
+            .get("/api/v1/shards/1")
+            .auth("user1", {type: "bearer"})
+            expect(response.status).toBe(400);
+            expect(cache.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+            expect(db.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+    })
+  })
+
+  describe("/api/v1/shards/{id} PUT saveShard", () => {
+    // protected route
+    beforeEach(()=> {
+      db.user.findById.mockResolvedValue(mockUserDetails);
+    })
+
+    it("should return status code 400 if bearer token not found", async () => {
+      const response = await request(app)
+      .put("/api/v1/shards/1")
+      expect(response.status).toBe(400);
+    })
+
+    it("should return status code 400 if could not get files by shard id", async ()=> {
+      // cache hit
+      cache.shard.getFiles.mockResolvedValue(null);
+      const response = await request(app)
+      .put("/api/v1/shards/1")
+      .auth("user1", {type: "bearer"})
+      expect(response.status).toBe(200);
+      expect(cache.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+      expect(db.shard.getShardWithFiles).not.toHaveBeenCalled();
+    })
+
+    it("should return status code 200 on db hit, cache miss", async () => {
+      // cache miss
+      cache.shard.getShardWithFiles.mockResolvedValue(null);
+      // db hit
+      db.shard.getShardWithFiles.mockResolvedValue(mockShardWithFiles as ShardWithFiles);
+      const response = await request(app)
+      .get("/api/v1/shards/1")
+      .auth("user1", {type: "bearer"})
+      expect(response.status).toBe(200);
+      expect(cache.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+      expect(db.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+    })
+
+    it("should return status code 400 on both cache and db miss", async ()=> {
+            // cache miss
+            cache.shard.getShardWithFiles.mockResolvedValue(null);
+            // db miss
+            db.shard.getShardWithFiles.mockResolvedValue(null);
+            const response = await request(app)
+            .get("/api/v1/shards/1")
+            .auth("user1", {type: "bearer"})
+            expect(response.status).toBe(400);
+            expect(cache.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+            expect(db.shard.getShardWithFiles).toHaveBeenCalledWith(1);
+    })
+  })
 });
