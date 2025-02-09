@@ -118,7 +118,7 @@ export async function saveShard(
   try {
     const existingFiles = await db.shard.getFiles(shardId);
     if (!existingFiles)
-      return next(new AppError(400, "could not find shard by shard id"));
+      return next(new AppError(500, "could not find shard by shard id"));
 
     const alreadyInserted = existingFiles.length !== 0;
     if (alreadyInserted) {
