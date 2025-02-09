@@ -36,7 +36,6 @@ import { db as originalDb} from "../../../src/repositories/db";
 import { cache as originalCache } from "../../../src/repositories/cache";
 import { Shard, ShardWithFiles } from "../../entities/shard";
 import { File } from "../../entities/file";
-import { dependencies } from "../../db/tables/dependencies";
 const db = originalDb as jest.Mocked<typeof originalDb>
 const cache = originalCache as jest.Mocked<typeof originalCache>
 
