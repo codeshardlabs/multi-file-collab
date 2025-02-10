@@ -16,7 +16,8 @@ jest.mock("../../../src/repositories/db", () => ({
       getShardWithFiles: jest.fn(),
       getFiles: jest.fn(),
       updateFiles: jest.fn(),
-      insertFiles: jest.fn()
+      insertFiles: jest.fn(),
+      patch: jest.fn()
     }
   }
 }));
@@ -27,7 +28,8 @@ jest.mock("../../../src/repositories/cache", () => ({
       findShardsByUserId: jest.fn(),
       saveShardsByUserId: jest.fn(),
       getShardWithFiles: jest.fn(),
-      saveShardWithFiles: jest.fn()
+      saveShardWithFiles: jest.fn(),
+      patchShard: jest.fn(),
     },
     addToDeadLetterQueue: jest.fn()
   }
@@ -401,5 +403,56 @@ beforeEach(() => {
      { code: 'TEST456', name: 'example.doc' }
    ]);
     })
+  })
+
+  describe("/api/v1/shards/{id} PATCH updateShard", () => {
+    // protected route
+    beforeEach(()=> {
+      db.user.findById.mockResolvedValue(mockUserDetails);
+    })
+
+    it("should return status code 400 if bearer token not found", async () => {
+      const response = await request(app)
+      .patch("/api/v1/shards/1")
+      expect(response.status).toBe(400);
+    })
+
+    it("should return status code 500 if db mutation failed", async ()=> {
+      db.shard.patch.mockResolvedValue(null);
+      const response = await request(app)
+      .patch("/api/v1/shards/1")
+      .auth("user1", {type: "bearer"})
+      .query({title: "Hi", type: "private"})
+      expect(response.status).toBe(500);
+      expect(db.shard.patch).toHaveBeenCalledWith({
+        userId: "user1",
+        type: "private",
+        title: "Hi"
+      });
+      expect(cache.shard.patchShard).not.toHaveBeenCalled();
+    })
+
+    it("should return status code 200 on successful cache invalidation", async () => {
+      // cache miss
+      db.shard.patch.mockResolvedValue("OK");
+      cache.shard.patchShard.mockResolvedValue("OK");
+      const response = await request(app)
+      .patch("/api/v1/shards/1")
+      .auth("user1", {type: "bearer"})
+      .query({title: "Hi", type: "private"})
+      expect(response.status).toBe(200);
+      expect(db.shard.patch).toHaveBeenCalledWith({
+        userId: "user1",
+        type: "private",
+        title: "Hi"
+      });
+      expect(cache.shard.patchShard).toHaveBeenCalledWith(1, {
+        userId: "user1",
+        type: "private",
+        title: "Hi"
+      })
+    })
+
+  
   })
 });

@@ -27,7 +27,7 @@ export interface SaveShardRequestBody {
 const shardIdRouter = Router();
 shardIdRouter.get("/", fetchShardById);
 shardIdRouter.put("/", validateSaveShardRequestBody, saveShard); 
-shardIdRouter.patch("/", updateShard);
+shardIdRouter.patch("/",  updateShard);
 shardIdRouter.delete("/", deleteShardById);
 shardIdRouter.get("/comments", queryValidation<GetCommentsQueryParams>, populateLimitOffset, getComments);
 shardIdRouter.post("/comments", addComment);
