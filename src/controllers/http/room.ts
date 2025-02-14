@@ -6,6 +6,7 @@ import { FileInput } from "../../interfaces/repositories/db/shard";
 import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
+import { NewRoomRequestBody } from "../../routes/v1/room";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -106,5 +107,29 @@ export async function fetchAllRooms(
     httpRequestTimer
       .labels(req.method, req.route.path, res.statusCode.toString())
       .observe(responseTimeInMs);
+  }
+}
+
+export async function createNewRoom(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const userId = req.auth.user.id;
+  const body = req.body as NewRoomRequestBody;
+  try {
+    
+    await db.shard.createRoom({
+      title: "New Room",
+      userId: userId,
+        templateType: body.templateType,
+        mode: "collaboration",
+        type: "private"
+    });
+
+
+  } catch (error) {
+    console.log("room Repository error > createNewRoom()")
+    next(new AppError(500, "could not create room"))
   }
 }

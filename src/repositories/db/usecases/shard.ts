@@ -15,6 +15,8 @@ import { files } from "../../../db/tables/files";
 import { Comment } from "../../../entities/comment";
 import { likes } from "../../../db/tables/likes";
 import { comments } from "../../../db/tables/comments";
+import { SANDBOX_TEMPLATES } from "../../../templates";
+import { formatFilesLikeInDb } from "../../../utils";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
@@ -26,6 +28,27 @@ export default class ShardRepository implements IShardRepository {
     shardInput = Array.isArray(shardInput) ? shardInput : [shardInput];
     try {
       return await this.db.insert(shards).values(shardInput).returning();
+    } catch (error) {
+      console.log("error occurred while creating shards");
+      return null;
+    }
+  }
+
+  async createNewRoom(shardInput: ShardInput[] | ShardInput): Promise<"OK" | null> {
+    shardInput = Array.isArray(shardInput) ? shardInput : [shardInput];
+    const isSingleRoom = shardInput.length === 1;
+    try {
+      await this.db.transaction(async (tx) => {
+        const out = await tx.insert(shards).values(shardInput).returning();
+        if(isSingleRoom) {
+         const roomId =  out[0].id;
+         const templateType = out[0].templateType!;
+         
+         await this.db.insert(files).values(formatFilesLikeInDb(SANDBOX_TEMPLATES[templateType], roomId)).returning()
+        }
+
+      } )
+      return "OK";
     } catch (error) {
       console.log("error occurred while creating shards");
       return null;
