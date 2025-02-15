@@ -119,17 +119,30 @@ export async function createNewRoom(
   const body = req.body as NewRoomRequestBody;
   try {
     
-    await db.shard.createRoom({
+    const out = await db.shard.createNewRoom({
       title: "New Room",
       userId: userId,
         templateType: body.templateType,
         mode: "collaboration",
         type: "private"
     });
+    if(!out || !out.shards || !out.files) {
+      logger.error("db.shard.createNewRoom() returned null");
+      return next(new AppError(500, "could not create new room"))
+    }
 
+    let {shards, files} = out;
+
+    res.status(200).json({
+      data: {
+        shards, 
+        files
+      },
+      error: null
+    })
 
   } catch (error) {
-    console.log("room Repository error > createNewRoom()")
+    logger.error("room Repository error > createNewRoom()", error)
     next(new AppError(500, "could not create room"))
   }
 }

@@ -6,6 +6,7 @@ import {
   CommentInput,
   FileInput,
   IShardRepository,
+  NewRoomOutput,
   PatchShardInput,
   ShardInput,
 } from "../../../interfaces/repositories/db/shard";
@@ -34,21 +35,27 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async createNewRoom(shardInput: ShardInput[] | ShardInput): Promise<"OK" | null> {
+  async createNewRoom(shardInput: ShardInput[] | ShardInput): Promise<NewRoomOutput | null> {
     shardInput = Array.isArray(shardInput) ? shardInput : [shardInput];
     const isSingleRoom = shardInput.length === 1;
+
+    let shardOutput : Shard[] = [];
+    let fileOutput : File[] = [];
     try {
       await this.db.transaction(async (tx) => {
-        const out = await tx.insert(shards).values(shardInput).returning();
+        shardOutput = await tx.insert(shards).values(shardInput).returning();
         if(isSingleRoom) {
-         const roomId =  out[0].id;
-         const templateType = out[0].templateType!;
+         const roomId =  shardOutput[0].id;
+         const templateType = shardOutput[0].templateType!;
          
-         await this.db.insert(files).values(formatFilesLikeInDb(SANDBOX_TEMPLATES[templateType], roomId)).returning()
+         fileOutput = await this.db.insert(files).values(formatFilesLikeInDb(SANDBOX_TEMPLATES[templateType], roomId)).returning()
         }
 
       } )
-      return "OK";
+      return {
+        shards: shardOutput,
+        files: fileOutput
+      }
     } catch (error) {
       console.log("error occurred while creating shards");
       return null;

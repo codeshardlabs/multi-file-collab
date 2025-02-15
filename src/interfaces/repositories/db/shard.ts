@@ -49,8 +49,14 @@ export interface CommentInput {
   shardId: number;
 }
 
+export interface NewRoomOutput {
+  shards: Shard[],
+  files: File[]
+}
+
 export interface IShardRepository extends IRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
+  createNewRoom(shards: ShardInput[] | ShardInput) : Promise<NewRoomOutput | null>
   findById(id: number): Promise<Shard | null>;
   deleteById(id: number): Promise<"OK" | null>;
   findByUserId(
