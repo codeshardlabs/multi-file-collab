@@ -79,7 +79,12 @@ export default class ShardRepository implements IShardRepository {
       const shards = await this.db.query.shards.findMany({
         where: (shards) => eq(shards.userId, id),
         limit: limit, // no. of rows to be limited to
-        offset: offset, // no. of rows to skip
+        offset: offset, //in no. of rows to skip
+        with: {
+          files: true,
+          dependencies: true,
+          likes: true
+        }
       });
 
       return shards;
