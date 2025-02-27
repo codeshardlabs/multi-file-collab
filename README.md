@@ -3,7 +3,8 @@
 ### Index
 
 - [Overview](#overview)
-- [Architecture]()
+- [Architecture](#architecture)
+- [Cache Invalidation Logic](#cache-invalidation-logic)
 - [Components](#components)
 - [Current Workflow](#current-workflow)
 - [Local Development](#local-development)
@@ -16,6 +17,10 @@ It is an implementation of a scalable socket.io server for allowing realtime col
 ### Architecture
 
 ![system architecture](/public/architecture.png)
+
+### Cache Invalidation Logic
+
+![cache invalidation logic](https://github.com/user-attachments/assets/8e08d305-f2d8-4959-b04e-4d7086a3783a)
 
 ### Components
 
