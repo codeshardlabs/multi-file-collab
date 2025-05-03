@@ -18,6 +18,7 @@ export class RedisManager {
     if (!this.pool.has(name)) {
       const connection = new Redis(process.env.REDIS_URL!, {
         maxRetriesPerRequest: null,
+        password: process.env.REDIS_PASSWORD!
       });
       this.pool.set(name, connection);
     }
