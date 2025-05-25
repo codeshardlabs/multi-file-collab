@@ -62,6 +62,25 @@ import { timestamps } from "./timestamp";
     ...timestamps,
   });
   
+  export const assignments = pgTable("assignments", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    deadline: timestamp("deadline").notNull(),
+    requirements: text("requirements").notNull(),
+    createdBy: text("created_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    ...timestamps,
+  });
+  
+  export const submissions = pgTable("submissions", {
+    id: serial("id").primaryKey(),
+    assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "cascade" }).notNull(),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    shardId: text("shard_id").notNull(),
+    shardLink: text("shard_link").notNull(),
+    ...timestamps,
+  });
+  
   export const comments = pgTable("comments", {
     id: serial("id").primaryKey(),
     message: text("message").notNull(),
