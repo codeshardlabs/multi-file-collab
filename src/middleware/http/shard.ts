@@ -4,7 +4,6 @@ import { AppError } from "../../errors";
 import { logger } from "../../services/logger/logger";
 import { isOfType, shardModeOptions, shardTemplateOptions, shardTypeOptions } from "../../utils";
 import { SaveShardRequestBody } from "../../routes/v1/shard/shardId";
-import { files } from "../../db/tables/files";
 import { Dependency } from "../../entities/dependency";
 
 export async function populateShardId(
@@ -62,7 +61,7 @@ export async function validateSaveShardRequestBody(
 
   if(
     !body.files.every((file) => file.code && file.name) && 
-    !body.dependencies.every((dep) => isOfType<Dependency>(dep, ["id", "isDevDependency", "shardId", "version"]))
+    !body.dependencies.every((dep) => isOfType<Dependency>(dep, ["name", "isDevDependency", "version"]))
 ) {
       logger.error("validation error", {
         body: body,

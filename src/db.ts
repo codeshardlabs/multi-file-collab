@@ -1,9 +1,5 @@
-import * as dependencySchema from "./db/tables/dependencies";
-import * as fileSchema from "./db/tables/files";
-import * as shardSchema from "./db/tables/shards";
-import * as userSchema from "./db/tables/users";
-import * as commentSchema from "./db/tables/comments";
-import * as likeSchema from "./db/tables/likes";
+import * as schema from "./db/tables";
+import * as relations from "./db/relations";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
@@ -14,11 +10,8 @@ const pool = new Pool({
 export const shardDb = drizzle({
   client: pool,
   schema: {
-    ...shardSchema,
-    ...fileSchema,
-    ...dependencySchema,
-    ...commentSchema,
-    ...likeSchema,
+      ...schema,
+      ...relations,
   },
 });
 
@@ -27,7 +20,8 @@ export type ShardDbType = typeof shardDb;
 export const userDb = drizzle({
   client: pool,
   schema: {
-    ...userSchema,
+    ...schema,
+    ...relations,
   },
 });
 export type UserDbType = typeof userDb;
@@ -35,8 +29,20 @@ export type UserDbType = typeof userDb;
 export const commentDb = drizzle({
   client: pool,
   schema: {
-    ...commentSchema,
+    ...schema,
+    ...relations,
   },
 });
 
+
+
 export type CommentDbType = typeof commentDb;
+
+
+export const commonDb = drizzle({
+  client: pool,
+  schema: {
+    ...schema,
+    ...relations,
+  },
+});

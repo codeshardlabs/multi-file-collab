@@ -41,7 +41,7 @@ export function formatFilesLikeInDb(files: any, shardId: number) {
       code: code,
       name: key,
       shardId: shardId,
-    });
+    } as File);
   }
   return finalFiles;
 }

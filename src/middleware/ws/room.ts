@@ -2,6 +2,7 @@ import { Socket } from "socket.io";
 import { errorMessage, errors } from "../../config";
 import { User } from "../../entities/user";
 import { db } from "../../repositories/db";
+import { kvStore } from "../../services/redis/kvStore";
 
 declare module "socket.io" {
   interface Socket {
@@ -10,21 +11,23 @@ declare module "socket.io" {
 }
 
 export async function fetchUserFromToken(socket: Socket) {
-  socket.use(async (_, next) => {
-    const token = socket.handshake.auth.token as string;
-    if (!token) next(new Error(errorMessage.get(errors.TOKEN_NOT_FOUND)));
+  const token = socket.handshake.auth.token as string;
+  if (!token) {
+    throw new Error(errorMessage.get(errors.TOKEN_NOT_FOUND));
+  }
 
-    const user = await db.user.findById(token);
+  const user = await db.user.findById(token);
+  console.log("user", user);
 
-    if (!user) next(new Error(errorMessage.get(errors.USER_NOT_FOUND)));
-    socket.user = user!;
-    next();
-  });
+  if (!user) {
+    throw new Error(errorMessage.get(errors.USER_NOT_FOUND));
+  }
+  
+  socket.user = user;
 }
 
-export async function validateRoomId(roomId: string, socket: Socket) {
-  socket.use((_, next) => {
-    if (!roomId) next(new Error(errorMessage.get(errors.SHARD_ID_NOT_FOUND)));
-    next();
-  });
+export function validateRoomId(roomId: string) {
+  if (!roomId) {
+    throw new Error(errorMessage.get(errors.SHARD_ID_NOT_FOUND));
+  }
 }

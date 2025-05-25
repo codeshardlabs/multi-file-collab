@@ -41,6 +41,7 @@ enum errors {
   TOKEN_NOT_FOUND,
   USER_NOT_FOUND,
   UNEXPECTED_ERROR_OCCURRED,
+  USER_ALREADY_JOINED_ROOM,
 }
 
 const env = {
@@ -59,5 +60,6 @@ errorMessage.set(errors.SHARD_ID_NOT_FOUND, "Shard ID Not Found");
 errorMessage.set(errors.TOKEN_NOT_FOUND, "Token Not Found");
 errorMessage.set(errors.USER_NOT_FOUND, "User Not Found");
 errorMessage.set(errors.UNEXPECTED_ERROR_OCCURRED, "Unexpected Error Occurred");
+errorMessage.set(errors.USER_ALREADY_JOINED_ROOM, "User Already Joined Room");
 
 export { redisConfig, errors, errorMessage, env };

@@ -1,3 +1,3 @@
-import { followers } from "../db/tables/users";
+import { followers } from "../db/tables";
 
 export type Follower = typeof followers.$inferSelect;

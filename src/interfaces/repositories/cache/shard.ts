@@ -32,4 +32,6 @@ export interface IShardRepository extends IRepository {
   getComments(id: number, page: number): Promise<Comment[] | null>;
   deleteAllComments(shardId: number): Promise<number>;
   removeCommentPages(id: number) : Promise<"OK" | null>
+  getAssistantResponse(shardId: number, hash: string): Promise<{content: string, errorMessage: string} | null>;
+  saveAssistantResponse(shardId: number, hash: string, response: string): Promise<"OK" | null>;
 }

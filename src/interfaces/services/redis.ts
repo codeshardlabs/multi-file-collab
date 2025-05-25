@@ -28,6 +28,8 @@ export interface IKVService {
     field: string | Buffer,
     cb?: Callback<string | null>,
   ): Promise<string | null>;
+  sadd(key: RedisKey, member: string | number): Promise<number>;
+  lrange(key: RedisKey, start: number, stop: number): Promise<string[]>;
 }
 
 export type Callback<T> = (err?: Error | null, res?: T) => void;

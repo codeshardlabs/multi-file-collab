@@ -1,2 +1,2 @@
-import { dependencies } from "../db/tables/dependencies";
+import { dependencies } from "../db/tables";
 export type Dependency = typeof dependencies.$inferSelect;

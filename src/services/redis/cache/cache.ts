@@ -3,6 +3,7 @@ import { RedisManager } from "../redisManager";
 import { redisConfig } from "../../../config";
 import CircuitBreaker from "./circuitBreaker";
 import { ICacheService } from "../../../interfaces/services/cache";
+import { logger } from "../../logger/logger";
 
 export class CacheService implements ICacheService { 
     private client: Redis;
@@ -16,6 +17,7 @@ export class CacheService implements ICacheService {
       try {
        return await this.circuitBreaker.execute(this.client.get(key));
       } catch (error) {
+        logger.error("Error getting key", error);
         return null;
       }
     }
@@ -27,21 +29,37 @@ export class CacheService implements ICacheService {
         }
         return await this.circuitBreaker.execute(this.client.set(key, value));
       } catch (error) {
+        logger.error("Error setting key", error);
         return null;
       }
       
     }
-      async del(...keys: string[]): Promise<number> {
-      return await this.circuitBreaker.execute(this.client.del(...keys));
+    async del(...keys: string[]): Promise<number> {
+      try {
+        return await this.circuitBreaker.execute(this.client.del(...keys));
+      } catch (error) {
+        logger.error("Error deleting keys", error);
+        return 0;
+      }
     }
   
     async keys(pattern: string): Promise<string[]> {
-      return await this.circuitBreaker.execute(this.client.keys(pattern));
+      try {
+        return await this.circuitBreaker.execute(this.client.keys(pattern));
+      } catch (error) {
+        logger.error("Error getting keys", error);
+        return [];
+      }
     }
 
-    pipeline(commands?: unknown[][]): ChainableCommander {
+    pipeline(commands?: unknown[][]): ChainableCommander | null {
+      try {
         return  this.client.pipeline(commands);
+      } catch (error) {
+        logger.error("Error creating pipeline", error);
+        return null;
       }
+    }
   }
   
 export const cacheService = new CacheService();

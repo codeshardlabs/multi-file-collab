@@ -21,8 +21,8 @@ process.on("uncaughtException", (error) => {
   logger.error("Uncaught Exception Occurred: ", error.message);
 });
 
-process.on("unhandledRejection", () => {
-  logger.warn("Unhandled Rejection Occurred"); // Asynchronous Error
+process.on("unhandledRejection", (error) => {
+  logger.warn("Unhandled Rejection Occurred", error); // Asynchronous Error
 });
 // Handle graceful shutdown
 process.on("SIGTERM", gracefulShutdown);

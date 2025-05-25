@@ -115,6 +115,18 @@ export class KVService implements IKVService {
   ): Promise<string | null> {
     return await this.client.hget(key, field, cb);
   }
+
+  async lrange(key: RedisKey, start: number, stop: number) : Promise<string[]> {
+    return await this.client.lrange(key, start, stop)
+  }
+
+  async sadd(key: RedisKey, member: string | number): Promise<number> {
+    return await this.client.sadd(key, member);
+  }
+
+  async srem(key: RedisKey, member: string | number): Promise<number> {
+    return await this.client.srem(key, member);
+  }
 }
 
 export const kvStore = new KVService();

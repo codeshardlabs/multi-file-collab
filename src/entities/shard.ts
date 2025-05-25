@@ -1,4 +1,4 @@
-import { shards } from "../db/tables/shards";
+import { shards } from "../db/tables";
 import { File } from "./file";
 
 //Reference: https://stackoverflow.com/a/78473818

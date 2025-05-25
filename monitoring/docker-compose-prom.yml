@@ -9,7 +9,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     volumes:
-      - ./datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./datasource.yml:/etc/grafana/provisioning/datasources/datasources.yml
     ports:
       - 3000:3000
     environment:

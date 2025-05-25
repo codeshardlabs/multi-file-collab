@@ -3,4 +3,5 @@ global:
 scrape_configs:
   - job_name: "codeshard"
     static_configs:
-      - targets: ["docker.for.win.localhost:8080"]
+      - targets: ["localhost:8080"]
+    scheme: http

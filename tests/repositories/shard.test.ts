@@ -1,12 +1,8 @@
 import { Pool } from "pg";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import { drizzle } from "drizzle-orm/node-postgres";
 import { shardDb, ShardDbType } from "../../src/db";
-import * as dependencySchema from "../../src/db/tables/dependencies";
-import * as fileSchema from "../../src/db/tables/files";
-import * as shardSchema from "../../src/db/tables/shards";
-import * as userSchema from "../../src/db/tables/users";
-import * as likeSchema from "../../src/db/tables/likes";
+import * as fileSchema from "../../src/db/tables";
+import * as userSchema from "../../src/db/tables";
 import { sql } from "drizzle-orm";
 import { IShardRepository } from "../interfaces/repositories/db/shard";
 import ShardRepository from "./db/usecases/shard";
@@ -187,7 +183,8 @@ describe("Shard Repository", () => {
       });
 
       const file = await db
-        .insert(fileSchema.files)
+      .insert(fileSchema.files)
+      // @ts-ignore TODO fix this
         .values({
           code: "console.log('hello world');",
           name: "index.js",
@@ -306,6 +303,7 @@ describe("Shard Repository", () => {
       expect(newShard?.length).toBe(1);
       const file = await db
         .insert(fileSchema.files)
+        // @ts-ignore TODO fix this
         .values({
           code: "console.log('hello world');",
           name: "index.js",
@@ -353,6 +351,7 @@ describe("Shard Repository", () => {
       expect(newShard?.length).toBe(1);
       const file = await db
         .insert(fileSchema.files)
+        // @ts-ignore TODO fix this
         .values({
           code: "console.log('hello world');",
           name: "index.js",

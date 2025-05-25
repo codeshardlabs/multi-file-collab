@@ -8,6 +8,27 @@
       "when": 1737609679808,
       "tag": "0000_mean_glorian",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1747845026195,
+      "tag": "0001_long_deathbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1747846983506,
+      "tag": "0002_confused_nightshade",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1747890623760,
+      "tag": "0003_steep_cyclops",
+      "breakpoints": true
     }
   ]
 }

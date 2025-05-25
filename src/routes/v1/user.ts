@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { getUserInfo, saveUserMetadata } from "../../controllers/http/user";
+import { followUser, getUserInfo, saveUserMetadata, unfollowUser } from "../../controllers/http/user";
 import { paramsValidation } from "../../middleware/http/global";
 import { populateUserId } from "../../middleware/http/user";
 import { AppError } from "../../errors";
 import { errorMessage, errors } from "../../config";
+import { authMiddleware } from "../../middleware/http/auth";
 
 const userRouter = Router();
 
@@ -22,9 +23,12 @@ userRouter.post("/", (req, res, next) => {
 },  saveUserMetadata);
 userRouter.get(
   "/:id",
+  authMiddleware,
   paramsValidation<UserIdParams>,
   populateUserId,
   getUserInfo,
 );
 
+userRouter.post("/:id/follow", authMiddleware, paramsValidation<UserIdParams>, populateUserId, followUser);
+userRouter.delete("/:id/unfollow", authMiddleware, paramsValidation<UserIdParams>, populateUserId, unfollowUser);
 export default userRouter;

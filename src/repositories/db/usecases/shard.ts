@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { ShardDbType } from "../../../db";
-import { shards } from "../../../db/tables/shards";
+import { comments, shards, files, replies, likes } from "../../../db/tables";
 import { Shard, ShardWithFiles } from "../../../entities/shard";
 import {
   CommentInput,
@@ -12,10 +12,7 @@ import {
 } from "../../../interfaces/repositories/db/shard";
 import { logger } from "../../../services/logger/logger";
 import { File } from "../../../entities/file";
-import { files } from "../../../db/tables/files";
 import { Comment } from "../../../entities/comment";
-import { likes } from "../../../db/tables/likes";
-import { comments } from "../../../db/tables/comments";
 import { SANDBOX_TEMPLATES } from "../../../templates";
 import { formatFilesLikeInDb } from "../../../utils";
 
@@ -30,28 +27,22 @@ export default class ShardRepository implements IShardRepository {
     try {
       return await this.db.insert(shards).values(shardInput).returning();
     } catch (error) {
-      console.log("error occurred while creating shards");
+      console.log("error occurred while creating shards", error);
       return null;
     }
   }
 
-  async createNewRoom(shardInput: ShardInput[] | ShardInput): Promise<NewRoomOutput | null> {
-    shardInput = Array.isArray(shardInput) ? shardInput : [shardInput];
-    const isSingleRoom = shardInput.length === 1;
-
+  async createNewRoom(shardInput: ShardInput): Promise<NewRoomOutput | null> {
     let shardOutput : Shard[] = [];
     let fileOutput : File[] = [];
     try {
       await this.db.transaction(async (tx) => {
-        shardOutput = await tx.insert(shards).values(shardInput).returning();
-        if(isSingleRoom) {
-         const roomId =  shardOutput[0].id;
-         const templateType = shardOutput[0].templateType!;
+          shardOutput = await tx.insert(shards).values(shardInput).returning();
+          const roomId =  shardOutput[0].id;
+          const templateType = shardOutput[0].templateType!;
          
-         fileOutput = await this.db.insert(files).values(formatFilesLikeInDb(SANDBOX_TEMPLATES[templateType], roomId)).returning()
-        }
-
-      } )
+            fileOutput = await tx.insert(files).values(formatFilesLikeInDb(SANDBOX_TEMPLATES[templateType].files, roomId)).returning();
+      })
       return {
         shards: shardOutput,
         files: fileOutput
@@ -77,7 +68,10 @@ export default class ShardRepository implements IShardRepository {
   ): Promise<Shard[] | null> {
     try {
       const shards = await this.db.query.shards.findMany({
-        where: (shards) => eq(shards.userId, id),
+        where: (shards) => and(
+          eq(shards.userId, id), 
+          eq(shards.mode, "normal")
+        ),
         limit: limit, // no. of rows to be limited to
         offset: offset, //in no. of rows to skip
         with: {
@@ -103,14 +97,18 @@ export default class ShardRepository implements IShardRepository {
       return files;
     } catch (error) {
       logger.debug("Unexpected error", error);
-      return null;
+      return [];
     }
   }
 
   async insertFiles(id: number, fileInput: FileInput[]): Promise<"OK" | null> {
     try {
-      await this.db.insert(files).values(fileInput);
-
+      const mappedFiles = fileInput.map((file) => ({
+        code: file.code,
+        name: file.name,
+        shardId: id,
+      } as File));
+       await this.db.insert(files).values(mappedFiles);
       return "OK";
     } catch (error) {
       logger.debug("Unexpected error", error);
@@ -130,11 +128,14 @@ export default class ShardRepository implements IShardRepository {
           and(eq(shards.mode, "collaboration"), eq(shards.userId, userId)),
         limit: limit,
         offset: offset,
+        with: {
+          files: true
+        }
       });
 
       return rooms;
     } catch (error) {
-      logger.warn("shard repository getAllCollaborativeRooms() error");
+      logger.warn("shard repository getAllCollaborativeRooms() error", error);
       return null;
     }
   }
@@ -171,22 +172,24 @@ export default class ShardRepository implements IShardRepository {
     fileInput: FileInput[] | FileInput,
   ): Promise<"OK" | null> {
     fileInput = Array.isArray(fileInput) ? fileInput : [fileInput];
-    const sqlChunks: SQL[] = [];
-    let names: string[] = [];
-    sqlChunks.push(sql`(case`);
-    for (const file of fileInput) {
-      sqlChunks.push(sql`when ${file.name} = ${file.name} then ${file.code}`);
-      names.push(file.name);
-    }
-    sqlChunks.push(sql`end)`);
-    const finalSql: SQL = sql.join(sqlChunks, sql.raw(" "));
+
+    const filesToUpdate = fileInput.map((file) => ({
+      code: file.code,
+      name: file.name,
+      shardId: id,
+    } as File));
+
     try {
-      await this.db
-        .update(files)
-        .set({
-          code: finalSql,
-        })
-        .where(and(eq(files.shardId, id), inArray(files.name, names)));
+      await this.db.transaction(async (tx) => {
+        for (const file of filesToUpdate) {
+          await tx.update(files)
+            .set({
+              code: file.code,
+              updatedAt: new Date()
+            })
+            .where(and(eq(files.shardId, id), eq(files.name, file.name!)));
+        }
+      });
       return "OK";
     } catch (error) {
       console.log("error updating files");
@@ -198,14 +201,34 @@ export default class ShardRepository implements IShardRepository {
     id: number,
     limit: number,
     offset: number,
-  ): Promise<Comment[] | null> {
+  ): Promise<[] | null> {
     try {
-      const comments = await this.db.query.comments.findMany({
-        where: (comments) => eq(comments.shardId, id),
-        limit: limit,
-        offset: offset,
-      });
-      return comments;
+      // const comments = await this.db.query.comments.findMany({
+      //   where: (comments) => eq(comments.shardId, id),
+      //   limit: limit,
+      //   offset: offset,
+      //   with: {
+      //     replies: true
+      //   }
+      // });
+      // return comments;
+
+      // TODO prevent sql injection attacks
+      const cmnts: any = await this.db.execute(sql`
+        SELECT 
+          comments.*,
+          COUNT(replies.id) as "replyCount"
+        FROM comments
+        LEFT JOIN replies ON replies.parent_id = comments.id 
+        WHERE comments.shard_id = ${id}
+        GROUP BY comments.id
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `);
+      if(cmnts?.rows && cmnts?.rows.length > 0) {
+        return cmnts.rows;
+      }
+      return [];
     } catch (error) {
       logger.error(
         "shardRepository > getComments() error",
@@ -213,7 +236,7 @@ export default class ShardRepository implements IShardRepository {
         "shardId",
         id,
       );
-      return null;
+      return [];
     }
   }
 
@@ -258,16 +281,17 @@ export default class ShardRepository implements IShardRepository {
 
   async addComment(commentInput: CommentInput): Promise<Comment | null> {
     try {
-      const out = await this.db
+
+      let out = await this.db
         .insert(comments)
         .values({
           message: commentInput.message,
           shardId: commentInput.shardId,
           userId: commentInput.userId,
-        })
+        })        
         .returning();
 
-      return out[0];
+      return out?.[0] || null;
     } catch (error) {
       logger.error(
         "shardRepository > addComment()",
@@ -280,28 +304,40 @@ export default class ShardRepository implements IShardRepository {
     }
   }
 
-  async deleteComment(commentId: number): Promise<"OK" | null> {
-    try {
-      await this.db.delete(comments).where(eq(comments.id, commentId));
+    async deleteComment(commentId: number): Promise<"OK" | null> {
+      try {
+        await this.db.delete(comments).where(eq(comments.id, commentId));
 
+        return "OK";
+      } catch (error) {
+        logger.error(
+          "shardRepository > deleteComment()",
+          "error",
+          error,
+          "commentId",
+          commentId,
+        );
+        return null;
+      }
+    }
+
+  async editComment(commentId: number, content: string): Promise<"OK" | null> {
+    try {
+      await this.db.update(comments).set({ message: content }).where(eq(comments.id, commentId));
       return "OK";
     } catch (error) {
-      logger.error(
-        "shardRepository > deleteComment()",
-        "error",
-        error,
-        "commentId",
-        commentId,
-      );
+      logger.error("shard repository > editComment() error", error);
       return null;
     }
   }
+
   async patch(patchShardInput: PatchShardInput): Promise<"OK" | null> {
     try {
       // TODO: implement this
-      let updatedInput: Partial<PatchShardInput> = {
-        type: patchShardInput.type,
-      };
+      let updatedInput: Partial<PatchShardInput> = {};
+      if(patchShardInput.type) {
+        updatedInput["type"] = patchShardInput.type;
+      }
 
       if (patchShardInput.title) {
         updatedInput["title"] = patchShardInput.title;

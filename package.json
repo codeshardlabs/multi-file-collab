@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "main": "dist/src/index.js",
   "scripts": {
-
     "build": "tsc -p .",
-    "prestart" : "npm run build",
+    "prestart": "npm run build",
     "start": "node dist/src/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/src/index.js\"",
     "test": "jest",
-    "test:cov" : "jest --coverage"
+    "test:cov": "jest --coverage"
   },
   "keywords": [],
   "author": "",

@@ -34,7 +34,7 @@ export default class UserRepository implements IUserRepository {
     const user = await this.getUserInfo(followerId);
     if (!user) return null;
 
-    user.following.push(followingUser);
+    user.following = user?.following && Array.isArray(user?.following) ? [...user.following, followingUser] : [followingUser];
     return await this.saveUserInfo(user);
   }
 
@@ -42,7 +42,7 @@ export default class UserRepository implements IUserRepository {
     const user = await this.getUserInfo(followerId);
     if (!user) return null;
 
-    const ind = user.following.find(
+    const ind = user.following?.find(
       (temp) => temp.followingId === temp.followingId,
     );
 

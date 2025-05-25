@@ -8,6 +8,7 @@ import {
   likeShard,
   dislikeShard,
   addComment,
+  handleAssistantLogic,
 } from "../../../controllers/http/shard";
 import { populateLimitOffset, queryValidation } from "../../../middleware/http/global";
 import { validateSaveShardRequestBody } from "../../../middleware/http/shard";
@@ -18,6 +19,7 @@ interface GetCommentsQueryParams {
   limit: number;
   offset: number;
 }
+
 
 export interface SaveShardRequestBody {
   files: FileInput[];
@@ -33,5 +35,6 @@ shardIdRouter.get("/comments", queryValidation<GetCommentsQueryParams>, populate
 shardIdRouter.post("/comments", addComment);
 shardIdRouter.post("/likes", likeShard);
 shardIdRouter.delete("/likes", dislikeShard);
+shardIdRouter.post("/assistant", handleAssistantLogic);
 
 export default shardIdRouter;

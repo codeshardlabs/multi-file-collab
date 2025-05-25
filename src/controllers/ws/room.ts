@@ -1,53 +1,32 @@
 import { Server, Socket } from "socket.io";
 import {  kvStore } from "../../services/redis/kvStore";
 import { pubsub } from "../../services/redis/pubsub";
-import { EditorStateManager } from "../../services/redis/editorStateManager";
 import { validateRoomId } from "../../middleware/ws/room";
-import { errorMessage, errors } from "../../config";
 import { logger } from "../../services/logger/logger";
-import { db } from "../../repositories/db";
+import { getSocketRoomKey, getSocketUserKey } from "./constants";
 
-export function joinRoom(roomId: string, io: Server, socket: Socket) {
+export async function joinRoom(roomId: string, io: Server, socket: Socket) {
   // validate room id: library not required
   logger.info("joinRoom() called", {
     roomId,
   });
-  validateRoomId(roomId, socket);
   const userId = socket.user.id;
+  validateRoomId(roomId);
+  const socketUserKey = getSocketUserKey(userId);
+  const roomIdFromSocket = await kvStore.get(socketUserKey);
+  if(roomIdFromSocket && String(roomIdFromSocket) === String(roomId)) {
+    logger.warn("user already in room", {
+      userId,
+      roomId,
+    });
+    return;
+  }
   socket.join(roomId);
   try {
-    const pipeline = kvStore.multi();
-    pipeline
-      .set(userId, roomId)
-      .rpush(roomId, userId)
-      .llen(roomId, async (err, results) => {
-        if (err) throw err;
-        const len = results!;
-        if (len == 1) {
-          // first user joined the room
-          // get the shard by room id
-          const files = await db.shard.getFiles(Number(roomId));
-          if (files) {
-            // populate all the files to redis
-            let pipeline = kvStore.multi();
-            for (let file of files) {
-              let redisKey = `editor:${roomId}:${file.name}:pending`;
-              const timestamp = Date.now();
-              pipeline.hset(redisKey, {
-                code: file.code,
-                lastModified: timestamp,
-              });
-              // pipeline.zadd(`project:${roomId}:changes`, "XX", , file.name); // TODO: implement this
-            }
-            await pipeline.exec();
-          } else {
-            throw new Error(errorMessage.get(errors.SHARD_ID_NOT_FOUND));
-          }
-        }
-      })
-      .exec((err, _) => {
-        if (err) throw err;
-      });
+    await kvStore.set(socketUserKey, roomId);
+    const roomUserKey = getSocketRoomKey(roomId);
+    // Use SADD which is atomic and will only add if not already present
+    await kvStore.sadd(roomUserKey, userId);
   } catch (error) {
     logger.error("Could not join room: ", {
       error: error,
@@ -66,7 +45,7 @@ export async function propagateRealtimeCodeUpdates(
   roomId: string,
   io: Server,
   _: Socket,
-  editorManager: EditorStateManager,
+  // editorManager: EditorStateManager,
 ) {
   logger.debug("propagateRealtimeCodeUpdates() called", {
     activeFile,
@@ -77,7 +56,7 @@ export async function propagateRealtimeCodeUpdates(
   try {
     io.to(roomId).emit("event:server-message", { activeFile, data });
     await Promise.all([
-      editorManager.cacheLatestUpdates(roomId, activeFile, data),
+      // editorManager.cacheLatestUpdates(roomId, activeFile, data),
       pubsub.publish(
         "EVENT:MESSAGE",
         JSON.stringify({

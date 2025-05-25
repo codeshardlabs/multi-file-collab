@@ -38,8 +38,8 @@ export interface ShardInput {
 }
 
 export interface PatchShardInput {
-  title: string;
-  type: ShardTypeType;
+  title?: string;
+  type?: ShardTypeType;
   userId: string;
 }
 
@@ -47,7 +47,7 @@ export interface CommentInput {
   message: string;
   userId: string;
   shardId: number;
-}
+ }
 
 export interface NewRoomOutput {
   shards: Shard[],
@@ -56,7 +56,7 @@ export interface NewRoomOutput {
 
 export interface IShardRepository extends IRepository {
   create(shards: ShardInput[] | ShardInput): Promise<Shard[] | null>;
-  createNewRoom(shards: ShardInput[] | ShardInput) : Promise<NewRoomOutput | null>
+  createNewRoom(shards: ShardInput) : Promise<NewRoomOutput | null>
   findById(id: number): Promise<Shard | null>;
   deleteById(id: number): Promise<"OK" | null>;
   findByUserId(
@@ -79,7 +79,7 @@ export interface IShardRepository extends IRepository {
     id: number,
     limit: number,
     offset: number,
-  ): Promise<Comment[] | null>;
+  ): Promise<[] | null>;
   like(shardId: number, userId: string): Promise<"OK" | null>;
   dislike(shardId: number, userId: string): Promise<"OK" | null>;
   addComment(commentInput: CommentInput): Promise<Comment | null>;

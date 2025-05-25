@@ -24,7 +24,7 @@ export class EditorStateManager {
       },
       db.shard,
     );
-    this.startPeriodicFlush();
+    // this.startPeriodicFlush();
   }
 
   setUserId(userId: string) {

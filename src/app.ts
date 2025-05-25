@@ -4,7 +4,8 @@ import cors from "cors";
 import morgan from "morgan";
 import { logger } from "./services/logger/logger";
 import v1Router from "./routes/v1";
-import registry from "./prometheus/registry";
+import * as client from "prom-client";
+import { errorHandler } from "./middleware/http/global";
 
 export const app = express();
 
@@ -33,7 +34,8 @@ app.use(
   }),
 );
 app.use("/api/v1", v1Router);
+app.use(errorHandler);
 app.get("/metrics", async (req: Request, res: Response) => {
-  res.setHeader("Content-Type", registry.contentType);
-  res.send(await registry.metrics());
+  res.setHeader("Content-Type", client.register.contentType);
+  res.send(await client.register.metrics());
 });

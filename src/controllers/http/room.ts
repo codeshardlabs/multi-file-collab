@@ -7,6 +7,7 @@ import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
 import { NewRoomRequestBody } from "../../routes/v1/room";
+import { DataSource } from "../../constants/global.constants";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -15,8 +16,7 @@ export async function fetchLatestRoomFilesState(
 ) {
   const id = req.shard.id;
   let shard: ShardWithFiles;
-  let start = Date.now();
-  let source : "db" | "cache" = "db";
+  let src = "";
   try {
     let cachedShard = await cache.shard.getShardWithFiles(id);
     if (!cachedShard) {
@@ -25,35 +25,31 @@ export async function fetchLatestRoomFilesState(
         return next(new AppError(500, "Could not find resource by room ID"));
       }
       shard = dbShard;
-      source = "db";
+      src = DataSource.DB;
       let out = await cache.shard.saveShardWithFiles(id, dbShard);
       if (!out) {
         logger.warn("could not save shard with files to cache", "shardId", id);
       }
     } else {
       shard = cachedShard;
-      source = "cache";
-      let out = await db.shard.updateFiles(id, shard.files as FileInput[]);
-      if (!out) {
-        logger.warn("could not save updated files to db", "shardId", id);
-      }
+      src = DataSource.CACHE;
+      // let out = await db.shard.updateFiles(id, shard.files as FileInput[]);
+      // if (!out) {
+      //   logger.warn("could not save updated files to db", "shardId", id);
+      // }
     }
 
     res.status(200).json({
       data: {
         shard,
+        src : src ?? undefined
       },
       error: null,
     });
   } catch (error) {
     logger.error("fetchLatestRoomFilesState() route error", error);
     next(new AppError(500, "could not fetch room files latest state info."));
-  } finally {
-    const responseTimeInMs = Date.now() - start;
-    httpRequestTimer
-      .labels(req.method, req.route.path, res.statusCode.toString())
-      .observe(responseTimeInMs);
-  }
+  } 
 }
 
 export async function fetchAllRooms(
@@ -63,11 +59,11 @@ export async function fetchAllRooms(
 ) {
   const userId = req.auth.user.id;
   let rooms: Shard[];
-  let start = Date.now();
   let { limit, offset } = req.pagination;
-  let source : "db" | "cache" = "db";
+  let src = "";
   try {
-    let cachedRooms = await cache.shard.getAllCollaborativeRooms(userId);
+    // let cachedRooms = await cache.shard.getAllCollaborativeRooms(userId);
+    let cachedRooms = null;
     if (!cachedRooms) {
       const dbRooms = await db.shard.getAllCollaborativeRooms(
         userId,
@@ -78,7 +74,7 @@ export async function fetchAllRooms(
         return next(new AppError(500, "could not fetch rooms"));
       }
       rooms = dbRooms;
-      source = "db";
+      src = DataSource.DB;
       let out = await cache.shard.saveAllCollaborativeRooms(userId, dbRooms);
       if (!out) {
         logger.warn(
@@ -89,24 +85,19 @@ export async function fetchAllRooms(
       }
     } else {
       rooms = cachedRooms;
-      source = "cache";
+      src = DataSource.CACHE;
     }
 
     res.status(200).json({
       data: {
         rooms,
-        source
+        src : src ?? undefined
       },
       error: null,
     });
   } catch (error) {
     logger.error("fetchAllRoom() route error", error);
     next(new AppError(500, "could not fetch collaborative rooms info."));
-  } finally {
-    const responseTimeInMs = Date.now() - start;
-    httpRequestTimer
-      .labels(req.method, req.route.path, res.statusCode.toString())
-      .observe(responseTimeInMs);
   }
 }
 
@@ -131,12 +122,10 @@ export async function createNewRoom(
       return next(new AppError(500, "could not create new room"))
     }
 
-    let {shards, files} = out;
-
     res.status(200).json({
       data: {
-        shards, 
-        files
+        shards: out.shards,
+        files: out.files
       },
       error: null
     })

@@ -95,33 +95,37 @@ export default class ShardRepository implements IShardRepository {
     if (!res) return null;
 
     const shard = JSON.parse(res) as ShardWithFiles;
-    if (shard.mode === "collaboration") {
-      const shardWithFilesKeyPattern = `${key}:file:*`;
-      const keys = await this.cache.keys(shardWithFilesKeyPattern);
-      let files: File[] = [];
-      const pipeline = this.cache.pipeline();
-      for (let key of keys) {
-        pipeline.get(key);
-      }
+    // if (shard.mode === "collaboration") {
+    //   const shardWithFilesKeyPattern = `${key}:file:*`;
+    //   const keys = await this.cache.keys(shardWithFilesKeyPattern);
+    //   let files: File[] = [];
+    //   const pipeline = this.cache.pipeline();
+    //   if(!pipeline) {
+    //     logger.warn("redisRepository > getShardWithFiles() pipeline is null");
+    //     return null;
+    //   }
+    //   for (let key of keys) {
+    //     pipeline!.get(key);
+    //   }
 
-      const res = await pipeline.exec();
-      if (!res) {
-        logger.warn(
-          "redisRepository > getShardWithFiles() pipeline execution error",
-        );
-        return null;
-      }
-      for (let record of res!) {
-        if (record[0] !== null) {
-          logger.warn("redisRepository > getShardWithFiles() error", record[0]);
-          return null;
-        }
-        let temp = record[1] as string;
-        let file = JSON.parse(temp) as File;
-        files.push(file);
-      }
-      shard.files = files;
-    }
+    //   const res = await pipeline!.exec();
+    //   if (!res) {
+    //     logger.warn(
+    //       "redisRepository > getShardWithFiles() pipeline execution error",
+    //     );
+    //     return null;
+    //   }
+    //   for (let record of res!) {
+    //     if (record[0] !== null) {
+    //       logger.warn("redisRepository > getShardWithFiles() error", record[0]);
+    //       return null;
+    //     }
+    //     let temp = record[1] as string;
+    //     let file = JSON.parse(temp) as File;
+    //     files.push(file);
+    //   }
+    //   shard.files = files;
+    // }
     return shard;
   }
 
@@ -192,7 +196,7 @@ export default class ShardRepository implements IShardRepository {
       const out = await this.cache.get(key);
       if (!out) return null;
       let shard = JSON.parse(out) as ShardWithFiles;
-      shard.type = patchShardInput.type;
+      if (patchShardInput.type) shard.type = patchShardInput.type;
       if (patchShardInput.title) shard.title = patchShardInput.title;
       await this.removeShardPages(patchShardInput.userId);
       return await this.saveShardWithFiles(shardId, shard);
@@ -217,6 +221,17 @@ export default class ShardRepository implements IShardRepository {
     return "OK";
   }
 
+  async saveAssistantResponse(shardId: number, hash: string, response: string): Promise<"OK" | null> {
+    const key = `${this.getShardKey(shardId)}:assistantResponse:hash:${hash}`;
+    return await this.cache.set(key, response, this.ttl);
+  }
+
+  async getAssistantResponse(shardId: number, hash: string): Promise<{content: string, errorMessage: string} | null> {
+    const key = `${this.getShardKey(shardId)}:assistantResponse:hash:${hash}`;
+    const res = await this.cache.get(key);
+    if (!res) return null;
+    return JSON.parse(res) as {content: string, errorMessage: string};
+  }
   private getShardCommentsKey(shardId: number): string {
     let shardKey = this.getShardKey(shardId);
     return `${shardKey}:comments`;
