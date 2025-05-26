@@ -72,6 +72,49 @@ class SocketService {
           },
         );
 
+        socket.on("event:chat-message", async (messageData: { text: string, sender: string, timestamp: string, roomId: string}) => {
+          try {
+            if (!messageData.roomId) {
+              logger.warn("Room ID not found for chat message", {
+                userId: socket.user.id
+              });
+              return;
+            }
+
+            // Publish the message to the chat channel
+            await pubsub.publish(
+              "EVENT:CHAT-MESSAGE",
+              JSON.stringify({
+                ...messageData,
+                userId: socket.user.id,
+                roomId: messageData.roomId
+              })
+            );
+
+            // Emit the message to the room with only the required fields
+            io.to(messageData.roomId).emit("event:server-chat-message", {
+              text: messageData.text,
+              sender: messageData.sender,
+              timestamp: messageData.timestamp
+            });
+
+            logger.info("Chat message propagated", {
+              userId: socket.user.id,
+              roomId: messageData.roomId,
+              sender: messageData.sender
+            });
+          } catch (error) {
+            logger.error("Error handling chat message", {
+              error,
+              userId: socket.user.id
+            });
+            socket.emit("event:error", {
+              src: "event:chat-message",
+              error
+            });
+          }
+        });
+
         pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {
           if (err) {
             logger.warn("could not subscribe to event", {
@@ -137,6 +180,48 @@ class SocketService {
               visibleFiles: visibleFiles,
             });
           } else {
+          }
+        });
+
+        pubsub.subscribe("EVENT:CHAT-MESSAGE", async (err, result) => {
+          if (err) {
+            logger.warn("Could not subscribe to chat messages", {
+              event: "EVENT:CHAT-MESSAGE",
+              src: "pubsub"
+            });
+            return;
+          }
+
+          logger.info("Subscribed to chat messages", {
+            event: "EVENT:CHAT-MESSAGE",
+            src: "pubsub"
+          });
+
+          const { text, sender, timestamp, userId, roomId } = JSON.parse(result as string) as {
+            text: string;
+            sender: string;
+            timestamp: string;
+            userId: string;
+            roomId: string;
+          };
+
+          if (roomId) {
+            // Emit only the required fields to users
+            io.to(roomId).emit("event:chat-message", {
+              text,
+              sender,
+              timestamp
+            });
+            logger.info("Chat message emitted", {
+              userId,
+              roomId,
+              sender
+            });
+          } else {
+            logger.debug("Room ID not found for chat message", {
+              event: "EVENT:CHAT-MESSAGE",
+              src: "pubsub"
+            });
           }
         });
 
