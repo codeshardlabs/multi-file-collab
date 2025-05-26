@@ -78,7 +78,7 @@ router.get("/:id", async (req: Request<{ id: string }>, res: Response): Promise<
 router.post("/:id/submit", authMiddleware, async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { shardId, shardLink } = req.body;
+    const { shardId } = req.body;
     const userId = req.auth.user.id;
 
     // Check if assignment exists and deadline hasn't passed
@@ -106,8 +106,7 @@ router.post("/:id/submit", authMiddleware, async (req: Request<{ id: string }>, 
     const submission = await assignmentUsecases.createSubmission({
       assignmentId: Number(id),
       userId,
-      shardId,
-      shardLink,
+      shardId
     });
 
     res.status(201).json(submission);

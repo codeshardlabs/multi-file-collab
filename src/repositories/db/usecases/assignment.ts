@@ -14,7 +14,6 @@ export interface CreateSubmissionParams {
   assignmentId: number;
   userId: string;
   shardId: string;
-  shardLink: string;
 }
 
 export interface Assignment {
@@ -33,7 +32,6 @@ export interface Submission {
   assignmentId: number;
   userId: string;
   shardId: string;
-  shardLink: string;
   createdAt: Date;
   updatedAt: Date | null;
 }

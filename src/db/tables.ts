@@ -77,7 +77,6 @@ import { timestamps } from "./timestamp";
     assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "cascade" }).notNull(),
     userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
     shardId: text("shard_id").notNull(),
-    shardLink: text("shard_link").notNull(),
     ...timestamps,
   });
   
