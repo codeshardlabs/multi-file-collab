@@ -9,6 +9,7 @@ import {
 import { fetchUserFromToken } from "../middleware/ws/room";
 import { logger } from "./logger/logger";
 import { getSocketRoomKey, getSocketUserKey } from "../controllers/ws/constants";
+import { env } from "../config";
 
 class SocketService {
   private _io: Server;
@@ -16,7 +17,7 @@ class SocketService {
     logger.info("SocketService instance created");
     this._io = new Server({
       cors: {
-        origin: "*",
+        origin: env.FRONTEND_URL,
       },
     });
   }
