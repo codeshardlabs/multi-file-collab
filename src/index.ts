@@ -13,6 +13,15 @@ async function init() {
     logger.info(`Server is listening on port: ${PORT}`);
   });
   socketService.initListeners();
+  setInterval(async () => {
+    try {
+      const backendUrl = env.BACKEND_URL;
+      const res = await fetch(`${backendUrl}/health`);
+      console.log("Pinged:", res.status);
+    } catch (err) {
+      console.error("Ping failed:", err);
+    }
+  }, 30 * 1000); // every 30 seconds
 }
 
 init();

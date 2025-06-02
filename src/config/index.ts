@@ -46,6 +46,7 @@ enum errors {
 
 const env = {
   FRONTEND_URL: process.env.FRONTEND_URL!,
+  BACKEND_URL: process.env.BACKEND_URL!,
   REDIS_URL: process.env.REDIS_URL!,
   DATABASE_URL: process.env.DATABASE_URL!,
   SERVICE_NAME: process.env.SERVICE_NAME!,
