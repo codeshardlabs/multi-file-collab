@@ -403,7 +403,7 @@ export default class ShardRepository implements IShardRepository {
       const usersInRoom = await this.db.query.roomMembers.findMany({
         where: (roomMembers) => eq(roomMembers.roomId, roomId),
       });
-      if(usersInRoom.length >= env.MAX_ROOM_USERS) {
+      if(usersInRoom.length >= 5) {
         throw new Error("room is full");
       }
 
