@@ -85,10 +85,10 @@ class SignozTransportStream extends TransportStream {
   }
 }
 
-export const signozTransportStream = new SignozTransportStream({
-  signozToken: env.SIGNOZ_TOKEN,
-  serviceName: env.SERVICE_NAME,
-  batchSize: 100,
-  batchTimeout: 5000,
-  signozEndpoint: env.SIGNOZ_ENDPOINT,
-});
+// export const signozTransportStream = new SignozTransportStream({
+//   signozToken: env.SIGNOZ_TOKEN,
+//   serviceName: env.SERVICE_NAME,
+//   batchSize: 100,
+//   batchTimeout: 5000,
+//   signozEndpoint: env.SIGNOZ_ENDPOINT,
+// });

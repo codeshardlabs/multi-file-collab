@@ -2,7 +2,7 @@ import winston, { createLogger, format, transport } from "winston";
 import TransportStream from "winston-transport";
 import { env } from "../../config";
 import { ILogger } from "../../interfaces/logger";
-import { signozTransportStream } from "./transports/signoz";
+// import { signozTransportStream } from "./transports/signoz";
 import { consoleTransportStream } from "./transports/console";
 import { fileTransportStream } from "./transports/file";
 
@@ -13,7 +13,7 @@ export class WinstonLogger implements ILogger {
     this.env = process.env.NODE_ENV!;
     let temp: TransportStream[] = [consoleTransportStream];
     if (this.env === "production") {
-      temp.push(signozTransportStream);
+      // temp.push(signozTransportStream);
     } else {
       temp.push(fileTransportStream);
     }
