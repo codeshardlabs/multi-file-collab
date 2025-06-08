@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { followUser, getUserInfo, saveUserMetadata, unfollowUser } from "../../controllers/http/user";
 import { paramsValidation } from "../../middleware/http/global";
 import { populateUserId } from "../../middleware/http/user";
@@ -12,7 +12,7 @@ interface UserIdParams {
   id: string;
 }
 
-userRouter.post("/", (req, res, next) => {
+userRouter.post("/", (req: Request, res: Response, next: NextFunction) => {
   const body = req.body as {
     id: string;
   };
