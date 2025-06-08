@@ -32,6 +32,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@clerk/backend": "^2.0.0",
     "@neondatabase/serverless": "^0.10.4",
     "bullmq": "^5.26.1",
     "cors": "^2.8.5",

@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import shardRouter from "./shard/shard";
-import roomRouter from "./room";
+import roomRouter from "./room/room";
 import userRouter from "./user";
 import { authMiddleware } from "../../middleware/http/auth";
 import commentRouter from "./comment";

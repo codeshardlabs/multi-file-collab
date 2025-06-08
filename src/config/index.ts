@@ -54,6 +54,8 @@ const env = {
   NODE_ENV: process.env.NODE_ENV!,
   PORT: process.env.PORT!,
   SIGNOZ_ENDPOINT: process.env.SIGNOZ_ENDPOINT!,
+  MAX_ROOM_USERS: parseInt(process.env.MAX_ROOM_USERS!),
+  CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY!
 };
 
 const errorMessage = new Map<number, string>();

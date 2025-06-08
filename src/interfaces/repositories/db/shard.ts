@@ -1,4 +1,4 @@
-import { IRepository } from "..";
+import { GenericResponse, IRepository } from "..";
 import { Comment } from "../../../entities/comment";
 import { File } from "../../../entities/file";
 import { Shard, ShardWithFiles } from "../../../entities/shard";
@@ -7,6 +7,8 @@ export interface FileInput {
   code: string;
   name: string;
 }
+
+export type RoomMemberRoleType = "owner" | "viewer" | "editor";
 
 export type ShardTemplateType =
   | "static"
@@ -84,4 +86,6 @@ export interface IShardRepository extends IRepository {
   dislike(shardId: number, userId: string): Promise<"OK" | null>;
   addComment(commentInput: CommentInput): Promise<Comment | null>;
   deleteComment(commentId: number): Promise<"OK" | null>;
+  inviteToRoom(roomId: number, userId: string, role: RoomMemberRoleType): Promise<GenericResponse>;
+  getRoomMembers(roomId: number): Promise<GenericResponse>;
 }

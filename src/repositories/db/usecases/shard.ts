@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { ShardDbType } from "../../../db";
-import { comments, shards, files, replies, likes } from "../../../db/tables";
+import { comments, shards, files, replies, likes, roomMembers } from "../../../db/tables";
 import { Shard, ShardWithFiles } from "../../../entities/shard";
 import {
   CommentInput,
@@ -15,6 +15,9 @@ import { File } from "../../../entities/file";
 import { Comment } from "../../../entities/comment";
 import { SANDBOX_TEMPLATES } from "../../../templates";
 import { formatFilesLikeInDb } from "../../../utils";
+import { RoomMemberRoleType } from "../../../interfaces/repositories/db/shard";
+import { env } from "../../../config";
+import { GenericResponse } from "../../../interfaces/repositories";
 
 export default class ShardRepository implements IShardRepository {
   private db: ShardDbType;
@@ -380,4 +383,70 @@ export default class ShardRepository implements IShardRepository {
       return null;
     }
   }
+
+  async inviteToRoom(roomId: number, userId: string, role: RoomMemberRoleType): Promise<GenericResponse> {
+    try {
+      const room = await this.db.query.shards.findFirst({
+        where: (shards) => eq(shards.id, roomId),
+      });
+      if(!room) {
+        throw new Error("room not found");
+      }
+
+      const existingMember = await this.db.query.roomMembers.findFirst({
+        where: (roomMembers) => and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)),
+      });
+      if(existingMember) {
+        throw new Error("user already a member of the room");
+      }
+
+      const usersInRoom = await this.db.query.roomMembers.findMany({
+        where: (roomMembers) => eq(roomMembers.roomId, roomId),
+      });
+      if(usersInRoom.length >= env.MAX_ROOM_USERS) {
+        throw new Error("room is full");
+      }
+
+      const ownerAlreadyPresent = usersInRoom?.find((user) => user.role === "owner");
+      if(ownerAlreadyPresent && role === "owner") {
+        throw new Error("There can only be one owner in one room.")
+      }
+
+      await this.db.insert(roomMembers).values({
+        roomId: roomId,
+        userId: userId,
+        role: role,
+      });
+      return {
+        data: "Invitation sent successfully",
+        error: null
+      }
+    } catch (error) {
+      logger.error("shard repository > inviteToRoom() error", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Could not invite to room"
+      };
+    }
+  }
+
+  async getRoomMembers(roomId: number): Promise<GenericResponse> {
+    try {
+      const members = await this.db.query.roomMembers.findMany({
+        where: (roomMembers) => eq(roomMembers.roomId, roomId),
+      });
+      return {
+        data: members,
+        error: null
+      }
+    } catch (error) {
+      logger.error("shard repository > getRoomMembers() error", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Could not fetch room members"
+      };
+    }
+  }
 }
+
+

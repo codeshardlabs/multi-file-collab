@@ -1,4 +1,3 @@
-// schema/tables.ts
 import {
     pgEnum,
     pgTable,
@@ -33,6 +32,7 @@ import { timestamps } from "./timestamp";
   ]);
   export const modeEnum = pgEnum("mode", ["normal", "collaboration"]);
   export const typeEnum = pgEnum("type", ["public", "private", "forked"]);
+  export const roomMemberRoleEnum = pgEnum("role", ["owner", "viewer", "editor"]);
   
   // Tables
   export const users = pgTable("users", {
@@ -84,14 +84,14 @@ import { timestamps } from "./timestamp";
     id: serial("id").primaryKey(),
     message: text("message").notNull(),
     userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-    shardId: integer("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
+    shardId: serial("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
     ...timestamps,
   });
   
   export const replies = pgTable("replies", {
     id: serial("id").primaryKey(),
-    repliedBy: integer("comment_id").notNull().references(() => comments.id, { onDelete: "cascade" }),
-    repliedTo: integer("parent_id").notNull().references(() => comments.id, { onDelete: "cascade" }),
+    repliedBy: serial("comment_id").notNull().references(() => comments.id, { onDelete: "cascade" }),
+    repliedTo: serial("parent_id").notNull().references(() => comments.id, { onDelete: "cascade" }),
     ...timestamps,
   });
   
@@ -100,7 +100,7 @@ import { timestamps } from "./timestamp";
     name: text("name"),
     version: text("version"),
     isDevDependency: boolean("is_dev_dependency"),
-    shardId: integer("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
+    shardId: serial("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
     ...timestamps,
   });
   
@@ -111,14 +111,21 @@ import { timestamps } from "./timestamp";
     hash: integer("hash").default(0),
     readOnly: boolean("read_only").default(false),
     hidden: boolean("hidden").default(false),
-    shardId: integer("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
+    shardId: serial("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
     ...timestamps,
   });
   
   export const likes = pgTable("likes", {
     id: serial("id").primaryKey(),
-    shardId: integer("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
+    shardId: serial("shard_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
     likedBy: text("liked_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
     ...timestamps,
   });
-  
+ 
+  export const roomMembers = pgTable("room_members", {
+    id: serial("id").primaryKey(),
+    roomId: serial("room_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    role: roomMemberRoleEnum("role").default("viewer"),
+    ...timestamps,
+  });

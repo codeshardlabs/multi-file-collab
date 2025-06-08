@@ -57,13 +57,13 @@ export async function propagateRealtimeCodeUpdates(
     io.to(roomId).emit("event:server-message", { activeFile, data });
     await Promise.all([
       // editorManager.cacheLatestUpdates(roomId, activeFile, data),
-      pubsub.publish(
-        "EVENT:MESSAGE",
-        JSON.stringify({
-          activeFile,
-          data,
-        }),
-      ),
+      // pubsub.publish(
+      //   "EVENT:MESSAGE",
+      //   JSON.stringify({
+      //     activeFile,
+      //     data,
+      //   }),
+      // ),
     ]);
   } catch (error) {
     logger.error("Unexpected Error Occurred", {
@@ -92,12 +92,12 @@ export async function propagateVisibleFiles(
 
   try {
     io.to(roomId).emit("event:sync-visible-files", { visibleFiles: files });
-    await pubsub.publish(
-      "EVENT:SYNC-VISIBLE-FILES",
-      JSON.stringify({
-        visibleFiles: files,
-      }),
-    );
+    // await pubsub.publish(
+    //   "EVENT:SYNC-VISIBLE-FILES",
+    //   JSON.stringify({
+    //     visibleFiles: files,
+    //   }),
+    // );
   } catch (error) {
     logger.error("Unexpected Error Occurred", error);
     io.to(roomId).emit("event:error", {

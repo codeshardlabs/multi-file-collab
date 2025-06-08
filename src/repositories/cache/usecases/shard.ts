@@ -1,3 +1,4 @@
+import { getSocketRoomKey } from "../../../controllers/ws/constants";
 import { Comment } from "../../../entities/comment";
 import { File } from "../../../entities/file";
 import { Shard, ShardWithFiles } from "../../../entities/shard";
@@ -232,6 +233,14 @@ export default class ShardRepository implements IShardRepository {
     if (!res) return null;
     return JSON.parse(res) as {content: string, errorMessage: string};
   }
+
+  async getActiveRoomMembers(roomId: number): Promise<string[] | null> {
+    const key = getSocketRoomKey(String(roomId));
+    const res = await this.cache.smembers(key);
+    if (!res) return [];
+    return res;
+  }
+
   private getShardCommentsKey(shardId: number): string {
     let shardKey = this.getShardKey(shardId);
     return `${shardKey}:comments`;
