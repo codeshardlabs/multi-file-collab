@@ -1,5 +1,5 @@
-import { Server } from "socket.io";
-import { pubsub } from "./redis/pubsub";
+import { Server, Socket } from "socket.io";
+// import { pubsub } from "./redis/pubsub";
 import { kvStore } from "./redis/kvStore";
 import {
   joinRoom,
@@ -13,67 +13,87 @@ import { env } from "../config";
 
 class SocketService {
   private _io: Server;
+  private readonly MAX_LISTENERS = 10; // Set a reasonable limit for event listeners
+
   constructor() {
     logger.info("SocketService instance created");
     this._io = new Server({
       cors: {
         origin: env.FRONTEND_URL,
       },
+      maxHttpBufferSize: 1e8, // 100MB
+      pingTimeout: 60000, // 60 seconds
+      pingInterval: 25000, // 25 seconds
     });
+    
+    // Set max listeners for the server
+    this._io.setMaxListeners(this.MAX_LISTENERS);
   }
+
   get io() {
     return this._io;
+  }
+
+  private cleanupSocketListeners(socket: Socket) {
+    // Remove all listeners for specific events
+    socket.removeAllListeners("event:join-room");
+    socket.removeAllListeners("event:message");
+    socket.removeAllListeners("event:visible-files");
+    socket.removeAllListeners("event:chat-message");
+    socket.removeAllListeners("error");
   }
 
   public initListeners() {
     logger.info("initListeners() method called");
     const io = this._io;
+    
     io.on("connect", async (socket) => {
       try {
         await fetchUserFromToken(socket);
-        console.log("socket.user.id", socket.user.id);
-        // this.editorManager.setUserId(socket.user.id);
         logger.info("User connected: ", {
           id: socket.id
         });
         
-        socket.on("event:join-room", async ({ roomId }: { roomId: string }) => {
-          console.log("event:join-room");
+        // Set max listeners for this socket
+        socket.setMaxListeners(this.MAX_LISTENERS);
+        
+        const joinRoomHandler = async ({ roomId }: { roomId: string }) => {
+          logger.info("event:join-room");
           await joinRoom(roomId, io, socket);
-        });
+        };
 
-        socket.on("event:message",async ({ activeFile, data, roomId  }: {
-            activeFile: string;
-            data: string;
-            roomId: string;
-          }) => {
-            console.log("event:message");
-            propagateRealtimeCodeUpdates(
-              activeFile,
-              data,
-              roomId,
-              io,
-              socket,
-              // this.editorManager,
-            );
-          },
-        );
-
-        socket.on(
-          "event:visible-files",
-          async ({
-            visibleFiles,
+        const messageHandler = async ({ activeFile, data, roomId }: {
+          activeFile: string;
+          data: string;
+          roomId: string;
+        }) => {
+          logger.info("event:message");
+          await propagateRealtimeCodeUpdates(
+            activeFile,
+            data,
             roomId,
-          }: {
-            visibleFiles: string[];
-            roomId: string;
-          }) => {
-            logger.info("event:visible-files");
-            propagateVisibleFiles(visibleFiles, roomId, io, socket);
-          },
-        );
+            io,
+            socket,
+          );
+        };
 
-        socket.on("event:chat-message", async (messageData: { text: string, sender: string, timestamp: string, roomId: string}) => {
+        const visibleFilesHandler = async ({
+          visibleFiles,
+          roomId,
+        }: {
+          visibleFiles: string[];
+          roomId: string;
+        }) => {
+          logger.info("event:visible-files");
+          await propagateVisibleFiles(visibleFiles, roomId, io, socket);
+        };
+
+        const chatMessageHandler = async (messageData: { 
+          text: string, 
+          sender: string, 
+          timestamp: string, 
+          roomId: string
+        }) => {
           try {
             if (!messageData.roomId) {
               logger.warn("Room ID not found for chat message", {
@@ -82,17 +102,6 @@ class SocketService {
               return;
             }
 
-            // Publish the message to the chat channel
-            // await pubsub.publish(
-            //   "EVENT:CHAT-MESSAGE",
-            //   JSON.stringify({
-            //     ...messageData,
-            //     userId: socket.user.id,
-            //     roomId: messageData.roomId
-            //   })
-            // );
-
-            // Emit the message to the room with only the required fields
             io.to(messageData.roomId).emit("event:server-chat-message", {
               text: messageData.text,
               sender: messageData.sender,
@@ -114,120 +123,9 @@ class SocketService {
               error
             });
           }
-        });
+        };
 
-        // pubsub.subscribe("EVENT:MESSAGE", async (err, result) => {
-        //   if (err) {
-        //     logger.warn("could not subscribe to event", {
-        //       event: "EVENT:MESSAGE",
-        //       src: "pubsub",
-        //     });
-        //     return;
-        //   }
-
-        //   logger.info("subscribed to event", {
-        //     event: "EVENT:MESSAGE",
-        //     src: "pubsub",
-        //   });
-
-        //   const { activeFile, data } = JSON.parse(result as string) as {
-        //     activeFile: string;
-        //     data: string;
-        //   };
-        //   const roomId = await kvStore.get(getSocketUserKey(socket.user.id));
-
-        //   if (roomId) {
-        //     io.to(roomId).emit("event:message", {
-        //       activeFile,
-        //       data,
-        //     });
-        //     logger.info("emit event: event:message", {
-        //       activeFile,
-        //       data,
-        //     });
-        //   } else {
-        //     logger.debug("room id not found", {
-        //       event: "EVENT:MESSAGE",
-        //       src: "pubsub",
-        //     });
-        //   }
-        // });
-
-        // pubsub.subscribe("EVENT:SYNC-VISIBLE-FILES", async (err, result) => {
-        //   if (err) {
-        //     logger.warn("could not subscribe to event", {
-        //       event: "EVENT:SYNC-VISIBLE-FILES",
-        //       src: "pubsub",
-        //     });
-        //     return;
-        //   }
-
-        //   logger.info("successfully subscribed to an event", {
-        //     event: "EVENT:SYNC-VISIBLE-FILES",
-        //     src: "pubsub",
-        //   });
-
-        //   const { visibleFiles } = JSON.parse(result as string) as {
-        //     visibleFiles: string[];
-        //   };
-        //   const roomId = await kvStore.get(getSocketUserKey(socket.user.id));
-        //   if (roomId) {
-        //     io.to(roomId).emit("event:sync-visible-files", {
-        //       visibleFiles,
-        //     });
-        //     logger.info("emit event", {
-        //       event: "event:sync-visible-files",
-        //       src: "pubsub",
-        //       visibleFiles: visibleFiles,
-        //     });
-        //   } else {
-        //   }
-        // });
-
-        // pubsub.subscribe("EVENT:CHAT-MESSAGE", async (err, result) => {
-        //   if (err) {
-        //     logger.warn("Could not subscribe to chat messages", {
-        //       event: "EVENT:CHAT-MESSAGE",
-        //       src: "pubsub"
-        //     });
-        //     return;
-        //   }
-
-        //   logger.info("Subscribed to chat messages", {
-        //     event: "EVENT:CHAT-MESSAGE",
-        //     src: "pubsub"
-        //   });
-
-        //   const { text, sender, timestamp, userId, roomId } = JSON.parse(result as string) as {
-        //     text: string;
-        //     sender: string;
-        //     timestamp: string;
-        //     userId: string;
-        //     roomId: string;
-        //   };
-
-        //   if (roomId) {
-        //     // Emit only the required fields to users
-        //     io.to(roomId).emit("event:chat-message", {
-        //       text,
-        //       sender,
-        //       timestamp
-        //     });
-        //     logger.info("Chat message emitted", {
-        //       userId,
-        //       roomId,
-        //       sender
-        //     });
-        //   } else {
-        //     logger.debug("Room ID not found for chat message", {
-        //       event: "EVENT:CHAT-MESSAGE",
-        //       src: "pubsub"
-        //     });
-        //   }
-        // });
-
-        socket.on("error", (error) => {
-          // room id not found
+        const errorHandler = (error: any) => {
           socket.emit("error", {
             data: null,
             error: {
@@ -238,45 +136,53 @@ class SocketService {
           logger.debug("error event", {
             message: error.message,
           });
-        });
+        };
+
+        // Attach event listeners
+        socket.on("event:join-room", joinRoomHandler);
+        socket.on("event:message", messageHandler);
+        socket.on("event:visible-files", visibleFilesHandler);
+        socket.on("event:chat-message", chatMessageHandler);
+        socket.on("error", errorHandler);
 
         socket.on("disconnect", async () => {
-          const userId = String(socket.user.id);
-          const socketUserKey = getSocketUserKey(userId);
-          let roomId = await kvStore.get(socketUserKey);
-          if (roomId) {
-            socket.leave(roomId);
-            await kvStore.srem(getSocketRoomKey(roomId), userId);
-            await kvStore.del(getSocketUserKey(userId))
-            // const len = await kvStore.llen(roomId);
-            // if (len == 0) {
-            //   // all the users left the room -> depopulate the cache
-            //   const files = await db.shard.getFiles(Number(roomId));
-            //   const keys = [userId, roomId];
-            //   if (files) {
-            //     for (let file of files) {
-            //       const redisKey = `editor:${roomId}:${file.name}:pending`;
-            //       keys.push(redisKey);
-            //     }
-            //   }
-            //   await kvStore.del(...keys);
-            // }
-            logger.info("User left the room", {
-              userId: userId,
-              event: "disconnect",
-              src: "socket.io",
+          try {
+            const userId = String(socket.user.id);
+            const socketUserKey = getSocketUserKey(userId);
+            let roomId = await kvStore.get(socketUserKey);
+            
+            if (roomId) {
+              socket.leave(roomId);
+              await kvStore.srem(getSocketRoomKey(roomId), userId);
+              await kvStore.del(getSocketUserKey(userId));
+              
+              logger.info("User left the room", {
+                userId: userId,
+                event: "disconnect",
+                src: "socket.io",
+              });
+            } else {
+              logger.warn("Room Id not found", {
+                event: "disconnect",
+                src: "socket.io",
+              });
+            }
+          } catch (error) {
+            logger.error("Error during disconnect", {
+              error,
+              userId: socket.user?.id
             });
-          } else if (!roomId) {
-            logger.warn("Room Id not found", {
-              event: "disconnect",
-              src: "socket.io",
-            });
+          } finally {
+            // Clean up all listeners
+            this.cleanupSocketListeners(socket);
           }
         });
       } catch (error) {
         logger.error("Error in initListeners()", {
           error: error,
         });
+        // Clean up listeners even if there's an error
+        this.cleanupSocketListeners(socket);
       }
     });
   }

@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc -p .",
     "prestart": "npm run build",
-    "start": "node --max-old-space-size=4096 dist/src/index.js",
+    "start": "node --max-old-space-size=512 dist/src/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/src/index.js\"",
     "test": "jest",
     "test:cov": "jest --coverage"
