@@ -1,12 +1,12 @@
 {
   "name": "multitab-server",
   "version": "1.0.0",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p .",
     "prestart": "npm run build",
-    "start": "node --max-old-space-size=512 dist/src/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/src/index.js\"",
+    "start": "node --max-old-space-size=512 dist/index.js",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "test": "jest",
     "test:cov": "jest --coverage"
   },
