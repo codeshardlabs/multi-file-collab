@@ -187,9 +187,10 @@ export async function fetchRoomMembers(
       logger.error("db.shard.getRoomMembers() returned null");
       return next(new AppError(500, roomMemberTableResponse?.error ?? "Could not fetch room members"))
     }
+    const formattedMembers = await formatRoomMembersResponse(roomMemberTableResponse.data) ?? []
     res.status(200).json({
       data: {
-        members: roomMemberTableResponse.data
+        members: formattedMembers
       },
       error: null
     })
@@ -211,4 +212,22 @@ export async function fetchRoomMembers(
     logger.error("room Repository error > fetchRoomMembers()", error)
     next(new AppError(500, "could not fetch room members"))
   }
+}
+
+async function formatRoomMembersResponse(roomMembers) {
+return await Promise.all(roomMembers.map(async (member) => {
+  let user;
+  try{
+     user = await clerkInst.getClerkUser(member.userId);
+  }
+  catch(error) {
+    logger.error("room Repository error > formatRoomMembersResponse()", error)
+    return null
+  }
+    return {
+      userId: member.userId,
+      roomId: member.roomId, 
+      emailId: user?.emailAddresses[0]?.emailAddress,
+      role: member.role
+    }}).filter(Boolean));
 }
