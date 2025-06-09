@@ -38,14 +38,16 @@ export interface Submission {
 
 export const assignmentUsecases = {
   createAssignment: async (params: CreateAssignmentParams): Promise<Assignment> => {
+
+    const newAssigment = {
+      ...params,
+      createdBy: params.createdBy,
+      createdAt: new Date(),
+      updatedAt: null,
+    }
     const [assignment] = await commonDb
       .insert(assignments)
-      .values({
-        ...params,
-        createdBy: params.createdBy,
-        createdAt: new Date(),
-        updatedAt: null,
-      })
+      .values(newAssigment)
       .returning();
     return assignment;
   },

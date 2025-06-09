@@ -157,15 +157,15 @@ export default class ShardRepository implements IShardRepository {
   }
 
   async updateLastSyncTimestamp(id: number): Promise<"OK" | null> {
-    const room = await this.db
-      .update(shards)
-      .set({
-        lastSyncTimestamp: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(shards.id, id))
-      .returning();
-    if (!room) return null;
+    // const room = await this.db
+    //   .update(shards)
+    //   .set({
+    //     lastSyncTimestamp: new Date(),
+    //     updatedAt: new Date(),
+    //   })
+    //   .where(eq(shards.id, id))
+    //   .returning();
+    // if (!room) return null;
     return "OK";
   }
 
@@ -185,11 +185,13 @@ export default class ShardRepository implements IShardRepository {
     try {
       await this.db.transaction(async (tx) => {
         for (const file of filesToUpdate) {
+          const schemaFile = {
+            code: file.code,
+            shardId: id,
+            updatedAt: new Date()
+          }
           await tx.update(files)
-            .set({
-              code: file.code,
-              updatedAt: new Date()
-            })
+            .set(schemaFile)
             .where(and(eq(files.shardId, id), eq(files.name, file.name!)));
         }
       });
@@ -412,11 +414,12 @@ export default class ShardRepository implements IShardRepository {
         throw new Error("There can only be one owner in one room.")
       }
 
-      await this.db.insert(roomMembers).values({
+      const schemaRoomMember = {
         roomId: roomId,
         userId: userId,
         role: role,
-      });
+      }
+      await this.db.insert(roomMembers).values(schemaRoomMember);
       return {
         data: "Invitation sent successfully",
         error: null
