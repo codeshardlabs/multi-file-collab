@@ -2,12 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
 import { Shard, ShardWithFiles } from "../../entities/shard";
-import { FileInput } from "../../interfaces/repositories/db/shard";
+import { FileInput, RoomMemberRoleType } from "../../interfaces/repositories/db/shard";
 import httpRequestTimer from "../../prometheus/histogram";
 import { db } from "../../repositories/db";
 import { cache } from "../../repositories/cache";
-import { NewRoomRequestBody } from "../../routes/v1/room";
+import { NewRoomRequestBody } from "../../routes/v1/room/room";
 import { DataSource } from "../../constants/global.constants";
+import { clerkInst } from "../../services/clerk";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -134,4 +135,99 @@ export async function createNewRoom(
     logger.error("room Repository error > createNewRoom()", error)
     next(new AppError(500, "could not create room"))
   }
+}
+
+export interface InviteToRoomRequestBody {
+  emailId: string;
+  role: RoomMemberRoleType;
+}
+
+export async function inviteToRoom(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const body = req.body as InviteToRoomRequestBody;
+  try {
+
+    const user = await clerkInst.getClerkUserByPrimaryEmail(body.emailId);
+    if(!user) {
+      return next(new AppError(400, "could get user by user email"))
+    }
+    const out = await db.shard.inviteToRoom(req.shard.id, user!.id, body.role);
+    if(!out.data) {
+      logger.error("db.shard.inviteToRoom() returned null");
+      return next(new AppError(500, out?.error ?? "Could not invite to room"))
+    }
+    res.status(200).json({
+      data: {
+        message: "Invitation sent successfully"
+      },
+      error: null
+    })
+
+
+  } catch (error) {
+    logger.error("room Repository error > inviteToRoom()", error)
+    next(new AppError(500, "could not invite to room"))
+  }
+}
+
+export async function fetchRoomMembers(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const roomId = req.shard.id;
+  const activeMembersOnly = req.query?.active === "true";
+  try {
+    if(!activeMembersOnly) {
+    const roomMemberTableResponse = await db.shard.getRoomMembers(roomId);
+    if(!roomMemberTableResponse.data) {
+      logger.error("db.shard.getRoomMembers() returned null");
+      return next(new AppError(500, roomMemberTableResponse?.error ?? "Could not fetch room members"))
+    }
+    const formattedMembers = await formatRoomMembersResponse(roomMemberTableResponse.data) ?? []
+    res.status(200).json({
+      data: {
+        members: formattedMembers
+      },
+      error: null
+    })
+  }
+  else {
+    const activeMembers = await cache.shard.getActiveRoomMembers(roomId);
+    if(!activeMembers) {
+      logger.error("cache.shard.getActiveRoomMembers() returned null");
+      return next(new AppError(500, "Could not fetch active room members"))
+    }
+    res.status(200).json({
+      data: {
+        members: activeMembers
+      },
+      error: null
+    })
+  }
+  } catch (error) {
+    logger.error("room Repository error > fetchRoomMembers()", error)
+    next(new AppError(500, "could not fetch room members"))
+  }
+}
+
+async function formatRoomMembersResponse(roomMembers) {
+return await Promise.all(roomMembers.map(async (member) => {
+  let user;
+  try{
+     user = await clerkInst.getClerkUser(member.userId);
+  }
+  catch(error) {
+    logger.error("room Repository error > formatRoomMembersResponse()", error)
+    return null
+  }
+    return {
+      userId: member.userId,
+      roomId: member.roomId, 
+      emailId: user?.emailAddresses[0]?.emailAddress,
+      role: member.role
+    }}).filter(Boolean));
 }

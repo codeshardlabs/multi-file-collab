@@ -1,13 +1,13 @@
 import { Router } from "express";
 import {
   createNewRoom,
-  fetchAllRooms,
-  fetchLatestRoomFilesState,
-} from "../../controllers/http/room";
-import { paramsValidation, populateLimitOffset, queryValidation } from "../../middleware/http/global";
-import { populateShardId } from "../../middleware/http/shard";
-import { validateNewRoomRequestBody } from "../../middleware/http/room";
-import { ShardTemplateType } from "../../interfaces/repositories/db/shard";
+  fetchAllRooms
+} from "../../../controllers/http/room";
+import { paramsValidation, populateLimitOffset, queryValidation } from "../../../middleware/http/global";
+import { populateShardId } from "../../../middleware/http/shard";
+import { validateNewRoomRequestBody } from "../../../middleware/http/room";
+import { ShardTemplateType } from "../../../interfaces/repositories/db/shard";
+import roomIdRouter from "./roomId";
 
 const roomRouter = Router();
 
@@ -15,11 +15,11 @@ interface RoomIdParams {
   id: number;
 }
 
-roomRouter.get(
+roomRouter.use(
   "/:id",
   paramsValidation<RoomIdParams>,
   populateShardId,
-  fetchLatestRoomFilesState,
+  roomIdRouter
 );
 
 interface FetchRoomsQueryParams{

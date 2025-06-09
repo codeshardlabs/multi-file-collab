@@ -52,6 +52,15 @@ export class CacheService implements ICacheService {
       }
     }
 
+    async smembers(key: string): Promise<string[]> {
+      try {
+        return await this.circuitBreaker.execute(this.client.smembers(key));
+      } catch (error) {
+        logger.error("Error getting members", error);
+        return [];
+      }
+    }
+
     pipeline(commands?: unknown[][]): ChainableCommander | null {
       try {
         return  this.client.pipeline(commands);

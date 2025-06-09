@@ -34,4 +34,5 @@ export interface IShardRepository extends IRepository {
   removeCommentPages(id: number) : Promise<"OK" | null>
   getAssistantResponse(shardId: number, hash: string): Promise<{content: string, errorMessage: string} | null>;
   saveAssistantResponse(shardId: number, hash: string, response: string): Promise<"OK" | null>;
+  getActiveRoomMembers(roomId: number): Promise<any | null>;
 }

@@ -26,6 +26,7 @@ export function errorHandler(
   });
 }
 
+// TODO: each params type validation should be done as well
 export function paramsValidation<T>(
   req: Request,
   _: Response,

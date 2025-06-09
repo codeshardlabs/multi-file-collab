@@ -1,4 +1,3 @@
-// schema/tables.ts
 import {
     pgEnum,
     pgTable,
@@ -33,6 +32,7 @@ import { timestamps } from "./timestamp";
   ]);
   export const modeEnum = pgEnum("mode", ["normal", "collaboration"]);
   export const typeEnum = pgEnum("type", ["public", "private", "forked"]);
+  export const roomMemberRoleEnum = pgEnum("role", ["owner", "viewer", "editor"]);
   
   // Tables
   export const users = pgTable("users", {
@@ -121,4 +121,11 @@ import { timestamps } from "./timestamp";
     likedBy: text("liked_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
     ...timestamps,
   });
-  
+ 
+  export const roomMembers = pgTable("room_members", {
+    id: serial("id").primaryKey(),
+    roomId: integer("room_id").references(() => shards.id, { onDelete: "cascade" }).notNull(),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    role: roomMemberRoleEnum("role").default("viewer"),
+    ...timestamps,
+  });

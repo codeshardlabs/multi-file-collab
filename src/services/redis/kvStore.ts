@@ -127,6 +127,10 @@ export class KVService implements IKVService {
   async srem(key: RedisKey, member: string | number): Promise<number> {
     return await this.client.srem(key, member);
   }
+
+  async smembers(key: RedisKey): Promise<string[]> {
+    return await this.client.smembers(key);
+  }
 }
 
 export const kvStore = new KVService();
