@@ -10,6 +10,8 @@ import { fetchUserFromToken } from "../middleware/ws/room";
 import { logger } from "./logger/logger";
 import { getSocketRoomKey, getSocketUserKey } from "../controllers/ws/constants";
 import { env } from "../config";
+import { clerkInst } from "./clerk";
+import { db } from "../repositories/db";
 
 class SocketService {
   private _io: Server;
@@ -138,11 +140,24 @@ class SocketService {
           });
         };
 
+        const propagateRoomStateHandler = async ({roomId, fileName, code}: {roomId: string, fileName: string, code: string}) => {
+          logger.info("event:propagate-room-state", {
+            roomId,
+            fileName,
+            code
+          });
+          await db.shard.updateFiles(Number(roomId), {
+            name: fileName,
+            code: code
+          });
+        };
+
         // Attach event listeners
         socket.on("event:join-room", joinRoomHandler);
         socket.on("event:message", messageHandler);
         socket.on("event:visible-files", visibleFilesHandler);
         socket.on("event:chat-message", chatMessageHandler);
+        socket.on("event:propagate-room-state", propagateRoomStateHandler);
         socket.on("error", errorHandler);
 
         socket.on("disconnect", async () => {
@@ -152,10 +167,15 @@ class SocketService {
             let roomId = await kvStore.get(socketUserKey);
             
             if (roomId) {
-              socket.leave(roomId);
+              const user = await clerkInst.getClerkUser(userId);
               await kvStore.srem(getSocketRoomKey(roomId), userId);
               await kvStore.del(getSocketUserKey(userId));
-              
+             io.to(roomId).emit("event:server-chat-message", {
+              text: `${user.username} left the room`,
+              sender: "System",
+              timestamp: new Date().toISOString(),
+             });
+             socket.leave(roomId);
               logger.info("User left the room", {
                 userId: userId,
                 event: "disconnect",
