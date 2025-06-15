@@ -1,14 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../../services/logger/logger";
 import { AppError } from "../../errors";
-import { Shard, ShardWithFiles } from "../../entities/shard";
-import { FileInput, RoomMemberRoleType } from "../../interfaces/repositories/db/shard";
-import httpRequestTimer from "../../prometheus/histogram";
+import { Shard } from "../../entities/shard";
+import { RoomMemberRoleType } from "../../interfaces/repositories/db/shard";
 import { db } from "../../repositories/db";
-import { cache } from "../../repositories/cache";
 import { NewRoomRequestBody } from "../../routes/v1/room/room";
 import { DataSource } from "../../constants/global.constants";
 import { clerkInst } from "../../services/clerk";
+import { cache } from "../../repositories/cache";
 
 export async function fetchLatestRoomFilesState(
   req: Request,
@@ -16,35 +15,14 @@ export async function fetchLatestRoomFilesState(
   next: NextFunction,
 ) {
   const id = req.shard.id;
-  let shard: ShardWithFiles;
-  let src = "";
   try {
-    let cachedShard = await cache.shard.getShardWithFiles(id);
-    if (!cachedShard) {
-      let dbShard = await db.shard.getShardWithFiles(id);
-      if (!dbShard) {
-        return next(new AppError(500, "Could not find resource by room ID"));
-      }
-      shard = dbShard;
-      src = DataSource.DB;
-      let out = await cache.shard.saveShardWithFiles(id, dbShard);
-      if (!out) {
-        logger.warn("could not save shard with files to cache", "shardId", id);
-      }
-    } else {
-      shard = cachedShard;
-      src = DataSource.CACHE;
-      // let out = await db.shard.updateFiles(id, shard.files as FileInput[]);
-      // if (!out) {
-      //   logger.warn("could not save updated files to db", "shardId", id);
-      // }
-    }
-
+      let shard = await db.shard.getShardWithFiles(id);
+      if (!shard) return next(new AppError(500, "Could not find resource by room ID"));
+  
     res.status(200).json({
       data: {
-        shard,
-        src : src ?? undefined
-      },
+        shard
+       },
       error: null,
     });
   } catch (error) {
