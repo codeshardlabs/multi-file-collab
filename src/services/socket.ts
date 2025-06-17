@@ -140,11 +140,12 @@ class SocketService {
           });
         };
 
-        const propagateRoomStateHandler = async ({roomId, fileName, code}: {roomId: string, fileName: string, code: string}) => {
+        const propagateRoomStateHandler = async ({roomId, fileName, code, updateType }: {roomId: string, fileName: string, code: string, updateType: "debounce" | "blur"}) => {
           logger.info("event:propagate-room-state", {
             roomId,
             fileName,
-            code
+            code,
+            updateType
           });
           await db.shard.updateFiles(Number(roomId), {
             name: fileName,
